@@ -152,6 +152,10 @@ label {
     justify-content: flex-start;
   }
   .hero-section {
+    background-image: url("./img/hero_img.jpeg");
+    background-size: cover; /* Ensures the image covers the entire section */
+    background-position: center center; /* Centers the image */
+    background-repeat: no-repeat; /* Prevents the image from repeating */
     grid-row-start: 1;
     grid-column-start: 2;
     grid-row-end: 3;
