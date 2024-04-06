@@ -1,0 +1,32 @@
+@media (min-width: 1024px) {
+    body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 90px 1fr;
+    }
+    main {
+      grid-row-start: 2;
+    }
+    header #nav-bar {
+      justify-content: flex-start;
+    }
+    .hero-section {
+      background-image: url("./img/hero_img.jpeg");
+      background-size: cover; /* Ensures the image covers the entire section */
+      background-position: center center; /* Centers the image */
+      background-repeat: no-repeat; /* Prevents the image from repeating */
+      grid-row-start: 1;
+      grid-column-start: 2;
+      grid-row-end: 3;
+      display: block; /* Show the hero section on larger screens */
+    }
+    .login-section,
+    .signup-section{
+      width: 100%;
+    }
+    .login-info,
+    .signup-info {
+      text-align: start;
+    }
+  }
+  

@@ -1,0 +1,7 @@
+/* Media Queries for Larger Screens */
+@media (min-width: 768px) {
+    .login-container,
+    .signup-container {
+      max-width: 600px; /* Adjust max-width for tablets and larger */
+    }
+  }
