@@ -1,3 +1,4 @@
+/* Base Styles for Mobile */
 :root {
   --font-title: 3em;
   --font-body: 1rem;
@@ -7,10 +8,9 @@
   --font-weight: bold;
   --black: #000000;
   --gray: #434242;
-  --hover-color: #0056b3; /* New variable for hover color */
+  --hover-color: #0056b3;
 }
 
-/* Reset and Global Styles */
 * {
   margin: 0;
   padding: 0;
@@ -46,7 +46,6 @@ nav .Logo {
   padding: 1em;
 }
 
-/* Flexbox Utility Classes */
 .flex-row,
 .flex-column {
   display: flex;
@@ -65,7 +64,6 @@ nav .Logo {
   align-items: center;
 }
 
-/* Login Container Styles */
 .login-container {
   gap: 2em;
   padding: 2em;
@@ -77,7 +75,6 @@ nav .Logo {
   margin: auto;
 }
 
-/* Login Info Styles */
 .login-info {
   gap: 1em;
   text-align: center;
@@ -92,7 +89,6 @@ nav .Logo {
   color: var(--second-option-color);
 }
 
-/* Login Form Styles */
 .login-form {
   gap: 1em;
 }
@@ -101,7 +97,6 @@ nav .Logo {
   gap: 0.5em;
 }
 
-/* Input Fields Styles */
 input[type="email"],
 input[type="password"] {
   border: 1px solid var(--black);
@@ -110,13 +105,11 @@ input[type="password"] {
   padding: 0.8em;
 }
 
-/* Labels Styles */
 label {
   font-size: var(--font-label);
   font-weight: var(--font-weight);
 }
 
-/* Submit Button Styles */
 .submit-button {
   border: var(--black) 1px solid;
   background-color: var(--gray);
@@ -125,15 +118,13 @@ label {
   padding: 1rem 1rem;
   border-radius: 8px;
   cursor: pointer;
-  transition: background-color 0.3s ease, border-color 0.3s ease; /* Added transition for border color */
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .submit-button:hover {
   background-color: #666666;
 }
 
-/* Hero Section Styles */
 .hero-section {
   display: none;
   width: 100%;
@@ -141,7 +132,13 @@ label {
   overflow: hidden;
 }
 
-/* Media Queries for Responsiveness */
+/* Media Queries for Larger Screens */
+@media (min-width: 768px) {
+  .login-container {
+    max-width: 600px; /* Adjust max-width for tablets and larger */
+  }
+}
+
 @media (min-width: 1024px) {
   body {
     display: grid;
@@ -151,35 +148,19 @@ label {
   main {
     grid-row-start: 2;
   }
-  header #nav-bar{
+  header #nav-bar {
     justify-content: flex-start;
   }
   .hero-section {
     grid-row-start: 1;
     grid-column-start: 2;
     grid-row-end: 3;
+    display: block; /* Show the hero section on larger screens */
   }
   .login-section {
     width: 100%;
-  }
-  .hero-section {
-    display: block; /* or flex, depending on your layout */
   }
   .login-info {
     text-align: start;
   }
 }
-
-
-@media (max-width: 768px) {
-    .login-container {
-       max-width: 90%; /* Adjust max-width for smaller screens */
-    }
-   }
-   
-   @media (max-width: 480px) {
-    .login-container {
-       max-width: 95%; /* Further adjust for even smaller screens */
-    }
-   }
-   
