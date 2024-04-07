@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+        href="https://cdn.jsdelivr.net/gh/eliyantosarage/font-awesome-pro@main/fontawesome-pro-6.5.1-web/css/all.min.css"
+        rel="stylesheet" />
+
+    <title>Unblockify Dashboard</title>
+    <link rel="stylesheet" href="./stylesheet.main.css" />
+    <link rel="stylesheet" href="./dashboard.css" />
+</head>
+
+<body>
+    <header>
+        <nav class="flex-row">
+            <div class="logo">
+                <img src="./img/Logo.svg" alt="Unblockify Logo" />
+            </div>
+            <div class="menu-toggle">
+                <i class="fa-solid fa-bars"></i>
+            </div>
+        </nav>
+        <div class="greeting">
+            <h1>Welcome Back</h1>
+            <p>Hello [Name], Good Morning</p>
+        </div>
+    </header>
+
+    <main>
+        <section class="blockages">
+            <div class="blockages-header flex-row">
+                <h1>List of Blockages</h1>
+                <button class="add_btn">+</button>
+            </div>
+            <!-- Additional content like filters and tables can be added here -->
+        </section>
+        <div class="blockage-detail flex-column">
+            <h2>Subject of the Difficulty</h2>
+            <p>Details of the difficulty</p>
+            <p>Name of the person</p>
+            <div class="status_date flex-row">
+                <div class="flex-row flex-center status_info">
+                    <button class="status_btn btn">Block</button>
+                    <button class="details_btn btn">Details</button>
+                </div>
+                <div class="blockage-date">
+                    <p>5 days ago</p>
+                </div>
+            </div>
+        </div>
+        <div class="blockage-detail flex-column">
+            <h2>Subject of the Difficulty</h2>
+            <p>Details of the difficulty</p>
+            <p>Name of the person</p>
+            <div class="status_date flex-row">
+                <button class="status_btn btn">Block</button>
+                <div class="blockage-date">
+                    <p>5 days ago</p>
+                </div>
+            </div>
+        </div>
+        <div class="blockage-detail flex-column">
+            <h2>Subject of the Difficulty</h2>
+            <p>Details of the difficulty</p>
+            <p>Name of the person</p>
+
+            <div class="status_date flex-row">
+                <button class="status_btn btn">Block</button>
+                <div class="blockage-date">
+                    <p>5 days ago</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <section id="details_model" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Blockage Details</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="user-info">
+                    <div>
+                        <span>Name: </span><span>userName</span>
+                    </div>
+                    <div>
+                        <span>Bootcamp: </span><span>BootcampName</span>
+                    </div>
+                    <div>
+                        <span>Brief: </span><span>BriefTitle</span>
+                    </div>
+                </div>
+                <div class="status-date">
+                    <button class="status-btn">Block</button>
+                    <div class="blockage-date">
+                        <p>5 days ago</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <h1>Title: <span>the blockage_title</span></h1>
+                <div class="description">
+                    <p>Description of the blockage</p>
+                </div>
+                <div class="actions">
+                    <button>Edit</button>
+                    <button>Delete</button>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+</body>
+
+</html>

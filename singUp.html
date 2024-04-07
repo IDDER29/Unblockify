@@ -23,46 +23,81 @@
         </div>
       </nav>
     </header>
-    <main>
-        <section class="signup-section flex-row flex-center">
-          <div class="signup-container flex-column">
-            <div class="signup-info flex-column">
-              <h1>Sign Up</h1>
-              <p>
-                Join Futur Talents School and start your journey to innovation.
-              </p>
-              <p class="login-link">
-                Already have an account? <a href="./index.html">Log In</a>
-              </p>
-            </div>
-  
-            <form class="signup-form flex-column" action="signup_endpoint" method="post">
-              <div class="form-group flex-column">
-                <label for="name">Name*</label>
-                <input type="text" id="name" name="name" placeholder="Your Name" required />
-              </div>
-              <div class="form-group flex-column">
-                <label for="email">Email*</label>
-                <input type="email" id="email" name="email" placeholder="example@email.com" required />
-              </div>
-              <div class="form-group flex-column">
-                <label for="password">Password*</label>
-                <input type="password" id="password" name="password" placeholder="Enter your password" required />
-              </div>
-              <div class="form-group flex-column">
-                <label for="confirm-password">Confirm Password*</label>
-                <input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm your password" required />
-              </div>
-              <button type="submit" class="submit-button">
-                Create Your Account
-              </button>
-              <p class="terms-agreement">
-                By signing up, you agree to our <a href="#">Terms & Privacy</a>.
-              </p>
-            </form>
+    <main class="flex-row flex-center">
+      <section class="signup-section flex-row flex-center">
+        <div class="signup-container flex-column">
+          <div class="signup-info flex-column">
+            <h1>Sign Up</h1>
+            <p>
+              Join Futur Talents School and start your journey to innovation.
+            </p>
+            <p class="login-link">
+              Already have an account? <a href="./index.html">Log In</a>
+            </p>
           </div>
-        </section>
-      </main>
+
+          <form class="signup-form flex-column">
+            <div class="form-group flex-column">
+              <label for="name">Name*</label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                placeholder="Your Name"
+                required
+              />
+            </div>
+            <div class="form-group flex-column">
+              <label for="email">Email*</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="example@email.com"
+                required
+              />
+            </div>
+            <div class="form-group flex-column">
+              <label for="password">Password*</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Enter your password"
+                required
+              />
+            </div>
+            <div class="form-group flex-column">
+              <label for="confirm-password">Confirm Password*</label>
+              <input
+                type="password"
+                id="confirm-password"
+                name="confirm-password"
+                placeholder="Confirm your password"
+                required
+              />
+            </div>
+            <button type="submit" onClick="save(event);" class="submit-button">
+              Create Your Account
+            </button>
+            <p class="terms-agreement">
+              By signing up, you agree to our <a href="#">Terms & Privacy</a>.
+            </p>
+          </form>
+        </div>
+      </section>
+    </main>
     <section class="hero-section"></section>
+
+    <script>
+      function save(e) {
+        console.log("hhh");
+        window.location.href = "index.html"; // Redirect to the desired page
+      }
+      function callName() {
+        let name = document.querySelector("#name");
+        console.log(name.value);
+      }
+    </script>
   </body>
 </html>
