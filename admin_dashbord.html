@@ -11,6 +11,87 @@
     <title>Unblockify Dashboard</title>
     <link rel="stylesheet" href="./stylesheet.main.css" />
     <link rel="stylesheet" href="./dashboard.css" />
+
+    <style>
+        label {
+            width: 100%;
+        }
+
+        /* Description Styling */
+        .description {
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .description p {
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Form Styling */
+        form {
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        fieldset {
+            border: none;
+            padding: 0;
+        }
+
+        legend {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        /* Radio Button Styling */
+        input[type="radio"] {
+            margin-right: 10px;
+        }
+
+        /* Button Styling */
+        button[type="submit"] {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 20px;
+            }
+
+            .description,
+            form {
+                padding: 15px;
+            }
+
+            button[type="submit"] {
+                padding: 8px 15px;
+            }
+
+            label {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -48,51 +129,51 @@
 
     <main>
 
-       <section class="table_section">
-        <section class="blockages">
-            <div class="flex-row flex-center list_title">
-                <h1>List of Blockages</h1>
-            </div>
-            <div class="search-filter-sort">
-                <!-- Search Input -->
-                <input type="search" id="searchInput" placeholder="Search...">
-                
-                <!-- Filter Input (Checkboxes) -->
-             <div class="flex-row select_input">
-                <select id="sortInput">
-                    <option value="">Filter by...</option>
-                    <option value="asc">Block</option>
-                    <option value="desc">Solve</option>
-                </select>
-                
-                <!-- Sort Input (Dropdown) -->
-                <select id="sortInput">
-                    <option value="">Sort by...</option>
-                    <option value="sub">Subject</option>
-                    <option value="date">Date</option>
-                    <option value="stat">Status</option>
-                    <option value="def">Deficute</option>
-                </select>
-             </div>
-            </div>
-            
-        </section>
+        <section class="table_section">
+            <section class="blockages">
+                <div class="flex-row flex-center list_title">
+                    <h1>List of Blockages</h1>
+                </div>
+                <div class="search-filter-sort">
+                    <!-- Search Input -->
+                    <input type="search" id="searchInput" placeholder="Search...">
 
-        <div class="table">
-            <h3>Name</h3>
-            <h3>Subject</h3>
-            <h3>Deficulte</h3>
-            <h3>Status</h3>
-            <h3>Created At</h3>
-        </div>
-        <section class="table_body">
-            <div class="blockage-detail flex-column">
-                <h2>Idder</h2>
-                <h2>Subject of the Difficulty</h2>
-                <p>Details of the difficulty</p>
-                <p class="name">Name of the person</p>
-                <div class="status_date flex-row" ">
-                    <div class="flex-row flex-center status_info">
+                    <!-- Filter Input (Checkboxes) -->
+                    <div class="flex-row select_input">
+                        <select id="sortInput">
+                            <option value="">Filter by...</option>
+                            <option value="asc">Block</option>
+                            <option value="desc">Solve</option>
+                        </select>
+
+                        <!-- Sort Input (Dropdown) -->
+                        <select id="sortInput">
+                            <option value="">Sort by...</option>
+                            <option value="sub">Subject</option>
+                            <option value="date">Date</option>
+                            <option value="stat">Status</option>
+                            <option value="def">Deficute</option>
+                        </select>
+                    </div>
+                </div>
+
+            </section>
+
+            <div class="table">
+                <h3>Name</h3>
+                <h3>Subject</h3>
+                <h3>Deficulte</h3>
+                <h3>Status</h3>
+                <h3>Created At</h3>
+            </div>
+            <section class="table_body">
+                <div class="blockage-detail flex-column">
+                    <h2>Idder</h2>
+                    <h2>Subject of the Difficulty</h2>
+
+                    <button class="details_btn btn" id="Details_model_btn">Details</button>
+                    <div class="status_date flex-row" ">
+                    <div class=" flex-row flex-center status_info">
                         <span class="status_btn btn">Block</span>
                         <button class="details_btn btn">Details</button>
                     </div>
@@ -104,15 +185,15 @@
                     <p>April 14,2024</p>
                     <p>5:20 PM</p>
                 </div>
-                
-            </div>
-            <div class="blockage-detail flex-column">
-                <h2>Idder</h2>
-                <h2>Subject of the Difficulty</h2>
-                <p>Details of the difficulty</p>
-                <p class="name">Name of the person</p>
-                <div class="status_date flex-row" ">
-                    <div class="flex-row flex-center status_info">
+
+                </div>
+                <div class="blockage-detail flex-column">
+                    <h2>Idder</h2>
+                    <h2>Subject of the Difficulty</h2>
+                    <button class="details_btn btn" id="Details_model_btn">Details</button>
+                    <p class="name">Name of the person</p>
+                    <div class="status_date flex-row" ">
+                    <div class=" flex-row flex-center status_info">
                         <span class="status_btn btn">Block</span>
                         <button class="details_btn btn">Details</button>
                     </div>
@@ -124,15 +205,15 @@
                     <p>April 14,2024</p>
                     <p>5:20 PM</p>
                 </div>
-                
-            </div>
-            <div class="blockage-detail flex-column">
-                <h2>Idder</h2>
-                <h2>Subject of the Difficulty</h2>
-                <p>Details of the difficulty</p>
-                <p class="name">Name of the person</p>
-                <div class="status_date flex-row" ">
-                    <div class="flex-row flex-center status_info">
+
+                </div>
+                <div class="blockage-detail flex-column">
+                    <h2>Idder</h2>
+                    <h2>Subject of the Difficulty</h2>
+                    <button class="details_btn btn" id="Details_model_btn">Details</button>
+                    <p class="name">Name of the person</p>
+                    <div class="status_date flex-row" ">
+                    <div class=" flex-row flex-center status_info">
                         <span class="status_btn btn">Block</span>
                         <button class="details_btn btn">Details</button>
                     </div>
@@ -144,10 +225,10 @@
                     <p>April 14,2024</p>
                     <p>5:20 PM</p>
                 </div>
-                
-            </div>
+
+                </div>
+            </section>
         </section>
-       </section>
     </main>
 
     <section id="details_model" class="modal">
@@ -165,7 +246,7 @@
                     <div><span class="title">Brief: </span><span>BriefTitle</span></div>
                 </div>
                 <div class="status-date flex-column">
-                    <button class="status-btn">Block</button>
+                    <button class="status_btn">Block</button>
                     <div class="blockage-date">
                         <p>5 days ago</p>
                     </div>
@@ -176,10 +257,26 @@
                 <div class="description">
                     <p>Description of the blockage</p>
                 </div>
-                <div class="actions">
-                    <button>Edit</button>
-                    <button class="Delete">Delete</button>
-                </div>
+                <form>
+                    <fieldset>
+                        <legend>Select your preferred support method:</legend>
+                        <div class="flex-row">
+                            <input type="radio" id="guidedSupport" name="supportMethod" value="guidedSupport" checked>
+                            <label for="guidedSupport">Guided support in finding solutions</label>
+                        </div>
+                        <div class="flex-row">
+                            <input type="radio" id="peerAssistedHelp" name="supportMethod" value="peerAssistedHelp">
+                            <label for="peerAssistedHelp">Peer-assisted help</label>
+                        </div>
+                        <div class="flex-row">
+                            <input type="radio" id="directIntervention" name="supportMethod" value="directIntervention">
+                            <label for="directIntervention">Direct intervention by the instructor</label>
+                        </div>
+                        <div>
+                            <button type="submit">Submit</button>
+                        </div>
+                    </fieldset>
+                </form>
             </div>
         </div>
     </section>

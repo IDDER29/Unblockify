@@ -88,9 +88,34 @@
         <section class="table_body">
             <div class="blockage-detail flex-column">
                 <h2>Subject of the Difficulty</h2>
-                <p>Details of the difficulty</p>
-                <p class="name">Name of the person</p>
+                <button class="details_btn btn" id="Details_model_btn">Details</button>
+                
                 <div class="status_date flex-row" ">
+                    <div class="flex-row flex-center status_info">
+                        <span class="status_btn btn">Block</span>
+                        <button class="details_btn btn" >Details</button>
+                    </div>
+                    <div class="blockage-date">
+                        <p>5 days ago</p>
+                    </div>
+                </div>
+                <div class="blockage-date-complet">
+                    <p>April 14,2024</p>
+                    <p>5:20 PM</p>
+                </div>
+                <div class="buttons">
+                    <div class="Edit">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </div>
+                    <div class="Delete">
+                        <i class="fa-solid fa-trash"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="blockage-detail flex-column">
+                <h2>Subject of the Difficulty</h2>
+                <button class="details_btn btn" id="Details_model_btn">Details</button>
+                <div class="status_date flex-row" >
                     <div class="flex-row flex-center status_info">
                         <span class="status_btn btn">Block</span>
                         <button class="details_btn btn">Details</button>
@@ -114,34 +139,7 @@
             </div>
             <div class="blockage-detail flex-column">
                 <h2>Subject of the Difficulty</h2>
-                <p>Details of the difficulty</p>
-                <p class="name">Name of the person</p>
-                <div class="status_date flex-row" ">
-                    <div class="flex-row flex-center status_info">
-                        <span class="status_btn btn">Block</span>
-                        <button class="details_btn btn">Details</button>
-                    </div>
-                    <div class="blockage-date">
-                        <p>5 days ago</p>
-                    </div>
-                </div>
-                <div class="blockage-date-complet">
-                    <p>April 14,2024</p>
-                    <p>5:20 PM</p>
-                </div>
-                <div class="buttons">
-                    <div class="Edit">
-                        <i class="fa-solid fa-pen-to-square"></i>
-                    </div>
-                    <div class="Delete">
-                        <i class="fa-solid fa-trash"></i>
-                    </div>
-                </div>
-            </div>
-            <div class="blockage-detail flex-column">
-                <h2>Subject of the Difficulty</h2>
-                <p>Details of the difficulty</p>
-                <p class="name">Name of the person</p>
+                <button class="details_btn btn" id="Details_model_btn">Details</button>
                 <div class="status_date flex-row" ">
                     <div class="flex-row flex-center status_info">
                         <span class="status_btn btn">Block</span>
@@ -200,7 +198,49 @@
                 </div>
             </div>
         </div>
+        <form class="add_new_blockage" >
+            
+            <label for="title">Title:</label><br>
+            <input type="text" id="title" name="title" required><br><br>
+
+            <label for="admin">Select Formateur:</label><br>
+            <select id="admin" name="admin">
+                <option value="admin1">Admin 1</option>
+                <option value="admin2">Admin 2</option>
+                <option value="admin3">Admin 3</option>
+            </select><br><br>
+        
+            <label for="bootcamp">Select Bootcamp:</label><br>
+            <select id="bootcamp" name="bootcamp">
+                <option value="bootcamp1">Bootcamp 1</option>
+                <option value="bootcamp2">Bootcamp 2</option>
+                <option value="bootcamp3">Bootcamp 3</option>
+            </select><br><br>
+        
+            
+        
+        
+            <label for="Brief">Select Brief:</label><br>
+            <select id="Brief" name="Brief">
+                <option value="Brief1">Brief 1</option>
+                <option value="Brief2">Brief 2</option>
+                <option value="Brief3">Brief 3</option>
+            </select><br><br>
+        
+            <label for="problem">La Difficulte:</label><br>
+            
+            <input id="problem" name="problem" type="text"><br><br>
+        
+            <label for="problemDetails">Problem Details:</label><br>
+            <textarea id="problemDetails" name="problemDetails" rows="4" cols="50" required></textarea><br><br>
+        
+            <input type="submit" value="Submit">
+        </form>
     </section>
+
+    
+    
+
 </body>
 
 </html>
