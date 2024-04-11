@@ -568,6 +568,9 @@ textarea {
 
 textarea {
   min-height: 100px; /* Ensure minimum height for textarea */
+  max-width: 100%;
+  height: 156px;
+  width: 755px;
 }
 
 input[type="submit"] {
