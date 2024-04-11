@@ -2,7 +2,7 @@ let users = JSON.parse(localStorage.getItem("users")) || [];
 
 // Function to create a user object (using object destructuring)
 function createUser({ name, email, userPassword }) {
-  return { name, email, userPassword, role, online };
+  return { name, email, userPassword};
 }
 
 // Function to save user to localStorage

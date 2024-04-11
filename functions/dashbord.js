@@ -121,8 +121,11 @@ formAddNewBlockage.addEventListener("submit", (e) => {
 
 
 function addBlockagesInfoCards(){
+  if(!usersBlockages[userId]){
+    return 0;
+  }
   table_body.innerHTML = "";
-    for(let i = 0; i< usersBlockages[userId].length ;i++){
+    for(let i = 0; i< usersBlockages[userId].length || 0 ;i++){
         table_body.innerHTML += `
     <div class="blockage-detail flex-column">
     <h2>${usersBlockages[userId][i].title}</h2>
