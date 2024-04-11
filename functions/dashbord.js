@@ -130,7 +130,7 @@ function addBlockagesInfoCards(){
     <div class="status_date flex-row">
         <div class="flex-row flex-center status_info">
             <span class="status_btn btn">Block</span>
-            <button class="details_btn btn">Details</button>
+            <button class="details_btn btn" data-id="${i}">Details</button>
         </div>
         <div class="blockage-date">
             <p>5 days ago</p>
@@ -145,7 +145,7 @@ function addBlockagesInfoCards(){
             <i class="fa-solid fa-pen-to-square"></i>
         </div>
         <div class="Delete">
-            <i class=" Delete fa-solid fa-trash" ></i>
+            <i class=" Delete fa-solid fa-trash" data-id="${i}" ></i>
         </div>
     </div>
 </div>
@@ -186,7 +186,35 @@ table_body.addEventListener('click', function(e) {
       console.log("hi how are you " + id);
       modalBackGround.style.display = "flex";
       modalDetiesContent.style.display = "block";
+      modalDetiesContent.querySelector("Delete").dataset.id=`${id}`;
       displayDetiesContent(id, modalDetiesContent);
+  }
+});
+
+
+// Attach event listener to the table_body for the delete button
+table_body.addEventListener('click', function(e) {
+  // Check if the clicked element is a .details_btn
+  if (e.target.classList.contains('Delete')) {
+      let id = e.target.dataset.id;
+      usersBlockages[userId].splice(id, 1);
+      addBlockagesInfoCards();
+      localStorage.setItem("userBlockageObjects", JSON.stringify(usersBlockages));
+  }
+});
+
+
+// Attach event listener to the table_body for the delete button
+modalDetiesContent.addEventListener('click', function(e) {
+  // Check if the clicked element is a .details_btn
+  if (e.target.classList.contains('Delete')) {
+      let id = e.target.dataset.id;
+      usersBlockages[userId].splice(id, 1);
+      modalBackGround.style.display = "none";
+      modalDetiesContent.style.display= "none";
+      addBlockagesInfoCards();
+      localStorage.setItem("userBlockageObjects", JSON.stringify(usersBlockages));
+      
   }
 });
 
