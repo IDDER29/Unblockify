@@ -14,19 +14,30 @@ welcomePara.forEach(
 );
 
 function creatNewBlockageObj(
-    userId,
+  userId,
   title,
   formateur,
   bootcamp,
   brief,
   dificculte,
-  details
+  details,
+  formattedDate,
+  formattedTime
 ) {
-  return {userId, title, formateur, bootcamp, brief, dificculte, details };
+  return {
+    userId,
+    title,
+    formateur,
+    bootcamp,
+    brief,
+    dificculte,
+    details,
+    formattedDate,
+    formattedTime,
+  };
 }
 
 function saveBlockageInfo(blockageInfo) {
-  
   // Check if the user's array exists, if not, initialize it
   if (!usersBlockages[userId]) {
     usersBlockages[userId] = [];
@@ -47,14 +58,14 @@ function validateForm(form) {
       return false;
     }
   }
-  
+
   for (const blockage of usersBlockages[userId] || []) {
     if (inputs[0].value == blockage.title) {
       displayError(inputs[0], "This title is eardy exist please change it");
       return false;
     }
   }
-  
+
   return true;
 }
 
@@ -98,6 +109,18 @@ formAddNewBlockage.addEventListener("submit", (e) => {
   const problemDetails = document.querySelector("#problemDetails").value.trim();
 
   if (validateForm(formAddNewBlockage) === true) {
+    const currentDate = new Date();
+    const formattedDate = currentDate.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    const formattedTime = currentDate.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+    });
+
     saveBlockageInfo(
       creatNewBlockageObj(
         userId,
@@ -106,7 +129,9 @@ formAddNewBlockage.addEventListener("submit", (e) => {
         bootcamp,
         Brief,
         problem,
-        problemDetails
+        problemDetails,
+        formattedDate,
+        formattedTime
       )
     );
     modalBackGround.style.display = "none";
@@ -117,16 +142,13 @@ formAddNewBlockage.addEventListener("submit", (e) => {
   }
 });
 
-
-
-
-function addBlockagesInfoCards(){
-  if(!usersBlockages[userId]){
+function addBlockagesInfoCards() {
+  if (!usersBlockages[userId]) {
     return 0;
   }
   table_body.innerHTML = "";
-    for(let i = 0; i< usersBlockages[userId].length || 0 ;i++){
-        table_body.innerHTML += `
+  for (let i = 0; i < usersBlockages[userId].length || 0; i++) {
+    table_body.innerHTML += `
     <div class="blockage-detail flex-column">
     <h2>${usersBlockages[userId][i].title}</h2>
     <button class="details_btn btn" class="Details_model_btn" data-id="${i}" >Details</button>
@@ -140,12 +162,12 @@ function addBlockagesInfoCards(){
         </div>
     </div>
     <div class="blockage-date-complet">
-        <p>April 14,2024</p>
-        <p>5:20 PM</p>
+        <p>${usersBlockages[userId][i].formattedDate}</p>
+        <p>${usersBlockages[userId][i].formattedTime}</p>
     </div>
     <div class="buttons">
         <div class="Edit">
-            <i class="fa-solid fa-pen-to-square"></i>
+            <i class="fa-solid fa-pen-to-square edit-btn" data-id="${i}" ></i>
         </div>
         <div class="Delete">
             <i class=" Delete fa-solid fa-trash" data-id="${i}" ></i>
@@ -153,10 +175,8 @@ function addBlockagesInfoCards(){
     </div>
 </div>
     `;
-    }
-    
+  }
 }
-
 
 // Event listener for input changes
 document.querySelectorAll("input").forEach((input) => {
@@ -169,59 +189,142 @@ document.querySelectorAll("input").forEach((input) => {
   });
 });
 
-
-
-function displayDetiesContent(id,modal){
-modal.querySelector(".formator").textContent = usersBlockages[userId][id].formateur;
-modal.querySelector(".bootcamp").textContent = usersBlockages[userId][id].bootcamp;
-modal.querySelector(".Brief").textContent = usersBlockages[userId][id].brief;
-modal.querySelector(".BlockageTitle").textContent = usersBlockages[userId][id].title;
-modal.querySelector(".blockageDiscription").textContent = usersBlockages[userId][id].details;
-
+function displayDetiesContent(id, modal) {
+  modal.querySelector(".formator").textContent =
+    usersBlockages[userId][id].formateur;
+  modal.querySelector(".bootcamp").textContent =
+    usersBlockages[userId][id].bootcamp;
+  modal.querySelector(".Brief").textContent = usersBlockages[userId][id].brief;
+  modal.querySelector(".BlockageTitle").textContent =
+    usersBlockages[userId][id].title;
+  modal.querySelector(".blockageDiscription").textContent =
+    usersBlockages[userId][id].details;
 }
 
-
 // Attach event listener to the table_body
-table_body.addEventListener('click', function(e) {
+table_body.addEventListener("click", function (e) {
   // Check if the clicked element is a .details_btn
-  if (e.target.classList.contains('details_btn')) {
-      let id = e.target.dataset.id;
-      console.log("hi how are you " + id);
-      modalBackGround.style.display = "flex";
-      modalDetiesContent.style.display = "block";
-      modalDetiesContent.querySelector("Delete").dataset.id=`${id}`;
-      displayDetiesContent(id, modalDetiesContent);
+  if (e.target.classList.contains("details_btn")) {
+    let id = e.target.dataset.id;
+    console.log("hi how are you " + id);
+    modalBackGround.style.display = "flex";
+    modalDetiesContent.style.display = "block";
+    modalDetiesContent.querySelector(".Delete").dataset.id = `${id}`;
+    modalDetiesContent.querySelector(".edit-btn").dataset.id = `${id}`;
+    displayDetiesContent(id, modalDetiesContent);
   }
 });
-
 
 // Attach event listener to the table_body for the delete button
-table_body.addEventListener('click', function(e) {
+table_body.addEventListener("click", function (e) {
   // Check if the clicked element is a .details_btn
-  if (e.target.classList.contains('Delete')) {
-      let id = e.target.dataset.id;
-      usersBlockages[userId].splice(id, 1);
-      addBlockagesInfoCards();
-      localStorage.setItem("userBlockageObjects", JSON.stringify(usersBlockages));
+  if (e.target.classList.contains("Delete")) {
+    let id = e.target.dataset.id;
+    usersBlockages[userId].splice(id, 1);
+    addBlockagesInfoCards();
+    localStorage.setItem("userBlockageObjects", JSON.stringify(usersBlockages));
   }
 });
-
 
 // Attach event listener to the table_body for the delete button
-modalDetiesContent.addEventListener('click', function(e) {
+modalDetiesContent.addEventListener("click", function (e) {
   // Check if the clicked element is a .details_btn
-  if (e.target.classList.contains('Delete')) {
-      let id = e.target.dataset.id;
-      usersBlockages[userId].splice(id, 1);
-      modalBackGround.style.display = "none";
-      modalDetiesContent.style.display= "none";
-      addBlockagesInfoCards();
-      localStorage.setItem("userBlockageObjects", JSON.stringify(usersBlockages));
-      
+  if (e.target.classList.contains("Delete")) {
+    let id = e.target.dataset.id;
+    usersBlockages[userId].splice(id, 1);
+    modalBackGround.style.display = "none";
+    modalDetiesContent.style.display = "none";
+    addBlockagesInfoCards();
+    localStorage.setItem("userBlockageObjects", JSON.stringify(usersBlockages));
+  }
+  if (e.target.classList.contains("edit-btn")) {
+    editId = e.target.dataset.id;
+    console.log(1234);
+    modalBackGround.style.display = "flex";
+    modalDetiesContent.style.display= "none";
+    editForm.style.display = "block";
+    console.log(usersBlockages[userId][editId]);
+    editForm.querySelector("#title").value =
+      usersBlockages[userId][editId].title;
+
+    editForm.querySelector("#Brief").value =
+      usersBlockages[userId][editId].brief;
+    editForm.querySelector("#problem").value =
+      usersBlockages[userId][editId].dificculte;
+    editForm.querySelector("#problemDetails").value =
+      usersBlockages[userId][editId].details;
   }
 });
 
-modalDetiesContent.querySelector(".close-modal").addEventListener("click", ()=>{
+
+
+modalDetiesContent
+  .querySelector(".close-modal")
+  .addEventListener("click", () => {
+    modalBackGround.style.display = "none";
+    modalDetiesContent.style.display = "none";
+  });
+
+formAddNewBlockage
+  .querySelector(".close-modal")
+  .addEventListener("click", () => {
+    modalBackGround.style.display = "none";
+    formAddNewBlockage.style.display = "none";
+  });
+
+let editForm = document.querySelector(".edit_blockage");
+let editId;
+// Attach event listener to the table_body
+table_body.addEventListener("click", function (e) {
+  // Check if the clicked element is a .details_btn
+  if (e.target.classList.contains("edit-btn")) {
+    editId = e.target.dataset.id;
+    console.log(1234);
+    modalBackGround.style.display = "flex";
+    editForm.style.display = "block";
+    console.log(usersBlockages[userId][editId]);
+    editForm.querySelector("#title").value =
+      usersBlockages[userId][editId].title;
+
+    editForm.querySelector("#Brief").value =
+      usersBlockages[userId][editId].brief;
+    editForm.querySelector("#problem").value =
+      usersBlockages[userId][editId].dificculte;
+    editForm.querySelector("#problemDetails").value =
+      usersBlockages[userId][editId].details;
+  }
+});
+
+editForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  console.log("click");
+  const title = editForm.querySelector("#title").value.trim();
+  const Brief = editForm.querySelector("#Brief").value.trim();
+  const problem = editForm.querySelector("#problem").value.trim();
+  const problemDetails = editForm.querySelector("#problemDetails").value.trim();
+
+  const currentDate = new Date();
+  const formattedDate = currentDate.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  const formattedTime = currentDate.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "numeric",
+    hour12: true,
+  });
+
+  // Update the existing blockage with the new information
+  usersBlockages[userId][editId].title = title;
+
+  usersBlockages[userId][editId].brief = Brief;
+  usersBlockages[userId][editId].dificculte = problem;
+  usersBlockages[userId][editId].details = problemDetails;
+
+  // Save the updated blockage information
+  localStorage.setItem("userBlockageObjects", JSON.stringify(usersBlockages));
+  addBlockagesInfoCards();
   modalBackGround.style.display = "none";
-  modalDetiesContent.style.display= "none";
-})
+  editForm.style.display = "none";
+});

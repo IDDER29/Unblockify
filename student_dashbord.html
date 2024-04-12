@@ -129,13 +129,16 @@
                     <p class="blockageDiscription">Description of the blockage</p>
                 </div>
                 <div class="actions">
-                    <button>Edit</button>
+                    <button class="edit-btn">Edit</button>
                     <button class="Delete">Delete</button>
                 </div>
             </div>
         </div>
         <form class="add_new_blockage">
-
+            <div class="flex-row header">
+                <h1>Blockage form </h1>
+                <button type="button" class="close-modal" >&times;</button>
+            </div>
             <label for="title">Title:</label><br>
             <input type="text" id="title" name="title" required><br><br>
 
@@ -155,6 +158,31 @@
 
 
 
+
+            <label for="Brief">Select Brief:</label><br>
+            <select id="Brief" name="Brief">
+                <option value="Brief1">Brief 1</option>
+                <option value="Brief2">Brief 2</option>
+                <option value="Brief3">Brief 3</option>
+            </select><br><br>
+
+            <label for="problem">La Difficulte:</label><br>
+
+            <input id="problem" name="problem" type="text"><br><br>
+
+            <label for="problemDetails">Problem Details:</label><br>
+            <textarea id="problemDetails" name="problemDetails" rows="4" cols="50" required></textarea><br><br>
+
+            <input type="submit" value="Submit">
+        </form>
+        
+        <form class="edit_blockage">
+            <div class="flex-row header">
+                <h1>Edit blockage </h1>
+                <button type="button" class="close-modal" >&times;</button>
+            </div>
+            <label for="title">Title:</label><br>
+            <input type="text" id="title" name="title" required><br><br>
 
             <label for="Brief">Select Brief:</label><br>
             <select id="Brief" name="Brief">

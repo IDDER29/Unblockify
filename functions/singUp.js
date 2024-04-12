@@ -1,8 +1,8 @@
-let users = JSON.parse(localStorage.getItem("users")) || [];
+let users = JSON.parse(localStorage.getItem("users")) || [{ name: "admin 1", email: "admin1@school.com", userPassword: "123456789admin", role:"admin"}];
 
 // Function to create a user object (using object destructuring)
-function createUser({ name, email, userPassword }) {
-  return { name, email, userPassword};
+function createUser({ name, email, userPassword,role }) {
+  return { name, email, userPassword, role};
 }
 
 // Function to save user to localStorage
@@ -73,7 +73,7 @@ submitForm.addEventListener("click", (e) => {
   const userEmail = document.querySelector("#email").value.trim().toLowerCase();
   const userPassword = document.querySelector("#password").value.trim();
   if (validateForm(form) === true) {
-    saveUser(createUser({ name: userName, email: userEmail, userPassword }));
+    saveUser(createUser({ name: userName, email: userEmail, userPassword, role:"student"}));
 
     window.location.href = "index.html";
   }

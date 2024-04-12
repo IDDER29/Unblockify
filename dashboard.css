@@ -490,6 +490,13 @@ header nav .nav_greeting {
   }
 }
 
+.add_new_blockage .header{
+  justify-content: space-between;
+  margin-bottom: 1em;
+}
+.add_new_blockage .header h1{
+ font-size: 2em;
+}
 
 
 
@@ -593,3 +600,6 @@ input[type="submit"] {
 }
 
 
+.edit_blockage{
+  display: none;
+}
