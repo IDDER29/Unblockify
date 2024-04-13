@@ -139,6 +139,7 @@ formAddNewBlockage.addEventListener("submit", (e) => {
     addBlockagesInfoCards();
     detailButton = document.querySelectorAll(".details_btn");
     formAddNewBlockage.reset();
+    updateStutusButtons()
   }
 });
 
@@ -154,7 +155,7 @@ function addBlockagesInfoCards() {
     <button class="details_btn btn" class="Details_model_btn" data-id="${i}" >Details</button>
     <div class="status_date flex-row">
         <div class="flex-row flex-center status_info">
-            <span class="status_btn btn">Block</span>
+            <span class="status_btn btn" data-id="${i}">Block</span>
             <button class="details_btn btn" data-id="${i}">Details</button>
         </div>
         <div class="blockage-date">
@@ -212,6 +213,23 @@ table_body.addEventListener("click", function (e) {
     modalDetiesContent.querySelector(".Delete").dataset.id = `${id}`;
     modalDetiesContent.querySelector(".edit-btn").dataset.id = `${id}`;
     displayDetiesContent(id, modalDetiesContent);
+  }
+  if (e.target.classList.contains("status_btn")) {
+    let id = e.target.dataset.id;
+  
+    
+    if (
+      usersBlockages[userId][id].isVerfied == true
+    ) {
+      const verfiedDetiesModal = document.querySelector(".modal_Verefied");
+      verfiedDetiesModal.style.display = "block";
+      // Corrected line: Use document.getElementById to access elements by their ID
+      document.getElementById("selectedMethod").textContent =
+      usersBlockages[userId][id].VerfiedDeties.type;
+  
+      document.getElementById("adminNotes").textContent =
+      usersBlockages[userId][id].VerfiedDeties.note;
+    }
   }
 });
 
@@ -328,3 +346,24 @@ editForm.addEventListener("submit", (e) => {
   modalBackGround.style.display = "none";
   editForm.style.display = "none";
 });
+
+
+
+function updateStutusButtons(){
+  let status_btn = table_body.querySelectorAll(".status_btn");
+  status_btn.forEach(btn => {
+      let id = btn.dataset.id;
+      console.log("ooo");
+      console.log(btn);
+      
+  if (
+    usersBlockages[userId][id].isVerfied == true
+  ) {
+    btn.style.background = "green";
+  }
+  })
+}
+
+updateStutusButtons()
+
+

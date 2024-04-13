@@ -79,11 +79,8 @@ table_body.addEventListener("click", function (e) {
     displayDetiesContent(id, modalDetiesContent);
   }
   if (e.target.classList.contains("status_btn")) {
-   
-
-
     let id = e.target.dataset.id;
-    
+
     let userId = filteredObjects[id].userId;
     if (
       usersBlockages[userId][
@@ -177,15 +174,14 @@ document
     // Process or send data
   });
 
+function updateStutusButtons() {
+  let status_btn = table_body.querySelectorAll(".status_btn");
+  status_btn.forEach((btn) => {
+    let id = btn.dataset.id;
+    console.log("ooo");
+    console.log(btn);
+    let userId = filteredObjects[id].userId;
 
-function updateStutusButtons(){
-    let status_btn = table_body.querySelectorAll(".status_btn");
-    status_btn.forEach(btn => {
-        let id = btn.dataset.id;
-        console.log("ooo");
-        console.log(btn);
-        let userId = filteredObjects[id].userId;
-  
     if (
       usersBlockages[userId][
         usersBlockages[userId].indexOf(filteredObjects[id])
@@ -193,7 +189,7 @@ function updateStutusButtons(){
     ) {
       btn.style.background = "green";
     }
-    })
+  });
 }
 
-updateStutusButtons()
+updateStutusButtons();
