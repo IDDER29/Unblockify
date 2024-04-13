@@ -167,10 +167,10 @@ function addBlockagesInfoCards() {
         <p>${usersBlockages[userId][i].formattedTime}</p>
     </div>
     <div class="buttons">
-        <div class="Edit">
-            <i class="fa-solid fa-pen-to-square edit-btn" data-id="${i}" ></i>
+        <div class="Edit" >
+            <i class="fa-solid fa-pen-to-square edit-btn"  data-id="${i}"></i>
         </div>
-        <div class="Delete">
+        <div class="Delete" data-id="${i}">
             <i class=" Delete fa-solid fa-trash" data-id="${i}" ></i>
         </div>
     </div>
@@ -216,19 +216,19 @@ table_body.addEventListener("click", function (e) {
   }
   if (e.target.classList.contains("status_btn")) {
     let id = e.target.dataset.id;
-  
-    
+
+
     if (
-      usersBlockages[userId][id].isVerfied == true
+      usersBlockages[userId][id].hasOwnProperty('isVerfied')
     ) {
       const verfiedDetiesModal = document.querySelector(".modal_Verefied");
       verfiedDetiesModal.style.display = "block";
       // Corrected line: Use document.getElementById to access elements by their ID
       document.getElementById("selectedMethod").textContent =
-      usersBlockages[userId][id].VerfiedDeties.type;
-  
+        usersBlockages[userId][id].VerfiedDeties.type;
+
       document.getElementById("adminNotes").textContent =
-      usersBlockages[userId][id].VerfiedDeties.note;
+        usersBlockages[userId][id].VerfiedDeties.note;
     }
   }
 });
@@ -238,9 +238,20 @@ table_body.addEventListener("click", function (e) {
   // Check if the clicked element is a .details_btn
   if (e.target.classList.contains("Delete")) {
     let id = e.target.dataset.id;
-    usersBlockages[userId].splice(id, 1);
-    addBlockagesInfoCards();
-    localStorage.setItem("userBlockageObjects", JSON.stringify(usersBlockages));
+
+
+    if (
+      usersBlockages[userId][id].hasOwnProperty('isVerfied')
+    ) {
+
+    } else {
+      usersBlockages[userId].splice(id, 1);
+      addBlockagesInfoCards();
+      localStorage.setItem("userBlockageObjects", JSON.stringify(usersBlockages));
+      usersBlockages[userId].splice(id, 1);
+      addBlockagesInfoCards();
+      updateStutusButtons();
+    }
   }
 });
 
@@ -249,28 +260,42 @@ modalDetiesContent.addEventListener("click", function (e) {
   // Check if the clicked element is a .details_btn
   if (e.target.classList.contains("Delete")) {
     let id = e.target.dataset.id;
-    usersBlockages[userId].splice(id, 1);
-    modalBackGround.style.display = "none";
-    modalDetiesContent.style.display = "none";
-    addBlockagesInfoCards();
-    localStorage.setItem("userBlockageObjects", JSON.stringify(usersBlockages));
+    if (
+      usersBlockages[userId][id].hasOwnProperty('isVerfied')
+    ) {
+
+    } else {
+      usersBlockages[userId].splice(id, 1);
+      modalBackGround.style.display = "none";
+      modalDetiesContent.style.display = "none";
+      addBlockagesInfoCards();
+      localStorage.setItem("userBlockageObjects", JSON.stringify(usersBlockages));
+    }
+
+
   }
   if (e.target.classList.contains("edit-btn")) {
     editId = e.target.dataset.id;
-    console.log(1234);
-    modalBackGround.style.display = "flex";
-    modalDetiesContent.style.display= "none";
-    editForm.style.display = "block";
-    console.log(usersBlockages[userId][editId]);
-    editForm.querySelector("#title").value =
-      usersBlockages[userId][editId].title;
+    if (
+      usersBlockages[userId][id].hasOwnProperty('isVerfied')
+    ) {
 
-    editForm.querySelector("#Brief").value =
-      usersBlockages[userId][editId].brief;
-    editForm.querySelector("#problem").value =
-      usersBlockages[userId][editId].dificculte;
-    editForm.querySelector("#problemDetails").value =
-      usersBlockages[userId][editId].details;
+    } else {
+      modalBackGround.style.display = "flex";
+      modalDetiesContent.style.display = "none";
+      editForm.style.display = "block";
+      console.log(usersBlockages[userId][editId]);
+      editForm.querySelector("#title").value =
+        usersBlockages[userId][editId].title;
+
+      editForm.querySelector("#Brief").value =
+        usersBlockages[userId][editId].brief;
+      editForm.querySelector("#problem").value =
+        usersBlockages[userId][editId].dificculte;
+      editForm.querySelector("#problemDetails").value =
+        usersBlockages[userId][editId].details;
+    }
+
   }
 });
 
@@ -297,19 +322,23 @@ table_body.addEventListener("click", function (e) {
   // Check if the clicked element is a .details_btn
   if (e.target.classList.contains("edit-btn")) {
     editId = e.target.dataset.id;
-    console.log(1234);
-    modalBackGround.style.display = "flex";
-    editForm.style.display = "block";
-    console.log(usersBlockages[userId][editId]);
-    editForm.querySelector("#title").value =
-      usersBlockages[userId][editId].title;
+    if (usersBlockages[userId][editId].hasOwnProperty('isVerfied')) {
 
-    editForm.querySelector("#Brief").value =
-      usersBlockages[userId][editId].brief;
-    editForm.querySelector("#problem").value =
-      usersBlockages[userId][editId].dificculte;
-    editForm.querySelector("#problemDetails").value =
-      usersBlockages[userId][editId].details;
+    } else {
+      modalBackGround.style.display = "flex";
+      editForm.style.display = "block";
+      console.log(usersBlockages[userId][editId]);
+      editForm.querySelector("#title").value =
+        usersBlockages[userId][editId].title;
+
+      editForm.querySelector("#Brief").value =
+        usersBlockages[userId][editId].brief;
+      editForm.querySelector("#problem").value =
+        usersBlockages[userId][editId].dificculte;
+      editForm.querySelector("#problemDetails").value =
+        usersBlockages[userId][editId].details;
+    }
+
   }
 });
 
@@ -349,21 +378,35 @@ editForm.addEventListener("submit", (e) => {
 
 
 
-function updateStutusButtons(){
+function updateStutusButtons() {
   let status_btn = table_body.querySelectorAll(".status_btn");
-  status_btn.forEach(btn => {
-      let id = btn.dataset.id;
-      console.log("ooo");
-      console.log(btn);
-      
-  if (
-    usersBlockages[userId][id].isVerfied == true
-  ) {
-    btn.style.background = "green";
-  }
+  let deleteBtn = table_body.querySelectorAll(".Delete");
+  let editBtn = table_body.querySelectorAll(".edit-btn");
+  let deleteButton = document.querySelectorAll('.blockage-detail .buttons .Delete');
+  let deleteIcon = document.querySelectorAll('.blockage-detail .buttons .Delete i');
+  
+  let editButton = document.querySelectorAll('.blockage-detail .buttons .Edit');
+  status_btn.forEach((btn,index) => {
+    let id = btn.dataset.id;
+    
+    console.log(usersBlockages[userId][id].hasOwnProperty('isVerfied'));
+    console.log(usersBlockages[userId][id]);
+    if (
+      usersBlockages[userId][id].hasOwnProperty('isVerfied')
+    ) {
+      //deleteBtn[index].style.backgroundColor = "gray";
+      deleteButton[index].style.backgroundColor = "lightblue"; 
+      deleteIcon[index].style.backgroundColor = "lightblue"; 
+      editButton[index].style.backgroundColor = "lightblue";
+     // editBtn[index].style.backgroundColor = "gray";
+      btn.style.background = "green";
+    }
   })
+
 }
 
-updateStutusButtons()
+updateStutusButtons();
+
+
 
 

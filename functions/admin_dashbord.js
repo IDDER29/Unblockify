@@ -85,7 +85,7 @@ table_body.addEventListener("click", function (e) {
     if (
       usersBlockages[userId][
         usersBlockages[userId].indexOf(filteredObjects[id])
-      ].isVerfied == true
+      ].hasOwnProperty('isVerfied')
     ) {
       const verfiedDetiesModal = document.querySelector(".modal_Verefied");
       verfiedDetiesModal.style.display = "block";
@@ -185,7 +185,7 @@ function updateStutusButtons() {
     if (
       usersBlockages[userId][
         usersBlockages[userId].indexOf(filteredObjects[id])
-      ].isVerfied == true
+      ].hasOwnProperty('isVerfied')
     ) {
       btn.style.background = "green";
     }
