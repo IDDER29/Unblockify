@@ -11,6 +11,19 @@
     <title>Unblockify Dashboard</title>
     <link rel="stylesheet" href="./stylesheet.main.css" />
     <link rel="stylesheet" href="./dashboard.css" />
+    <style>
+        @media (min-width: 768px) {
+
+            input[type="text"],
+            select,
+            textarea {
+                width: 100%;
+            }
+        }
+        form{
+            width: 100%;
+        }
+    </style>
 </head>
 
 <body>
@@ -18,7 +31,7 @@
         <nav class="flex-row">
             <div class="nav_greeting">
                 <h1>Welcome Back</h1>
-                <p>Hello <span class="userName">[Name]</span>, Good Morning</p>
+                <p><span class="userName">[Name]</span></p>
             </div>
             <div class="logo">
                 <img src="./img/Logo.svg" alt="Unblockify Logo" />
@@ -32,7 +45,7 @@
                         <i class="fa-solid fa-bell"></i>
                     </li>
                     <li>
-                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                        <i class="fa-solid fa-right-from-bracket logOut"></i>
                     </li>
                 </ul>
             </div>
@@ -45,16 +58,7 @@
             <p>Hello <span class="userName">[Name]</span>, Good Morning</p>
         </div>
 
-        <style>
-            @media (min-width: 768px) {
-
-                input[type="text"],
-                select,
-                textarea {
-                    width: 100%;
-                }
-            }
-        </style>
+       
     </header>
 
     <main>

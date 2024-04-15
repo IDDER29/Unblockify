@@ -103,6 +103,9 @@ table_body.addEventListener("click", function (e) {
   }
 });
 
+
+  
+
 const radioButtons = document.querySelectorAll(
   'input[type="radio"][name="supportMethod"]'
 );
@@ -193,3 +196,12 @@ function updateStutusButtons() {
 }
 
 updateStutusButtons();
+
+let logOut = document.querySelector(".logOut");
+logOut.addEventListener("click",()=>{
+  localStorage.setItem(
+    "userActiveIndex",
+    "-1"
+  );
+  window.location.href = "./../index.html";
+})

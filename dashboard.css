@@ -23,7 +23,7 @@ img {
   width: 50px;
 }
 
-.blockage-detail #Details_model_btn{
+.blockage-detail #Details_model_btn {
   display: none;
 }
 .fa-bars {
@@ -71,7 +71,6 @@ header {
   text-align: center;
   padding: 20px 0;
 }
-
 
 main {
   padding: 20px;
@@ -158,7 +157,6 @@ main {
 
 /* Modal Styles */
 .modal {
-  
   position: fixed;
   inset: 0;
   overflow: auto;
@@ -302,10 +300,10 @@ main {
   color: #333;
 }
 
-.modal .Delete{
+.modal .Delete {
   background-color: #ff0000;
 }
-.modal .Delete:hover{
+.modal .Delete:hover {
   background-color: #dc3545;
 }
 header nav .nav_greeting {
@@ -418,7 +416,7 @@ header nav .nav_greeting {
   .greeting {
     display: none;
   }
-  .blockage-detail #Details_model_btn{
+  .blockage-detail #Details_model_btn {
     display: block;
   }
   header nav .nav_greeting {
@@ -432,12 +430,16 @@ header nav .nav_greeting {
     padding: 20px 0;
   }
   header nav div {
-    width: 400px;
+    height: 70px;
     text-align: center;
     display: flex;
     justify-content: center;
     align-items: center;
   }
+  header nav > div {
+    width: 300px;
+  }
+
   main {
     padding: 10em 5em 0px;
   }
@@ -490,23 +492,15 @@ header nav .nav_greeting {
   }
 }
 
-.add_new_blockage .header{
+.add_new_blockage .header {
   justify-content: space-between;
   margin-bottom: 1em;
 }
-.add_new_blockage .header h1{
- font-size: 2em;
+.add_new_blockage .header h1 {
+  font-size: 2em;
 }
 
-
-
-
-
-
-
-
 form {
- 
   margin: 20px auto;
   padding: 20px;
   background-color: #fff;
@@ -514,7 +508,7 @@ form {
   border-radius: 10px;
 }
 
-.add_new_blockage{
+.add_new_blockage {
   display: none;
   max-width: 790px;
   width: 80%;
@@ -526,8 +520,9 @@ label {
   font-weight: bold;
 }
 
-select, input, textarea {
- 
+select,
+input,
+textarea {
   padding: 10px;
   margin-bottom: 20px;
   border: 1px solid #ddd;
@@ -536,7 +531,7 @@ select, input, textarea {
 }
 
 input[type="submit"] {
-  background-color: #007BFF;
+  background-color: #007bff;
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -549,11 +544,10 @@ input[type="submit"]:hover {
   background-color: #0056b3;
 }
 
-
 form {
   display: flex;
   flex-wrap: wrap; /* Allow form elements to wrap on small screens */
-  width: 100%; /* Form container takes full width */
+  width: 40%; /* Form container takes full width */
 }
 
 label {
@@ -581,13 +575,14 @@ textarea {
 }
 
 input[type="submit"] {
-  background-color: #4CAF50; /* Green submit button */
+  background-color: #4caf50; /* Green submit button */
   color: white;
   cursor: pointer;
 }
 
 /* Responsive adjustments using media queries */
-@media (min-width: 768px) { /* For screens wider than 768px (tablets and desktops) */
+@media (min-width: 768px) {
+  /* For screens wider than 768px (tablets and desktops) */
   label {
     width: 30%; /* Labels take up less space on larger screens */
   }
@@ -597,14 +592,16 @@ input[type="submit"] {
   textarea {
     width: 65%; /* Elements take up remaining space */
   }
+  form{
+    max-width: 790px;
+}
 }
 
-
-.edit_blockage{
+.edit_blockage {
   display: none;
 }
 
-.modal_Verefied{
+.modal_Verefied {
   display: none;
   position: fixed;
   z-index: 1;
@@ -613,29 +610,37 @@ input[type="submit"] {
   width: 100%;
   height: 100%;
   overflow: auto;
-  background-color: rgba(0,0,0,0.4);
- }
- 
- .modal-content-Verefied {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.modal-content-Verefied {
   background-color: #fefefe;
   margin: 15% auto;
   padding: 20px;
   border: 1px solid #888;
   width: 80%;
   display: block;
- }
- 
- .close {
+}
+
+.close {
   color: #aaa;
   float: right;
   font-size: 28px;
   font-weight: bold;
- }
- 
- .close:hover,
- .close:focus {
+}
+
+.close:hover,
+.close:focus {
   color: black;
   text-decoration: none;
   cursor: pointer;
- }
- 
+}
+.logOut {
+  cursor: pointer;
+}
+.logOut:hover {
+  color: #ff0000;
+}
+.edit_blockage .header{
+  justify-content: space-between;
+}

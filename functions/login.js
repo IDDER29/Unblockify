@@ -1,5 +1,23 @@
 let users = JSON.parse(localStorage.getItem("users")) || [];
+let userIdL = JSON.parse(localStorage.getItem("userActiveIndex"));
 let userRole;
+console.log(userIdL);
+if(userIdL >=0){
+  
+  userRole = users[userIdL].role;
+
+  switch (userRole) {
+    case "admin":
+      
+      window.location.href = "admin_dashbord.html";
+      break;
+    case "student":
+      window.location.href = "student_dashbord.html";
+      break;
+  }
+}
+
+
 console.log("hi i started");
 function validateUserIsExiste(email, password) {
   for (const user of users) {

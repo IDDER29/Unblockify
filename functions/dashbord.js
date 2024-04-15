@@ -177,6 +177,7 @@ function addBlockagesInfoCards() {
 </div>
     `;
   }
+  updateStutusButtons();
 }
 
 // Event listener for input changes
@@ -277,7 +278,7 @@ modalDetiesContent.addEventListener("click", function (e) {
   if (e.target.classList.contains("edit-btn")) {
     editId = e.target.dataset.id;
     if (
-      usersBlockages[userId][id].hasOwnProperty('isVerfied')
+      usersBlockages[userId][editId].hasOwnProperty('isVerfied')
     ) {
 
     } else {
@@ -294,11 +295,20 @@ modalDetiesContent.addEventListener("click", function (e) {
         usersBlockages[userId][editId].dificculte;
       editForm.querySelector("#problemDetails").value =
         usersBlockages[userId][editId].details;
-    }
+       
 
+    }
+    
   }
 });
-
+modalBackGround.addEventListener("click", (e)=> {
+  // Check if the clicked element is a .details_btn
+  if (e.target.classList.contains("close-modal")) {
+    modalBackGround.style.display = "none";
+      
+      editForm.style.display = "none";
+  }
+})
 
 
 modalDetiesContent
@@ -337,6 +347,7 @@ table_body.addEventListener("click", function (e) {
         usersBlockages[userId][editId].dificculte;
       editForm.querySelector("#problemDetails").value =
         usersBlockages[userId][editId].details;
+        updateStutusButtons();
     }
 
   }
@@ -386,6 +397,7 @@ function updateStutusButtons() {
   let deleteIcon = document.querySelectorAll('.blockage-detail .buttons .Delete i');
   
   let editButton = document.querySelectorAll('.blockage-detail .buttons .Edit');
+  status_btnDeties = document.querySelectorAll('.blockage-detail .buttons .Edit') 
   status_btn.forEach((btn,index) => {
     let id = btn.dataset.id;
     
@@ -407,6 +419,13 @@ function updateStutusButtons() {
 
 updateStutusButtons();
 
-
+let logOut = document.querySelector(".logOut");
+logOut.addEventListener("click",()=>{
+  localStorage.setItem(
+    "userActiveIndex",
+    "-1"
+  );
+  window.location.href = "./../index.html";
+})
 
 
