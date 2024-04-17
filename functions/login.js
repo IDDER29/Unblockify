@@ -1,9 +1,9 @@
 let users = JSON.parse(localStorage.getItem("users")) || [];
 let userIdL = JSON.parse(localStorage.getItem("userActiveIndex"));
 let userRole;
-console.log(userIdL);
-if(userIdL >=0){
-  
+
+if(userIdL >=0 && userIdL != null){
+  console.log(userIdL)
   userRole = users[userIdL].role;
 
   switch (userRole) {

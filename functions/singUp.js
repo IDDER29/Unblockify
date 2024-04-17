@@ -8,6 +8,8 @@ function createUser({ name, email, userPassword,role }) {
 // Function to save user to localStorage
 function saveUser(user) {
   users.push(user);
+  alert("awdi");
+  alert(users);
   localStorage.setItem("users", JSON.stringify(users));
 }
 // Function to validate form inputs

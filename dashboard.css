@@ -157,9 +157,10 @@ main {
 
 /* Modal Styles */
 .modal {
-  position: fixed;
-  inset: 0;
-  overflow: auto;
+  position: absolute;
+  width: 100%;
+  
+  
   background-color: rgba(0, 0, 0, 0.4);
   display: flex;
   justify-content: center;
