@@ -1,225 +1,232 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link
-        href="https://cdn.jsdelivr.net/gh/eliyantosarage/font-awesome-pro@main/fontawesome-pro-6.5.1-web/css/all.min.css"
-        rel="stylesheet" />
+      href="https://cdn.jsdelivr.net/gh/eliyantosarage/font-awesome-pro@main/fontawesome-pro-6.5.1-web/css/all.min.css"
+      rel="stylesheet"
+    />
 
     <title>Unblockify Dashboard</title>
     <link rel="stylesheet" href="./stylesheet.main.css" />
     <link rel="stylesheet" href="./dashboard.css" />
     <style>
-        @media (min-width: 768px) {
-
-            input[type="text"],
-            select,
-            textarea {
-                width: 100%;
-            }
+      @media (min-width: 768px) {
+        input[type="text"],
+        select,
+        textarea {
+          width: 100%;
         }
-        form{
-            width: 100%;
-        }
+      }
+      form {
+        width: 100%;
+      }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <header>
-        <nav class="flex-row">
-            <div class="nav_greeting">
-                <h1>Welcome Back</h1>
-                <p><span class="userName">[Name]</span></p>
-            </div>
-            <div class="logo">
-                <img src="./img/Logo.svg" alt="Unblockify Logo" />
-            </div>
-            <div class="">
-                <ul>
-                    <li>
-                        <i class="fa-solid fa-user"></i>
-                    </li>
-                    <li>
-                        <i class="fa-solid fa-bell"></i>
-                    </li>
-                    <li>
-                        <i class="fa-solid fa-right-from-bracket logOut"></i>
-                    </li>
-                </ul>
-            </div>
-            <div class="menu-tsoggle">
-                <i class="fa-solid fa-bars"></i>
-            </div>
-        </nav>
-        <div class="greeting">
-            <h1>Welcome Back</h1>
-            <p>Hello <span class="userName">[Name]</span>, Good Morning</p>
+      <nav class="flex-row">
+        <div class="nav_greeting">
+          <h1>Welcome Back</h1>
+          <p><span class="userName">[Name]</span></p>
         </div>
-
-       
+        <div class="logo">
+          <img src="./img/Logo.svg" alt="Unblockify Logo" />
+        </div>
+        <div class="">
+          <ul>
+            <li>
+              <i class="fa-solid fa-user"></i>
+            </li>
+            <li>
+              <i class="fa-solid fa-bell"></i>
+            </li>
+            <li>
+              <i class="fa-solid fa-right-from-bracket logOut"></i>
+            </li>
+          </ul>
+        </div>
+        <div class="menu-tsoggle">
+          <i class="fa-solid fa-bars"></i>
+        </div>
+      </nav>
+      <div class="greeting">
+        <h1>Welcome Back</h1>
+        <p>Hello <span class="userName">[Name]</span>, Good Morning</p>
+      </div>
     </header>
 
     <main>
+      <section class="table_section">
+        <section class="blockages">
+          <div class="blockages-header flex-row">
+            <h1>List of Blockages</h1>
+            <button class="add_btn">+</button>
+          </div>
+          <div class="search-filter-sort">
+            <!-- Search Input -->
+            <input type="search" id="searchInput" placeholder="Search..." />
 
-        <section class="table_section">
-            <section class="blockages">
-                <div class="blockages-header flex-row">
-                    <h1>List of Blockages</h1>
-                    <button class="add_btn">+</button>
-                </div>
-                <div class="search-filter-sort">
-                    <!-- Search Input -->
-                    <input type="search" id="searchInput" placeholder="Search...">
+            <!-- Filter Input (Checkboxes) -->
+            <div class="flex-row select_input">
+              <select id="sortInput">
+                <option value="">Filter by...</option>
+                <option value="asc">Block</option>
+                <option value="desc">Solve</option>
+              </select>
 
-                    <!-- Filter Input (Checkboxes) -->
-                    <div class="flex-row select_input">
-                        <select id="sortInput">
-                            <option value="">Filter by...</option>
-                            <option value="asc">Block</option>
-                            <option value="desc">Solve</option>
-                        </select>
-
-                        <!-- Sort Input (Dropdown) -->
-                        <select id="sortInput">
-                            <option value="">Sort by...</option>
-                            <option value="sub">Subject</option>
-                            <option value="date">Date</option>
-                            <option value="stat">Status</option>
-                            <option value="def">Deficute</option>
-                        </select>
-                    </div>
-                </div>
-
-            </section>
-
-            <div class="table">
-                <h3>Subject</h3>
-                <h3>Deficulte</h3>
-                <h3>Status</h3>
-                <h3>Created At</h3>
+              <!-- Sort Input (Dropdown) -->
+              <select id="sortInput">
+                <option value="">Sort by...</option>
+                <option value="sub">Subject</option>
+                <option value="date">Date</option>
+                <option value="stat">Status</option>
+                <option value="def">Deficute</option>
+              </select>
             </div>
-            <section class="table_body">
-               
-            </section>
+          </div>
         </section>
+
+        <div class="table">
+          <h3>Subject</h3>
+          <h3>Deficulte</h3>
+          <h3>Status</h3>
+          <h3>Created At</h3>
+        </div>
+        <section class="table_body"></section>
+      </section>
     </main>
 
     <section id="details_model" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Blockage Details</h2>
-                <button class="close-modal" >&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="user-info">
-                    <div><span class="title">formator: </span><span class="formator">userName</span></div>
-                    <div>
-                        <span class="title">Bootcamp: </span><span class="bootcamp">BootcampName</span>
-                    </div>
-                    <div><span class="title">Brief: </span><span class="Brief">BriefTitle</span></div>
-                </div>
-                <div class="status-date flex-column">
-                    <button class="status_btn">Block</button>
-                    <div class="blockage-date">
-                        <p>5 days ago</p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <h1>Title: <span class="BlockageTitle">the blockage_title</span></h1>
-                <div class="description">
-                    <p class="blockageDiscription">Description of the blockage</p>
-                </div>
-                <div class="actions">
-                    <button class="edit-btn">Edit</button>
-                    <button class="Delete">Delete</button>
-                </div>
-            </div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Blockage Details</h2>
+          <button class="close-modal">&times;</button>
         </div>
-        <form class="add_new_blockage">
-            <div class="flex-row header">
-                <h1>Blockage form </h1>
-                <button type="button" class="close-modal" >&times;</button>
+        <div class="modal-body">
+          <div class="user-info">
+            <div>
+              <span class="title">formator: </span
+              ><span class="formator">userName</span>
             </div>
-            <label for="title">Title:</label><br>
-            <input type="text" id="title" name="title" required><br><br>
-
-            <label for="admin">Select Formateur:</label><br>
-            <select id="admin" name="admin">
-                <option value="admin1">Admin 1</option>
-                <option value="admin2">Admin 2</option>
-                <option value="admin3">Admin 3</option>
-            </select><br><br>
-
-            <label for="bootcamp">Select Bootcamp:</label><br>
-            <select id="bootcamp" name="bootcamp">
-                <option value="bootcamp1">Bootcamp 1</option>
-                <option value="bootcamp2">Bootcamp 2</option>
-                <option value="bootcamp3">Bootcamp 3</option>
-            </select><br><br>
-
-
-
-
-            <label for="Brief">Select Brief:</label><br>
-            <select id="Brief" name="Brief">
-                <option value="Brief1">Brief 1</option>
-                <option value="Brief2">Brief 2</option>
-                <option value="Brief3">Brief 3</option>
-            </select><br><br>
-
-            <label for="problem">La Difficulte:</label><br>
-
-            <input id="problem" name="problem" type="text"><br><br>
-
-            <label for="problemDetails">Problem Details:</label><br>
-            <textarea id="problemDetails" name="problemDetails" rows="4" cols="50" required></textarea><br><br>
-
-            <input type="submit" value="Submit">
-        </form>
-        
-        <form class="edit_blockage">
-            <div class="flex-row header">
-                <h1>Edit blockage </h1>
-                <button type="button" class="close-modal" >&times;</button>
+            <div>
+              <span class="title">Bootcamp: </span
+              ><span class="bootcamp">BootcampName</span>
             </div>
-            <label for="title">Title:</label><br>
-            <input type="text" id="title" name="title" required><br><br>
+            <div>
+              <span class="title">Brief: </span
+              ><span class="Brief">BriefTitle</span>
+            </div>
+          </div>
+          <div class="status-date flex-column">
+            <button class="status_btn">Block</button>
+            <div class="blockage-date">
+              <p>5 days ago</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <h1>Title: <span class="BlockageTitle">the blockage_title</span></h1>
+          <div class="description">
+            <p class="blockageDiscription">Description of the blockage</p>
+          </div>
+          <div class="actions">
+            <button class="edit-btn">Edit</button>
+            <button class="Delete">Delete</button>
+          </div>
+        </div>
+      </div>
+      <form class="add_new_blockage">
+        <div class="flex-row header">
+          <h1>Blockage form</h1>
+          <button type="button" class="close-modal">&times;</button>
+        </div>
+        <label for="title">Title:</label><br />
+        <input type="text" id="title" name="title" required /><br /><br />
 
-            <label for="Brief">Select Brief:</label><br>
-            <select id="Brief" name="Brief">
-                <option value="Brief1">Brief 1</option>
-                <option value="Brief2">Brief 2</option>
-                <option value="Brief3">Brief 3</option>
-            </select><br><br>
+        <label for="admin">Select Formateur:</label><br />
+        <select id="admin" name="admin">
+          <option value="admin1">Admin 1</option>
+          <option value="admin2">Admin 2</option>
+          <option value="admin3">Admin 3</option></select
+        ><br /><br />
 
-            <label for="problem">La Difficulte:</label><br>
+        <label for="bootcamp">Select Bootcamp:</label><br />
+        <select id="bootcamp" name="bootcamp">
+          <option value="bootcamp1">Bootcamp 1</option>
+          <option value="bootcamp2">Bootcamp 2</option>
+          <option value="bootcamp3">Bootcamp 3</option></select
+        ><br /><br />
 
-            <input id="problem" name="problem" type="text"><br><br>
+        <label for="Brief">Select Brief:</label><br />
+        <select id="Brief" name="Brief">
+          <option value="Brief1">Brief 1</option>
+          <option value="Brief2">Brief 2</option>
+          <option value="Brief3">Brief 3</option></select
+        ><br /><br />
 
-            <label for="problemDetails">Problem Details:</label><br>
-            <textarea id="problemDetails" name="problemDetails" rows="4" cols="50" required></textarea><br><br>
+        <label for="problem">La Difficulte:</label><br />
 
-            <input type="submit" value="Submit">
-        </form>
+        <input id="problem" name="problem" type="text" /><br /><br />
+
+        <label for="problemDetails">Problem Details:</label><br />
+        <textarea
+          id="problemDetails"
+          name="problemDetails"
+          rows="4"
+          cols="50"
+          required
+        ></textarea
+        ><br /><br />
+
+        <input type="submit" value="Submit" />
+      </form>
+
+      <form class="edit_blockage">
+        <div class="flex-row header">
+          <h1>Edit blockage</h1>
+          <button type="button" class="close-modal">&times;</button>
+        </div>
+        <label for="title">Title:</label><br />
+        <input type="text" id="title" name="title" required /><br /><br />
+
+        <label for="Brief">Select Brief:</label><br />
+        <select id="Brief" name="Brief">
+          <option value="Brief1">Brief 1</option>
+          <option value="Brief2">Brief 2</option>
+          <option value="Brief3">Brief 3</option></select
+        ><br /><br />
+
+        <label for="problem">La Difficulte:</label><br />
+
+        <input id="problem" name="problem" type="text" /><br /><br />
+
+        <label for="problemDetails">Problem Details:</label><br />
+        <textarea
+          id="problemDetails"
+          name="problemDetails"
+          rows="4"
+          cols="50"
+          required
+        ></textarea
+        ><br /><br />
+
+        <input type="submit" value="Submit" />
+      </form>
     </section>
 
     <div id="myModal" class="modal_Verefied">
-        <div class="modal-content-Verefied">
-          <span class="close">&times;</span>
-          <h2>Selected Support Method</h2>
-          <p id="selectedMethod"></p>
-          <h2>Notes</h2>
-          <p id="adminNotes"></p>
-        </div>
+      <div class="modal-content-Verefied">
+        <span class="close close-modal">&times;</span>
+        <h2>Selected Support Method</h2>
+        <p id="selectedMethod"></p>
+        <h2>Notes</h2>
+        <p id="adminNotes"></p>
       </div>
-  
-    <script src="./functions/dashbord.js">
+    </div>
 
-    </script>
-
-</body>
-
+    <script src="./functions/dashbord.js"></script>
+  </body>
 </html>

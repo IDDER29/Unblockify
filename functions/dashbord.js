@@ -295,8 +295,7 @@ modalDetiesContent.addEventListener("click", function (e) {
         usersBlockages[userId][editId].dificculte;
       editForm.querySelector("#problemDetails").value =
         usersBlockages[userId][editId].details;
-       
-
+      
     }
     
   }
