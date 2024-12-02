@@ -87,9 +87,8 @@ table_body.addEventListener("click", function (e) {
         usersBlockages[userId].indexOf(filteredObjects[id])
       ].hasOwnProperty('isVerfied')
     ) {
-      const verfiedDetiesModal = document.querySelector(".modal_Verefied");
-      verfiedDetiesModal.style.display = "block";
       // Corrected line: Use document.getElementById to access elements by their ID
+      document.querySelector("#myModal").style.display ="block";
       document.getElementById("selectedMethod").textContent =
         usersBlockages[userId][
           usersBlockages[userId].indexOf(filteredObjects[id])
