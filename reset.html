@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unblockify · Choose a new password</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./stylesheet.main.css" />
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute">
+      <symbol id="mark" viewBox="0 0 32 32">
+        <rect x="1" y="1" width="30" height="30" rx="9" fill="#12B886" />
+        <path d="M6 16h4l2.5-6 4 12 2.5-6h7" fill="none" stroke="#05281d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+    </svg>
+
+    <div class="auth">
+      <aside class="auth-aside">
+        <a href="index.html" class="brand">
+          <svg class="brand-mark"><use href="#mark" /></svg>
+          Unblockify
+        </a>
+        <div class="aside-body">
+          <h2>One new password and you're moving again.</h2>
+          <p>Pick something you'll remember — at least six characters.</p>
+          <svg class="signal-wave" viewBox="0 0 320 80" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="sig" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#FF5A4D" />
+                <stop offset="60%" stop-color="#F59F00" />
+                <stop offset="85%" stop-color="#12B886" />
+              </linearGradient>
+            </defs>
+            <path class="pulse-track" d="M0 48 L80 48 L96 16 L112 70 L128 48 L168 48 L184 14 L198 72 L214 38 L250 38 L266 8 L280 66 L296 28 L320 28" fill="none" stroke="url(#sig)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+        <div class="aside-meta">UNBLOCKIFY — STUDENT SUPPORT</div>
+      </aside>
+
+      <main class="auth-main">
+        <div class="auth-card">
+          <h1>Choose a new password</h1>
+          <p class="sub">Remembered it? <a href="login.html">Back to log in</a></p>
+
+          <form class="login-form">
+            <div class="field">
+              <label for="password">New password</label>
+              <input type="password" id="password" autocomplete="new-password" placeholder="At least 6 characters" required />
+              <button type="button" class="pw-toggle" data-target="password">Show</button>
+            </div>
+            <button type="button" class="btn btn-primary btn-block btn-lg" id="reset-btn">Set new password</button>
+          </form>
+        </div>
+      </main>
+    </div>
+
+    <script src="./functions/api.js"></script>
+    <script src="./reset.js"></script>
+    <script>
+      document.querySelectorAll(".pw-toggle").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const i = document.getElementById(btn.dataset.target);
+          if (!i) return;
+          const show = i.type === "password";
+          i.type = show ? "text" : "password";
+          btn.textContent = show ? "Hide" : "Show";
+        });
+      });
+    </script>
+  </body>
+</html>

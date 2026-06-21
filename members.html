@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unblockify · Members</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./stylesheet.main.css" />
+    <link rel="stylesheet" href="./dashboard.css" />
+  </head>
+  <body class="dashboard-page">
+    <div id="app"></div>
+
+    <div class="modal" id="inviteModal">
+      <div class="modal-content" style="display:block">
+        <div class="modal-header">
+          <h2 id="inviteModalTitle">Invite people</h2>
+          <button class="close-modal" type="button" data-close>&times;</button>
+        </div>
+        <div class="modal-body" style="display:block">
+          <div class="form-row">
+            <label for="inviteRole">Role</label>
+            <select id="inviteRole">
+              <option value="instructor">Instructor</option>
+              <option value="student">Student</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label for="inviteCohort">Cohort</label>
+            <select id="inviteCohort"></select>
+          </div>
+          <div id="inviteResult" hidden style="margin-top:1rem"></div>
+          <div style="margin-top:1.4rem;display:flex;justify-content:flex-end">
+            <button class="btn btn-primary" type="button" id="createInviteBtn">Create invite</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="./functions/api.js"></script>
+    <script src="./functions/members.js"></script>
+  </body>
+</html>

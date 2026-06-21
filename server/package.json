@@ -1,0 +1,19 @@
+{
+  "name": "unblockify-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local Express + SQLite backend for Unblockify",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --experimental-sqlite index.js",
+    "dev": "node --experimental-sqlite --watch index.js",
+    "test": "node --experimental-sqlite --test"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.105.0",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

@@ -1,0 +1,13 @@
+node_modules/
+server/data.db
+server/data.db-*
+*.log
+
+server/uploads/*
+!server/uploads/.gitkeep
+
+server/outbox/*
+!server/outbox/.gitkeep
+
+server/logs/*
+!server/logs/.gitkeep

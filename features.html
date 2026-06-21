@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product — Unblockify</title>
+    <meta
+      name="description"
+      content="The Unblockify platform: an AI Teaching Assistant that answers every blockage instantly, a clear claim-to-resolve lifecycle, and analytics that protect retention."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./stylesheet.main.css" />
+  </head>
+  <body>
+    <div id="site-nav"></div>
+
+    <!-- HERO -->
+    <header class="hero">
+      <div class="container">
+        <div class="hero-grid">
+          <div>
+            <span class="eyebrow">The product</span>
+            <h1>One platform that keeps every student <span class="accent">moving.</span></h1>
+            <p class="lead">
+              Unblockify pairs an AI Teaching Assistant with a clean
+              blockage-to-resolved workflow. Students get an instant, Socratic
+              answer the moment they're stuck; instructors work a focused queue;
+              owners watch deflection, hours saved, and retention climb.
+            </p>
+            <div class="hero-actions">
+              <a href="signup.html" class="btn btn-flow btn-lg">Get started</a>
+              <a href="contact.html" class="btn btn-ghost-dark btn-lg">Request a demo</a>
+            </div>
+            <div class="hero-stats">
+              <div>
+                <div class="num">&lt;5s</div>
+                <div class="lbl">To first AI response</div>
+              </div>
+              <div>
+                <div class="num">40%+</div>
+                <div class="lbl">Blockages AI-deflected</div>
+              </div>
+              <div>
+                <div class="num">24/7</div>
+                <div class="lbl">Always-on support</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Signature: a live signal panel -->
+          <div class="signal-card">
+            <svg class="signal-wave" viewBox="0 0 320 64" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="sig" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#FF5A4D" />
+                  <stop offset="55%" stop-color="#F59F00" />
+                  <stop offset="80%" stop-color="#12B886" />
+                </linearGradient>
+              </defs>
+              <path
+                class="pulse-track"
+                d="M0 40 L70 40 L84 40 L96 14 L112 58 L128 40 L150 40 L168 40 L182 12 L196 60 L210 32 L230 32 L250 32 L264 8 L276 56 L290 24 L320 24"
+                fill="none"
+                stroke="url(#sig)"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <div class="row">
+              <div>
+                <div class="blk-id">BLK-118</div>
+                <div class="blk-title">AI: "What does the 401 body actually say?"</div>
+              </div>
+              <span class="pill pill-resolved">AI resolved</span>
+            </div>
+            <div class="row">
+              <div>
+                <div class="blk-id">BLK-122</div>
+                <div class="blk-title">Instructor copilot drafted a reply</div>
+              </div>
+              <span class="pill pill-pending">In support</span>
+            </div>
+            <div class="row">
+              <div>
+                <div class="blk-id">BLK-126</div>
+                <div class="blk-title">Auto-triaged · topic: async · urgency: high</div>
+              </div>
+              <span class="pill pill-blocked">Blocked</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- THE WEDGE: AI TEACHING ASSISTANT -->
+    <section class="section" id="ai">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">The wedge</span>
+          <h2>An AI Teaching Assistant on every blockage.</h2>
+          <p>
+            The instant a student reports a blockage, the assistant replies —
+            never with the answer, always with the next question. It's grounded
+            in the cohort, the brief, and a knowledge base that builds itself
+            from every problem your team has already solved.
+          </p>
+        </div>
+        <div class="card-grid">
+          <div class="m-card">
+            <h3>Instant Socratic reply</h3>
+            <p>
+              Every new blockage gets a thoughtful first response in seconds —
+              guiding questions, not spoilers. Students stay unblocked even when
+              no instructor is online.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>Grounded in your cohort</h3>
+            <p>
+              Answers are conditioned on the cohort and its brief, so the help
+              matches what students are actually building — not generic advice
+              scraped from the open web.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>A knowledge base that builds itself</h3>
+            <p>
+              Every resolved blockage feeds retrieval. The next student with a
+              similar problem gets an answer informed by how your team solved it
+              last time — accuracy compounds as you go.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>"This unblocked me" deflection</h3>
+            <p>
+              When the assistant gets a student moving again, one tap marks the
+              blockage AI-resolved. That deflection is measured, reported, and
+              turned into hours your instructors get back.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>Instructor copilot</h3>
+            <p>
+              When a human is needed, the assistant drafts a reply in your
+              voice — grounded in the thread and past resolutions. Instructors
+              edit and send in seconds instead of starting from a blank box.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>Auto-triage on arrival</h3>
+            <p>
+              Each blockage is classified the moment it lands — difficulty,
+              topics, and urgency — so the queue sorts itself and the right
+              people see the right problems first.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>Multi-turn follow-ups</h3>
+            <p>
+              The conversation doesn't stop at one reply. The assistant follows
+              the thread, responds to what the student tries next, and keeps
+              nudging until they're flowing.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>Thread summaries</h3>
+            <p>
+              Long back-and-forth? The assistant distills it into a tight
+              summary, so an instructor picking up the blockage is caught up in
+              a glance.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>Weekly struggle digest</h3>
+            <p>
+              Owners get a "what your cohort struggled with this week" report —
+              the recurring blockers, the topics on fire, and where curriculum
+              needs attention.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIFECYCLE -->
+    <section class="section" id="lifecycle" style="background: var(--surface-2)">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">The blockage lifecycle</span>
+          <h2>From "I'm stuck" to resolved — on rails.</h2>
+          <p>
+            Every blockage moves through one clear path. No DMs lost in a
+            channel, no "did anyone see my message?" — just a status everyone
+            can read at a glance.
+          </p>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-no">STEP 01</div>
+            <h3>Report &amp; auto-reply</h3>
+            <p>
+              A student logs the blockage with context. The AI Teaching
+              Assistant replies instantly and the blockage is auto-triaged into
+              the queue.
+            </p>
+          </div>
+          <div class="step">
+            <div class="step-no">STEP 02</div>
+            <h3>Claim</h3>
+            <p>
+              An instructor for that cohort claims it. The signal flips to
+              "in support" — the student knows a real person is on it, in real
+              time.
+            </p>
+          </div>
+          <div class="step">
+            <div class="step-no">STEP 03</div>
+            <h3>Resolve &amp; reopen</h3>
+            <p>
+              Resolve with a note that's kept forever. If it wasn't fully fixed,
+              reopen in one tap — nothing gets quietly dropped.
+            </p>
+          </div>
+        </div>
+        <div class="card-grid" style="margin-top: 1.6rem">
+          <div class="m-card">
+            <h3>Threaded conversations</h3>
+            <p>
+              Full markdown, fenced code blocks, and screenshot attachments —
+              the whole exchange lives in one place, readable and searchable.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>Real-time live updates</h3>
+            <p>
+              Status changes, new replies, and claims push to every open board
+              instantly. The room always reflects reality without a refresh.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>A timeline you can trust</h3>
+            <p>
+              Created, claimed, commented, resolved — every event is logged. The
+              history of how a blockage was cleared is never lost.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ANALYTICS & RETENTION -->
+    <section class="section" id="analytics">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Analytics &amp; retention</span>
+          <h2>See the room. Catch the slip before it happens.</h2>
+          <p>
+            Unblockify turns support into signal. Owners see exactly where the
+            cohort is stuck, what the AI is handling, and which students need a
+            human before they disengage.
+          </p>
+        </div>
+        <div class="card-grid">
+          <div class="m-card">
+            <h3>AI deflection &amp; hours saved</h3>
+            <p>
+              The headline number: what share of blockages the assistant cleared
+              on its own, and the instructor-hours that bought back — measured,
+              not estimated.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>At-risk students radar</h3>
+            <p>
+              A live watchlist of students whose blockages are piling up,
+              stalling, or going quiet — so you reach out while it still
+              matters.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>CSAT on every resolution</h3>
+            <p>
+              Students rate how their blockage was handled. Satisfaction trends
+              by cohort and instructor tell you what "good help" actually looks
+              like.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>Student-360 profiles</h3>
+            <p>
+              One page per student: their blockages, their patterns, their
+              momentum over time. Context-rich check-ins instead of guesswork.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>By cohort &amp; instructor</h3>
+            <p>
+              Resolve rate, median time-to-unblock, and volume broken down by
+              cohort and by instructor — find the bottleneck before it costs a
+              sprint.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>Median time-to-unblock</h3>
+            <p>
+              The metric that defines momentum. Watch it drop as the assistant
+              and your team get faster — and as the knowledge base deepens.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BUILT FOR TEAMS -->
+    <section class="section" id="teams" style="background: var(--surface-2)">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Built for teams</span>
+          <h2>Your workspace, your rules, your data.</h2>
+          <p>
+            Every organization gets an isolated workspace with clear roles,
+            cohorts, and invites. Tenant boundaries are enforced on every
+            request — cross-org access simply doesn't exist.
+          </p>
+        </div>
+        <div class="card-grid">
+          <div class="m-card">
+            <h3>Multi-tenant workspaces</h3>
+            <p>
+              Self-register and get an isolated org in seconds. Every record is
+              scoped to your workspace — your students' data stays yours, full
+              stop.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>Owner, instructor, student roles</h3>
+            <p>
+              Owners run the org and see analytics; instructors work the queue
+              and resolve; students report and follow along. Each role sees
+              exactly what it should.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>Cohorts &amp; briefs</h3>
+            <p>
+              Group students into cohorts and attach the briefs they're working
+              from — the same context that grounds the AI and routes the queue.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>Invite links &amp; codes</h3>
+            <p>
+              Generate a link or code with a role and cohort baked in. Opening
+              it provisions the user instantly — no email server, no friction.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>Auto-assignment</h3>
+            <p>
+              Blockages route straight to the instructors assigned to that
+              cohort. The right person sees the right problem without any manual
+              triage.
+            </p>
+          </div>
+          <div class="m-card">
+            <h3>SLA-aware queues</h3>
+            <p>
+              Urgency and age surface the blockages that are waiting too long,
+              so nothing ages out of view and no student waits in the void.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-band">
+      <div class="container">
+        <span class="eyebrow">Ready when you are</span>
+        <h2>Start unblocking your cohort.</h2>
+        <p>
+          Create a workspace, invite your team, and log your first blockage in
+          under a minute. The AI is on from the start.
+        </p>
+        <a href="signup.html" class="btn btn-primary btn-lg">Start unblocking</a>
+      </div>
+    </section>
+
+    <div id="site-footer"></div>
+    <script src="./functions/site.js"></script>
+  </body>
+</html>

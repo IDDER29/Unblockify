@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unblockify · Cohorts</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./stylesheet.main.css" />
+    <link rel="stylesheet" href="./dashboard.css" />
+  </head>
+  <body class="dashboard-page">
+    <div id="app"></div>
+
+    <!-- New cohort modal -->
+    <div class="modal" id="newCohortModal">
+      <div class="modal-content" style="display:block; max-width:440px">
+        <div class="modal-header">
+          <h2>New cohort</h2>
+          <button class="close" type="button" data-close="newCohortModal" aria-label="Close">&times;</button>
+        </div>
+        <form id="newCohortForm" style="padding:1.6rem">
+          <div class="form-row">
+            <label for="cohortName">Cohort name</label>
+            <input type="text" id="cohortName" name="name" placeholder="e.g. Fall 2026 · Web" required autocomplete="off" />
+          </div>
+          <div class="actions">
+            <button type="button" class="btn btn-ghost" data-close="newCohortModal">Cancel</button>
+            <button type="submit" class="btn btn-primary">Create cohort</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Cohort detail modal -->
+    <div class="modal" id="cohortModal">
+      <div class="modal-content" id="cohortModalContent" style="display:block; max-width:560px"></div>
+    </div>
+
+    <script src="./functions/api.js"></script>
+    <script src="./functions/cohorts.js"></script>
+  </body>
+</html>
