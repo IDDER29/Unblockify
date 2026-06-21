@@ -1,0 +1,19 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install deps
+        run: cd server && npm install
+      - name: Backend tests
+        run: cd server && npm test
+      - name: Front-end syntax check
+        run: for f in functions/*.js; do node --check "$f"; done

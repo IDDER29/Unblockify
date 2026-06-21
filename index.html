@@ -3,69 +3,233 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unblockify — turn "I'm stuck" into shipped</title>
+    <meta
+      name="description"
+      content="Unblockify is where students log what's blocking them and instructors clear it, fast."
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Playfair+Display:ital,wght@0,900;1,900&family=Press+Start+2P&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./stylesheet.main.css" />
-    <link rel="stylesheet" href="desktop.css" />
-    <link rel="stylesheet" href="tablet.css" />
-    <title>Unblockify</title>
   </head>
-
   <body>
-    <header>
-      <nav class="flex-row flex-center" id="nav-bar">
-        <div class="Logo">
-          <img src="./img/Logo.svg" alt="Logo" />
-        </div>
-      </nav>
-    </header>
-    <main class="flex-column flex-center">
-      <section class="login-section flex-row flex-center">
-        <div class="login-container flex-column">
-          <div class="login-info flex-column">
-            <h1>Log In</h1>
-            <p>
-              Futur Talents School: Fostering Innovation Through Effective
-              Support.
+    <!-- Reusable brand mark -->
+    <svg width="0" height="0" style="position: absolute">
+      <symbol id="mark" viewBox="0 0 32 32">
+        <rect x="1" y="1" width="30" height="30" rx="9" fill="#12B886" />
+        <path
+          d="M6 16h4l2.5-6 4 12 2.5-6h7"
+          fill="none"
+          stroke="#05281d"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+    </svg>
+
+    <div id="site-nav"></div>
+
+    <!-- HERO -->
+    <header class="hero">
+      <div class="container">
+        <div class="hero-grid">
+          <div>
+            <span class="eyebrow">Student support, systematized</span>
+            <h1>Turn "I'm stuck" into <span class="accent">shipped.</span></h1>
+            <p class="lead">
+              Unblockify is where students log what's blocking them —
+              and instructors clear it, fast. Less waiting in the void. More
+              momentum.
             </p>
-            <p class="create-acount">
-              Don't have an account?
-              <a href="./singUp.html">Create an Account</a>
-            </p>
+            <div class="hero-actions">
+              <a href="signup.html" class="btn btn-flow btn-lg">Start unblocking</a>
+              <a href="#how" class="btn btn-ghost-dark btn-lg">See how it works</a>
+            </div>
+            <div class="hero-stats">
+              <div>
+                <div class="num">4h</div>
+                <div class="lbl">Avg. time to unblock</div>
+              </div>
+              <div>
+                <div class="num">1,240</div>
+                <div class="lbl">Blockages cleared</div>
+              </div>
+              <div>
+                <div class="num">96%</div>
+                <div class="lbl">Resolved same day</div>
+              </div>
+            </div>
           </div>
 
-          <form class="login-form flex-column">
-            <div class="form-group flex-column">
-              <label for="email">Email</label>
-              <input
-                type="email"
-                id="email"
-                placeholder="example@email.com"
-                required
+          <!-- Signature: a live signal panel -->
+          <div class="signal-card">
+            <svg class="signal-wave" viewBox="0 0 320 64" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="sig" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#FF5A4D" />
+                  <stop offset="55%" stop-color="#F59F00" />
+                  <stop offset="80%" stop-color="#12B886" />
+                </linearGradient>
+              </defs>
+              <path
+                class="pulse-track"
+                d="M0 40 L70 40 L84 40 L96 14 L112 58 L128 40 L150 40 L168 40 L182 12 L196 60 L210 32 L230 32 L250 32 L264 8 L276 56 L290 24 L320 24"
+                fill="none"
+                stroke="url(#sig)"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
               />
+            </svg>
+            <div class="row">
+              <div>
+                <div class="blk-id">BLK-024</div>
+                <div class="blk-title">API returns 401 on login</div>
+              </div>
+              <span class="pill pill-resolved">Resolved</span>
             </div>
-            <div class="form-group flex-column">
-              <label for="password">Password</label>
-              <input
-                type="password"
-                id="password"
-                placeholder="Enter your password"
-                required
-              />
+            <div class="row">
+              <div>
+                <div class="blk-id">BLK-031</div>
+                <div class="blk-title">CSS grid overflows on mobile</div>
+              </div>
+              <span class="pill pill-pending">In support</span>
             </div>
-            <button type="button" class="submit-button" id="login-form-btn">
-              Log In
-            </button>
-          </form>
+            <div class="row">
+              <div>
+                <div class="blk-id">BLK-033</div>
+                <div class="blk-title">Webpack build hangs at 92%</div>
+              </div>
+              <span class="pill pill-blocked">Blocked</span>
+            </div>
+          </div>
         </div>
-      </section>
-    </main>
-    <section class="hero-section"></section>
+      </div>
+    </header>
 
-    <script src="./functions/login.js"></script>
+    <!-- HOW IT WORKS (a real 3-step sequence) -->
+    <section class="section" id="how">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">The loop</span>
+          <h2>From blocked to flowing in three steps.</h2>
+          <p>
+            Every blockage follows the same path. No DMs lost in a channel, no
+            "did anyone see my message?"
+          </p>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-no">STEP 01</div>
+            <h3>Report it</h3>
+            <p>
+              Log the blockage with the context that matters — the brief, the
+              cohort, what you've tried. Thirty seconds, done.
+            </p>
+            <svg class="step-arrow" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="step">
+            <div class="step-no">STEP 02</div>
+            <h3>Get matched</h3>
+            <p>
+              It routes straight to your instructor's queue and shows up the
+              moment they open the board. Nothing falls through.
+            </p>
+            <svg class="step-arrow" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="step">
+            <div class="step-no">STEP 03</div>
+            <h3>Get unblocked</h3>
+            <p>
+              They pick the right kind of help and leave a note. Your signal
+              flips green and you're moving again.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="section" id="features" style="background: var(--surface-2)">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Built for the work</span>
+          <h2>Everything a blockage needs, nothing it doesn't.</h2>
+        </div>
+        <div class="features">
+          <div class="feature">
+            <div class="ic"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 10h3l2-5 4 10 2-5h3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <h3>Status that reads itself</h3>
+            <p>Blocked, in support, resolved — a single signal everyone understands at a glance.</p>
+          </div>
+          <div class="feature">
+            <div class="ic"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 5h14M3 10h14M3 15h9" stroke-linecap="round"/></svg></div>
+            <h3>One queue per instructor</h3>
+            <p>Each blockage lands with the right person. No triage, no guessing who owns it.</p>
+          </div>
+          <div class="feature">
+            <div class="ic"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l3 2" stroke-linecap="round"/></svg></div>
+            <h3>Time-to-unblock</h3>
+            <p>See how long students wait and where the bottlenecks are — before they cost a sprint.</p>
+          </div>
+          <div class="feature">
+            <div class="ic"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 3l2 4 4 .6-3 3 .8 4-3.8-2-3.8 2 .8-4-3-3 4-.6z" stroke-linejoin="round"/></svg></div>
+            <h3>Matched support</h3>
+            <p>Guided, peer-assisted, or direct intervention — the help fits the blockage.</p>
+          </div>
+          <div class="feature">
+            <div class="ic"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="14" height="12" rx="2"/><path d="M3 8h14" stroke-linecap="round"/></svg></div>
+            <h3>Full history</h3>
+            <p>Every resolution is kept. Patterns surface, and good answers get reused.</p>
+          </div>
+          <div class="feature">
+            <div class="ic"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2a8 8 0 100 16 8 8 0 000-16zM2 10h16" stroke-linecap="round"/></svg></div>
+            <h3>Yours, locally</h3>
+            <p>Runs on your own machine with its own database. Your students' data stays with you.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INSTRUCTOR BAND -->
+    <section class="section" id="instructors">
+      <div class="container">
+        <div class="band">
+          <div>
+            <span class="eyebrow">For instructors</span>
+            <h2>Stop firefighting. Start seeing the room.</h2>
+            <p>
+              A live board of who's stuck and on what. Resolve with a method and
+              a note, and watch the cohort's signal turn green.
+            </p>
+            <a href="signup.html" class="btn btn-flow" style="margin-top: 1.6rem">Open the board</a>
+          </div>
+          <div class="metric-grid">
+            <div class="metric"><div class="num">12</div><div class="lbl">Open in your queue</div></div>
+            <div class="metric"><div class="num">3.2h</div><div class="lbl">Median response</div></div>
+            <div class="metric"><div class="num">88%</div><div class="lbl">Cleared in a day</div></div>
+            <div class="metric"><div class="num">6</div><div class="lbl">Organizations tracked</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-band">
+      <div class="container">
+        <span class="eyebrow">Ready when you are</span>
+        <h2>Get your cohort unblocked.</h2>
+        <p>Create an account and log your first blockage in under a minute.</p>
+        <a href="signup.html" class="btn btn-primary btn-lg">Start unblocking</a>
+      </div>
+    </section>
+
+    <div id="site-footer"></div>
+    <script src="./functions/site.js"></script>
   </body>
 </html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unblockify — Request a demo</title>
+    <meta
+      name="description"
+      content="Talk to the Unblockify team. See the AI Teaching Assistant on your own cohort, discuss SSO, SLAs and security, or get help migrating."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./stylesheet.main.css" />
+  </head>
+  <body>
+    <!-- Reusable brand mark -->
+    <svg width="0" height="0" style="position: absolute">
+      <symbol id="mark" viewBox="0 0 32 32">
+        <rect x="1" y="1" width="30" height="30" rx="9" fill="#12B886" />
+        <path
+          d="M6 16h4l2.5-6 4 12 2.5-6h7"
+          fill="none"
+          stroke="#05281d"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </symbol>
+    </svg>
+
+    <div id="site-nav"></div>
+
+    <!-- HERO -->
+    <header class="hero">
+      <div class="container">
+        <span class="eyebrow">Get in touch</span>
+        <h1>Let's get your cohort <span class="accent">moving.</span></h1>
+        <p class="lead">
+          Book a 30-minute walkthrough and we'll wire the AI Teaching Assistant
+          to one of your real cohorts — so you can watch blockages deflect
+          before a human ever opens the queue.
+        </p>
+      </div>
+    </header>
+
+    <!-- CONTACT -->
+    <section class="section">
+      <div class="container">
+        <div
+          style="
+            display: grid;
+            grid-template-columns: 0.9fr 1.1fr;
+            gap: 3rem;
+            align-items: start;
+          "
+        >
+          <!-- LEFT: pitch -->
+          <div>
+            <span class="section-eyebrow">Get in touch</span>
+            <h2 style="margin: 0 0 0.6rem">Request a demo</h2>
+            <p class="lead" style="margin-bottom: 1.8rem">
+              Tell us a little about your program and we'll tailor the demo to
+              your stack, your cohorts, and the blockages that slow your
+              students down most.
+            </p>
+
+            <div class="card-grid" style="grid-template-columns: 1fr">
+              <div class="m-card">
+                <h3>See the AI TA on your own cohort</h3>
+                <p>
+                  We'll load a brief and a few sample blockages from your
+                  program and show the Socratic first response live — grounded
+                  in your context, not a canned demo.
+                </p>
+              </div>
+              <div class="m-card">
+                <h3>SSO, SLAs &amp; security for your org</h3>
+                <p>
+                  Bringing Unblockify to a larger team? Let's talk single
+                  sign-on, data residency, uptime commitments, and how
+                  per-tenant isolation keeps every org's data its own.
+                </p>
+              </div>
+              <div class="m-card">
+                <h3>Help migrating what you already have</h3>
+                <p>
+                  Moving off spreadsheets, a Discord channel, or another tool?
+                  We'll help you map cohorts, instructors, and your history of
+                  resolved questions into your new workspace.
+                </p>
+              </div>
+            </div>
+
+            <p class="lead" style="margin-top: 1.6rem; font-size: 1rem">
+              Prefer to just try it?
+              <a href="signup.html">Create your workspace</a> — it takes about a
+              minute.
+            </p>
+          </div>
+
+          <!-- RIGHT: form -->
+          <div class="m-card" style="padding: 2rem">
+            <h2 style="margin: 0 0 0.4rem; font-size: 1.4rem">Talk to us</h2>
+            <p class="lead" style="font-size: 0.98rem; margin-bottom: 1.4rem">
+              We'll be in touch within one business day.
+            </p>
+
+            <form id="contact-form" novalidate>
+              <div class="field">
+                <label for="name">Name</label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  autocomplete="name"
+                  placeholder="Your name"
+                  required
+                />
+              </div>
+              <div class="field">
+                <label for="email">Work email</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  autocomplete="email"
+                  placeholder="you@yourorg.com"
+                  required
+                />
+              </div>
+              <div class="field">
+                <label for="org">Organization</label>
+                <input
+                  type="text"
+                  id="org"
+                  name="org"
+                  autocomplete="organization"
+                  placeholder="e.g. Acme Academy"
+                  required
+                />
+              </div>
+              <div class="field">
+                <label for="cohortSize">Cohort size</label>
+                <select id="cohortSize" name="cohortSize" required>
+                  <option value="1-50">1–50 students</option>
+                  <option value="50-200">50–200 students</option>
+                  <option value="200+">200+ students</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="message">Message</label>
+                <textarea
+                  id="message"
+                  name="message"
+                  rows="4"
+                  placeholder="What are you hoping to unblock? Tell us about your cohorts, your stack, or anything else."
+                  required
+                ></textarea>
+              </div>
+              <button
+                type="submit"
+                class="btn btn-flow btn-block btn-lg"
+                id="contact-submit"
+              >
+                Send message
+              </button>
+            </form>
+
+            <div
+              id="contact-success"
+              role="status"
+              hidden
+              style="
+                text-align: center;
+                padding: 1.5rem 0.5rem;
+              "
+            >
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 32 32"
+                style="margin-bottom: 0.8rem"
+              >
+                <use href="#mark" />
+              </svg>
+              <h2 style="margin: 0 0 0.5rem; font-size: 1.35rem">
+                Message sent.
+              </h2>
+              <p class="lead" style="font-size: 1rem; margin: 0 auto">
+                Thanks — we'll be in touch within one business day.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="site-footer"></div>
+
+    <!-- Inline form handling: no backend, graceful success state -->
+    <script>
+      (function () {
+        const form = document.getElementById("contact-form");
+        const success = document.getElementById("contact-success");
+        if (!form || !success) return;
+
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          // Native validation so required fields are still enforced.
+          if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+          }
+
+          // No contact backend — build a mailto fallback so the message can
+          // still reach us, then swap the form for an inline success state.
+          const data = new FormData(form);
+          const subject = encodeURIComponent(
+            "Unblockify demo request — " + (data.get("org") || "")
+          );
+          const body = encodeURIComponent(
+            "Name: " +
+              (data.get("name") || "") +
+              "\nWork email: " +
+              (data.get("email") || "") +
+              "\nOrganization: " +
+              (data.get("org") || "") +
+              "\nCohort size: " +
+              (data.get("cohortSize") || "") +
+              "\n\n" +
+              (data.get("message") || "")
+          );
+
+          // Open the user's mail client as a graceful fallback (best effort).
+          try {
+            window.location.href =
+              "mailto:hello@unblockify.app?subject=" +
+              subject +
+              "&body=" +
+              body;
+          } catch (err) {
+            /* ignore — the success state is the primary confirmation */
+          }
+
+          form.hidden = true;
+          success.hidden = false;
+          success.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+      })();
+    </script>
+
+    <script src="./functions/site.js"></script>
+  </body>
+</html>

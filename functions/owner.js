@@ -1,0 +1,251 @@
+/* Owner dashboard — analytics with inline SVG charts. */
+
+function donut(totals) {
+  const segs = [
+    { v: totals.open || 0, c: "#FF5A4D" },
+    { v: totals.in_support || 0, c: "#F59F00" },
+    { v: totals.resolved || 0, c: "#12B886" },
+  ];
+  const actual = segs.reduce((a, s) => a + s.v, 0);
+  const total = actual || 1;
+  const R = 52, C = 2 * Math.PI * R;
+  let off = 0;
+  const rings = segs
+    .map((s) => {
+      const len = (s.v / total) * C;
+      const ring = `<circle cx="70" cy="70" r="${R}" fill="none" stroke="${s.c}" stroke-width="16"
+        stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-off}" transform="rotate(-90 70 70)" stroke-linecap="butt"/>`;
+      off += len;
+      return ring;
+    })
+    .join("");
+  return `<svg viewBox="0 0 140 140" width="140" height="140">
+    <circle cx="70" cy="70" r="52" fill="none" stroke="#EEF0F3" stroke-width="16"/>${rings}
+    <text x="70" y="66" text-anchor="middle" font-family="Space Grotesk" font-size="26" font-weight="700" fill="#0C111B">${actual}</text>
+    <text x="70" y="86" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#5d6675" letter-spacing="1">TOTAL</text>
+  </svg>`;
+}
+
+function lineChart(points) {
+  const W = 520, H = 150, P = 8;
+  const max = Math.max(1, ...points.map((p) => p.count));
+  const step = points.length > 1 ? (W - P * 2) / (points.length - 1) : 0;
+  const coords = points.map((p, i) => [P + i * step, H - P - (p.count / max) * (H - P * 2)]);
+  const line = coords.map((c, i) => (i ? "L" : "M") + c[0].toFixed(1) + " " + c[1].toFixed(1)).join(" ");
+  const area = `${line} L ${coords[coords.length - 1][0].toFixed(1)} ${H - P} L ${coords[0][0].toFixed(1)} ${H - P} Z`;
+  const dots = coords.map((c) => `<circle cx="${c[0].toFixed(1)}" cy="${c[1].toFixed(1)}" r="2.5" fill="#12B886"/>`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none">
+    <defs><linearGradient id="vg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#12B886" stop-opacity="0.18"/><stop offset="100%" stop-color="#12B886" stop-opacity="0"/></linearGradient></defs>
+    <path d="${area}" fill="url(#vg)"/><path d="${line}" fill="none" stroke="#12B886" stroke-width="2.5" stroke-linejoin="round"/>${dots}
+  </svg>`;
+}
+
+function bars(rows, valKey, color) {
+  if (!rows.length) return `<p class="thread-empty">No data yet.</p>`;
+  const max = Math.max(1, ...rows.map((r) => r[valKey]));
+  return rows
+    .map(
+      (r) => `<div class="bar-row"><div class="lbl">${escapeHtml(r.label)}</div>
+        <div class="track"><div class="fill" style="width:${(r[valKey] / max) * 100}%;background:${color}"></div></div>
+        <div class="n">${r[valKey]}</div></div>`
+    )
+    .join("");
+}
+
+function activityLabel(ev) {
+  const who = escapeHtml(ev.actor || "Someone");
+  const title = `'${escapeHtml(ev.blockageTitle || "a blockage")}'`;
+  switch (ev.type) {
+    case "created": return `${who} reported ${title}`;
+    case "claimed": return `${who} started helping with ${title}`;
+    case "comment": return `${who} replied on ${title}`;
+    case "ai_reply": return `AI responded to ${title}`;
+    case "resolved": return `${who} resolved ${title}`;
+    case "reopened": return `${who} reopened ${title}`;
+    default: return `${who} updated ${title}`;
+  }
+}
+
+function activityHtml(items) {
+  if (!items || !items.length) return `<p class="thread-empty">No activity yet.</p>`;
+  return `<ul class="timeline">${items
+    .map(
+      (ev) => `<li class="ev-${escapeHtml(ev.type)}">
+        <a href="blockage.html?id=${encodeURIComponent(ev.blockageId)}" style="text-decoration:none;color:inherit">
+          <div class="ev-t">${activityLabel(ev)}</div>
+          <div class="ev-m">${escapeHtml(fmtRelative(ev.createdAt))}</div>
+        </a>
+      </li>`
+    )
+    .join("")}</ul>`;
+}
+
+function welcomeHtml(orgName) {
+  return `<section class="panel" style="margin-bottom:1.25rem">
+    <div class="page-head" style="margin-bottom:.75rem">
+      <h1>Welcome to ${escapeHtml(orgName)} 👋</h1>
+      <p>Your workspace is ready. Unblockify turns the things your students get stuck on into resolved, measured momentum. Here's how to get going:</p>
+    </div>
+    <ol class="timeline" style="margin:0 0 1.25rem">
+      <li class="ev-created"><div class="ev-t">Create a cohort</div><div class="ev-m">Group your students and add a brief so the AI TA can answer in context.</div></li>
+      <li class="ev-claimed"><div class="ev-t">Invite your people</div><div class="ev-m">Send invite links to instructors and students — they join with one click.</div></li>
+      <li class="ev-resolved"><div class="ev-t">Watch the signal</div><div class="ev-m">Students report blockages, the AI replies instantly, and this dashboard lights up.</div></li>
+    </ol>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+      <a class="btn btn-primary" href="cohorts.html">Create your first cohort</a>
+      <a class="btn" href="members.html">Invite instructors &amp; students</a>
+      <a class="btn btn-ghost" href="cohorts.html">Set up a brief</a>
+    </div>
+  </section>`;
+}
+
+function atRiskHtml(rows) {
+  if (!rows || !rows.length) return `<p class="atrisk-empty">No students at risk right now. 🎉</p>`;
+  return `<div class="atrisk-list">${rows
+    .map(
+      (r) => `<div class="atrisk-item">
+        <span class="nm">${
+          r.id != null
+            ? `<a href="student_profile.html?id=${encodeURIComponent(r.id)}" style="color:inherit">${escapeHtml(r.name)}</a>`
+            : escapeHtml(r.name)
+        }</span>
+        <span class="rs">${(r.reasons || []).map((t) => `<span class="atrisk-tag">${escapeHtml(t)}</span>`).join("")}</span>
+      </div>`
+    )
+    .join("")}</div>`;
+}
+
+(async function () {
+  const s = await requireRole("owner");
+  if (!s) return;
+  const view = renderShell({
+    user: s.user, org: s.org, active: "owner_dashboard.html",
+    title: "Dashboard", crumb: "Owner / Analytics",
+  });
+  view.innerHTML = `<div class="page-head"><h1>${escapeHtml(s.org.name)}</h1><p>How your organization is clearing blockages.</p></div><div id="analytics"></div>`;
+  const el = document.getElementById("analytics");
+
+  let a;
+  try { a = await API.get("/api/analytics"); }
+  catch (e) { el.innerHTML = `<div class="blk-empty">Couldn't load analytics.</div>`; return; }
+
+  const cohortRows = a.byCohort.map((c) => ({ label: c.cohort, resolved: c.resolved, open: c.open }));
+  const insRows = a.byInstructor.map((i) => ({ label: i.name, resolved: i.resolved }));
+
+  const welcome = a.total === 0 ? welcomeHtml(s.org.name) : "";
+
+  el.innerHTML = `
+    ${welcome}
+    <section class="stat-row">
+      <div class="stat is-blocked"><div class="k">Blocked</div><div class="v">${a.totals.open || 0}</div></div>
+      <div class="stat is-pending"><div class="k">In support</div><div class="v">${a.totals.in_support || 0}</div></div>
+      <div class="stat is-resolved"><div class="k">Resolved</div><div class="v">${a.totals.resolved || 0}</div></div>
+      <div class="stat"><div class="k">Median time to unblock</div><div class="v">${a.medianHoursToUnblock || 0}h</div></div>
+      <div class="stat"><div class="k">Avg satisfaction</div><div class="v">${
+        a.csatCount
+          ? `<span class="csat-inline">${csatStars(a.avgCsat)}</span> <span class="csat-n">${a.avgCsat}</span>`
+          : "—"
+      }</div></div>
+    </section>
+
+    <div class="chart-grid">
+      <div class="chart-card"><h3>Volume · last 14 days</h3>${lineChart(a.volumeByDay)}</div>
+      <div class="chart-card"><h3>Status mix</h3>
+        <div style="display:flex;gap:1rem;align-items:center">
+          ${donut(a.totals)}
+          <div class="legend">
+            <div class="row"><span class="sw" style="background:var(--blocked)"></span>Blocked · ${a.totals.open || 0}</div>
+            <div class="row"><span class="sw" style="background:var(--pending)"></span>In support · ${a.totals.in_support || 0}</div>
+            <div class="row"><span class="sw" style="background:var(--flow)"></span>Resolved · ${a.totals.resolved || 0}</div>
+            <div class="row" style="margin-top:.4rem;color:var(--muted)"><span class="sw" style="background:transparent"></span>${a.resolveRate}% resolve rate</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-card"><h3>AI deflection</h3>
+        <div class="deflect-big">${a.deflectionRate || 0}%</div>
+        <div class="deflect-sub">${a.aiResolved || 0} blockage${(a.aiResolved || 0) === 1 ? "" : "s"} cleared by the AI TA · ~${a.hoursSaved || 0}h of instructor time saved</div>
+      </div>
+      <div class="chart-card"><h3>Students who need a human</h3>${atRiskHtml(a.atRisk)}</div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-card"><h3>Resolved by cohort</h3>${bars(cohortRows, "resolved", "#12B886")}</div>
+      <div class="chart-card"><h3>Resolved by instructor</h3>${bars(insRows, "resolved", "#0C111B")}</div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-card"><h3>This week</h3><div id="digestPanel"><p class="thread-empty">Loading…</p></div></div>
+      <div class="chart-card"><h3>Top AI topics</h3>${bars((a.byTopic || []).map((t) => ({ label: t.topic, count: t.count })), "count", "#12B886")}</div>
+    </div>
+
+    <div class="chart-card"><h3>Recent activity</h3><div id="activityFeed"><p class="thread-empty">Loading…</p></div></div>
+
+    <div class="chart-card"><h3>Nudge a cohort</h3>
+      <p class="thread-empty" style="margin:.2rem 0 .8rem">Send an in-app nudge to every student in a cohort.</p>
+      <div class="form-row" style="margin-bottom:.7rem">
+        <label for="nudgeCohort">Cohort</label>
+        <select id="nudgeCohort" class="row-select"><option value="">Loading cohorts…</option></select>
+      </div>
+      <div class="form-row" style="margin-bottom:.7rem">
+        <label for="nudgeMessage">Message</label>
+        <textarea id="nudgeMessage" rows="3" placeholder="e.g. Office hours at 3pm — bring your blockers!"></textarea>
+      </div>
+      <button class="btn btn-primary" id="nudgeSend" type="button">Send nudge</button>
+    </div>`;
+
+  // Weekly AI digest (loads after the charts).
+  const dp = document.getElementById("digestPanel");
+  try {
+    const dg = await API.get("/api/analytics/digest");
+    const chips = (dg.themes || [])
+      .map((t) => `<span class="theme-chip">${escapeHtml(t.theme)}<b>${t.count}</b></span>`)
+      .join("");
+    dp.innerHTML =
+      `<p class="digest-summary">${escapeHtml(dg.summary || "")}</p>` +
+      (chips ? `<div class="theme-chips">${chips}</div>` : "");
+  } catch (e) {
+    dp.innerHTML = `<p class="thread-empty">No digest yet.</p>`;
+  }
+
+  // Recent activity feed (loads after the charts so a failure here can't blank the dashboard).
+  const feed = document.getElementById("activityFeed");
+  try {
+    const { activity } = await API.get("/api/activity");
+    feed.innerHTML = activityHtml(activity);
+  } catch (e) {
+    feed.innerHTML = `<p class="thread-empty">Couldn't load activity.</p>`;
+  }
+
+  // Nudge composer — pick a cohort, write a message, POST /api/nudges.
+  const nudgeCohort = document.getElementById("nudgeCohort");
+  const nudgeMessage = document.getElementById("nudgeMessage");
+  const nudgeSend = document.getElementById("nudgeSend");
+  try {
+    const { cohorts } = await API.get("/api/cohorts");
+    nudgeCohort.innerHTML = (cohorts && cohorts.length)
+      ? cohorts.map((c) => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join("")
+      : `<option value="">No cohorts yet</option>`;
+  } catch (e) {
+    nudgeCohort.innerHTML = `<option value="">Couldn't load cohorts</option>`;
+  }
+  nudgeSend.addEventListener("click", async () => {
+    const cohortId = nudgeCohort.value;
+    const message = nudgeMessage.value.trim();
+    if (!cohortId) { toast("Pick a cohort first.", "error"); return; }
+    if (!message) { toast("Write a message to send.", "error"); return; }
+    nudgeSend.disabled = true;
+    try {
+      const r = await API.post("/api/nudges", { message, target: "cohort:" + cohortId });
+      const n = r.sent || 0;
+      toast(`Sent to ${n} student${n === 1 ? "" : "s"}.`, "success");
+      nudgeMessage.value = "";
+    } catch (err) {
+      toast(err.message || "Couldn't send the nudge.", "error");
+    } finally {
+      nudgeSend.disabled = false;
+    }
+  });
+})();

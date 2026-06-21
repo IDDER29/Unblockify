@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unblockify — Security &amp; Trust</title>
+    <meta
+      name="description"
+      content="How Unblockify keeps your organization's data isolated, auditable, and yours: strict multi-tenant isolation, an immutable audit log, GDPR data tools, and local-first residency."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./stylesheet.main.css" />
+  </head>
+  <body>
+    <div id="site-nav"></div>
+
+    <!-- HERO -->
+    <header class="hero">
+      <div class="container">
+        <div class="hero-grid">
+          <div>
+            <span class="eyebrow">Security &amp; trust</span>
+            <h1>Built so an institution can <span class="accent">say yes.</span></h1>
+            <p class="lead">
+              Unblockify is designed for organizations that take student data
+              seriously. Strict tenant isolation, an immutable audit trail, and
+              GDPR tooling are part of the product — not a paid add-on. And it
+              runs entirely on your own infrastructure.
+            </p>
+            <div class="hero-actions">
+              <a href="contact.html" class="btn btn-flow btn-lg">Talk to our team</a>
+              <a href="#pillars" class="btn btn-ghost-dark btn-lg">See the safeguards</a>
+            </div>
+            <div class="hero-stats">
+              <div>
+                <div class="num">1&nbsp;DB</div>
+                <div class="lbl">Every row scoped to your org</div>
+              </div>
+              <div>
+                <div class="num">100%</div>
+                <div class="lbl">Self-hostable, local-first</div>
+              </div>
+              <div>
+                <div class="num">Audit</div>
+                <div class="lbl">Every admin action logged</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Signature: a security signal panel -->
+          <div class="signal-card">
+            <svg class="signal-wave" viewBox="0 0 320 64" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="sig" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#FF5A4D" />
+                  <stop offset="55%" stop-color="#F59F00" />
+                  <stop offset="80%" stop-color="#12B886" />
+                </linearGradient>
+              </defs>
+              <path
+                class="pulse-track"
+                d="M0 40 L70 40 L84 40 L96 14 L112 58 L128 40 L150 40 L168 40 L182 12 L196 60 L210 32 L230 32 L250 32 L264 8 L276 56 L290 24 L320 24"
+                fill="none"
+                stroke="url(#sig)"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <div class="row">
+              <div>
+                <div class="blk-id">AUTH</div>
+                <div class="blk-title">Login — rate-limited, httpOnly session</div>
+              </div>
+              <span class="pill pill-resolved">Logged</span>
+            </div>
+            <div class="row">
+              <div>
+                <div class="blk-id">TENANT</div>
+                <div class="blk-title">Cross-org read attempt</div>
+              </div>
+              <span class="pill pill-blocked">Blocked</span>
+            </div>
+            <div class="row">
+              <div>
+                <div class="blk-id">GDPR</div>
+                <div class="blk-title">Right-to-erasure request</div>
+              </div>
+              <span class="pill pill-pending">Ready</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- TRUST PILLARS -->
+    <section class="section" id="pillars">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">What protects you</span>
+          <h2>Trust, built into the architecture.</h2>
+          <p>
+            These aren't policies on a page. They're enforced in the database,
+            the API layer, and the session — every request, every role.
+          </p>
+        </div>
+
+        <div class="card-grid">
+          <div class="m-card">
+            <span class="section-eyebrow">Isolation</span>
+            <h3>Strict multi-tenant isolation</h3>
+            <p>
+              Every record carries your organization's ID, and every query is
+              filtered by the caller's org before it runs. A request for another
+              tenant's data returns "not found" — never the data. Cross-tenant
+              access is impossible by design, not by convention.
+            </p>
+          </div>
+
+          <div class="m-card">
+            <span class="section-eyebrow">Accountability</span>
+            <h3>Immutable audit log</h3>
+            <p>
+              Every login, invite, role change, and admin action is recorded as
+              an append-only event. Owners get a built-in audit viewer and a
+              one-click CSV export — so you always have a defensible record of
+              who did what, and when.
+            </p>
+          </div>
+
+          <div class="m-card">
+            <span class="section-eyebrow">Privacy</span>
+            <h3>GDPR data tools</h3>
+            <p>
+              Data-subject rights are built in: a full organization export, a
+              per-user data export, and right-to-erasure that removes a person's
+              data on request. No tickets to support, no manual database
+              surgery.
+            </p>
+          </div>
+
+          <div class="m-card">
+            <span class="section-eyebrow">Access</span>
+            <h3>Role-based access control</h3>
+            <p>
+              Three least-privilege roles — owner, instructor, and student. Each
+              endpoint enforces the roles it allows server-side, so a student
+              can't reach instructor tooling and an instructor can't reach
+              owner analytics, no matter what the client sends.
+            </p>
+          </div>
+
+          <div class="m-card">
+            <span class="section-eyebrow">In transit</span>
+            <h3>Encryption in transit</h3>
+            <p>
+              Run Unblockify behind HTTPS and every request — credentials,
+              session cookies, and student data — is encrypted on the wire.
+              Sessions ride in a secure, httpOnly cookie that JavaScript can't
+              read.
+            </p>
+          </div>
+
+          <div class="m-card">
+            <span class="section-eyebrow">Residency</span>
+            <h3>Local-first &amp; data residency</h3>
+            <p>
+              Unblockify runs entirely on your own infrastructure with its own
+              database — no third-party data sharing. The AI Teaching Assistant
+              even works fully offline with a deterministic local fallback, so
+              student work never has to leave your walls.
+            </p>
+          </div>
+
+          <div class="m-card">
+            <span class="section-eyebrow">Accounts</span>
+            <h3>Account protection</h3>
+            <p>
+              Authentication is rate-limited to slow credential-stuffing,
+              passwords can be reset securely, and sessions are carried in
+              signed, httpOnly cookies. The basics, done right, on every
+              account.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DATA OWNERSHIP -->
+    <section class="section" id="ownership" style="background: var(--surface-2)">
+      <div class="container">
+        <div class="band">
+          <div>
+            <span class="eyebrow">Your data stays yours</span>
+            <h2>Local-first, and self-hostable end to end.</h2>
+            <p>
+              Unblockify is a single Node service and a single SQLite database
+              that live on hardware you control. There's no telemetry phoning
+              home and no shared multi-customer cloud holding your students'
+              work. Your data has exactly one residence: yours.
+            </p>
+            <p>
+              Because everything — including the AI assistant's offline
+              fallback — runs locally, you can deploy Unblockify on a private
+              network or fully air-gapped and it keeps working.
+            </p>
+            <a href="contact.html" class="btn btn-flow" style="margin-top: 1.6rem">Talk to our team</a>
+          </div>
+          <div class="metric-grid">
+            <div class="metric"><div class="num">1</div><div class="lbl">Service, self-hosted</div></div>
+            <div class="metric"><div class="num">0</div><div class="lbl">Third-party data sharing</div></div>
+            <div class="metric"><div class="num">Offline</div><div class="lbl">AI fallback included</div></div>
+            <div class="metric"><div class="num">Yours</div><div class="lbl">Single data residence</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMPLIANCE READY -->
+    <section class="section" id="compliance">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Compliance-ready</span>
+          <h2>The evidence procurement asks for.</h2>
+          <p>
+            We don't claim certifications we don't hold. We give you the
+            mechanisms underneath them — designed so your DPA, your audit, and
+            your privacy reviews go smoothly.
+          </p>
+        </div>
+
+        <div class="card-grid">
+          <div class="m-card">
+            <span class="section-eyebrow">Audit trail</span>
+            <h3>Provable history</h3>
+            <p>
+              An append-only event log of access and administrative changes,
+              viewable by owners — the trail security reviewers expect to see.
+            </p>
+          </div>
+          <div class="m-card">
+            <span class="section-eyebrow">Exports</span>
+            <h3>Subject-access requests</h3>
+            <p>
+              Org-wide and per-user exports answer data-subject access requests
+              in minutes, not days — straight from the owner console.
+            </p>
+          </div>
+          <div class="m-card">
+            <span class="section-eyebrow">Erasure</span>
+            <h3>Right to be forgotten</h3>
+            <p>
+              Built-in erasure removes an individual's data on request, so you
+              can honor deletion obligations without engineering effort.
+            </p>
+          </div>
+          <div class="m-card">
+            <span class="section-eyebrow">DPA-ready</span>
+            <h3>Designed for your agreement</h3>
+            <p>
+              Tenant isolation, encryption in transit, and local data residency
+              map cleanly onto the controls a Data Processing Agreement asks
+              you to attest.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-band">
+      <div class="container">
+        <span class="eyebrow">Bring it to your security team</span>
+        <h2>Let's make it easy to say yes.</h2>
+        <p>
+          Walk through isolation, audit, and data tooling with us — and get the
+          answers your procurement and privacy reviews need.
+        </p>
+        <a href="contact.html" class="btn btn-primary btn-lg">Talk to our team</a>
+      </div>
+    </section>
+
+    <div id="site-footer"></div>
+    <script src="./functions/site.js"></script>
+  </body>
+</html>
