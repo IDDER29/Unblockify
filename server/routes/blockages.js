@@ -798,5 +798,42 @@ module.exports = function blockageRoutes(db) {
     res.json({ ok: true });
   });
 
+  // POST /api/blockages/:id/proactive-prompt — student requests a "what to watch next" prompt (Phase 5.2)
+  router.post("/blockages/:id/proactive-prompt", requireRole("student"), (req, res) => {
+    const row = rowById(req.params.id);
+    if (!row || row.org_id !== req.user.orgId || row.user_id !== req.user.userId)
+      return res.status(404).json({ error: "Blockage not found." });
+
+    // Look for co-occurrence patterns: topics in this blockage → commonly-following topics
+    let currentTopics = [];
+    try { currentTopics = JSON.parse(row.ai_topics) || []; } catch (_) {}
+
+    if (!currentTopics.length) return res.json({ ok: true, prompt: null });
+
+    // Find top predicted next topics from progression_patterns
+    const placeholders = currentTopics.map(() => "?").join(",");
+    const patterns = db.prepare(
+      `SELECT topic_b, SUM(count) as total FROM progression_patterns
+        WHERE org_id = ? AND topic_a IN (${placeholders})
+        GROUP BY topic_b ORDER BY total DESC LIMIT 3`
+    ).all(req.user.orgId, ...currentTopics);
+
+    if (!patterns.length) return res.json({ ok: true, prompt: null });
+
+    const nextTopics = patterns.map((p) => p.topic_b);
+    const prompt = `Based on what students typically encounter after **${currentTopics[0]}**, you may want to review: **${nextTopics.join(", ")}**. Getting ahead on these could save you time later.`;
+
+    // Create a dismissible notification
+    notify(db, {
+      orgId: req.user.orgId,
+      userId: req.user.userId,
+      type: "proactive_prompt",
+      blockageId: row.id,
+      body: prompt,
+    });
+
+    res.json({ ok: true, prompt, nextTopics });
+  });
+
   return router;
 };
