@@ -1766,3 +1766,11 @@ tr:has(.skel-line) td { border-color: transparent !important; }
 .backup-chip { display:none; background:var(--pending); color:#fff; border:none; }
 .backup-chip.active { background:var(--ink,#0C111B); color:#fff; }
 .blk-card.needs-backup { border-left:3px solid var(--pending); }
+
+/* ── Phase 2.2 · Student Knowledge Pre-Search ─────────────── */
+.social-proof { background:#f0faf5; border:1px solid #c3ebd9; border-radius:8px; padding:.75rem; margin:.5rem 0 .75rem; font-size:.88rem; }
+.sp-head { font-weight:600; color:var(--flow,#12B886); margin-bottom:.5rem; }
+.sp-item { display:block; padding:.4rem .5rem; border-radius:5px; text-decoration:none; color:inherit; margin-bottom:.25rem; }
+.sp-item:hover { background:rgba(18,184,134,.08); }
+.sp-title { font-weight:500; }
+.sp-summary { color:var(--muted,#666); font-size:.8rem; margin-top:.15rem; }

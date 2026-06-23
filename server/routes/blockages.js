@@ -164,7 +164,12 @@ module.exports = function blockageRoutes(db) {
     // Pull a wide set for an honest count, surface only the top few.
     const all = similarResolved(db, { orgId, cohortId, text, limit: 20 });
     res.json({
-      matches: all.slice(0, 3).map((m) => ({ id: m.id, title: m.title, resolutionType: m.resolutionType })),
+      matches: all.slice(0, 3).map((m) => ({
+        id: m.id,
+        title: m.title,
+        resolutionType: m.resolutionType,
+        resolutionSummary: m.resolution_summary || m.resolutionSummary || null,
+      })),
       count: all.length,
     });
   });

@@ -24,10 +24,10 @@ function tokenize(text) {
 function similarResolved(db, { orgId, cohortId = null, text, excludeId = null, limit = 3 }) {
   const rows = db
     .prepare(
-      `SELECT id, title, details, difficulty, resolution_type, resolution_note, cohort_id
+      `SELECT id, title, details, difficulty, resolution_type, resolution_note, resolution_summary, cohort_id
          FROM blockages
         WHERE org_id = ? AND status = 'resolved'
-          AND resolution_note IS NOT NULL ${excludeId ? "AND id != ?" : ""}`
+          AND (resolution_note IS NOT NULL OR resolution_summary IS NOT NULL) ${excludeId ? "AND id != ?" : ""}`
     )
     .all(...(excludeId ? [orgId, excludeId] : [orgId]));
 
@@ -52,6 +52,7 @@ function similarResolved(db, { orgId, cohortId = null, text, excludeId = null, l
     title: r.title,
     resolutionType: r.resolution_type,
     resolutionNote: r.resolution_note,
+    resolution_summary: r.resolution_summary || null,
     score,
   }));
 }

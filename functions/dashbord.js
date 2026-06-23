@@ -232,6 +232,30 @@
     if (e.target === modal) hideModal();
   });
 
+  // Live pre-search: as the student types the title, show similar resolved blockages
+  const titleInput = document.getElementById("title");
+  const socialProof = document.getElementById("socialProof");
+  let _searchTimer = null;
+  if (titleInput && socialProof) {
+    titleInput.addEventListener("input", () => {
+      clearTimeout(_searchTimer);
+      const q = titleInput.value.trim();
+      if (q.length < 4) { socialProof.hidden = true; return; }
+      _searchTimer = setTimeout(async () => {
+        try {
+          const { matches, count } = await API.get(`/api/blockages/similar?text=${encodeURIComponent(q)}`);
+          if (!matches || !matches.length) { socialProof.hidden = true; return; }
+          socialProof.innerHTML = `<div class="sp-head">${count} student${count !== 1 ? "s" : ""} had this before — here's what worked:</div>
+            ${matches.map((m) => `<a href="blockage.html?id=${encodeURIComponent(m.id)}" target="_blank" class="sp-item">
+              <div class="sp-title">${escapeHtml(m.title)}</div>
+              ${m.resolutionSummary ? `<div class="sp-summary">${escapeHtml(m.resolutionSummary)}</div>` : ""}
+            </a>`).join("")}`;
+          socialProof.hidden = false;
+        } catch (_) { socialProof.hidden = true; }
+      }, 400);
+    });
+  }
+
   // Load the student's cohort + its briefs to populate the form.
   async function loadCohort() {
     try {
