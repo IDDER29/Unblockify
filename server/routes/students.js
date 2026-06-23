@@ -1,71 +1,55 @@
 "use strict";
 
 const express = require("express");
-const { requireAuth, requireRole } = require("../auth");
+const { requireAuth, requireStaff } = require("../auth");
 const { notify } = require("../lib/helpers");
 
 module.exports = function studentsRoutes(db) {
   const router = express.Router();
 
-  // POST /students/:id/nudge — send a nudge notification to a student (owner only)
-  router.post(
-    "/students/:id/nudge",
-    requireAuth,
-    requireRole("owner"),
-    (req, res) => {
-      const { orgId, userId } = req.user;
-      const studentId = Number(req.params.id);
+  // POST /api/students/:id/nudge — send a nudge notification to a specific student.
+  router.post("/students/:id/nudge", requireAuth, requireStaff, (req, res) => {
+    const { orgId, userId } = req.user;
+    const studentId = Number(req.params.id);
+    const message = (req.body.message || "").trim() || "Your instructor has nudged you.";
 
-      const student = db
-        .prepare(
-          "SELECT id, name FROM users WHERE id = ? AND org_id = ? AND role = 'student'"
-        )
-        .get(studentId, orgId);
-
-      if (!student) return res.status(404).json({ error: "Student not found" });
-
-      notify(db, {
-        orgId,
-        userId: studentId,
-        type: "nudge",
-        body: "Your instructor wants to check in with you. Keep going — you've got this!",
-      });
-
-      res.json({ ok: true });
+    const student = db
+      .prepare("SELECT id, org_id FROM users WHERE id = ? AND role = 'student'")
+      .get(studentId);
+    if (!student || student.org_id !== orgId) {
+      return res.status(404).json({ error: "Student not found." });
     }
-  );
 
-  // POST /students/:id/flag — flag a student for a check-in (owner only)
-  router.post(
-    "/students/:id/flag",
-    requireAuth,
-    requireRole("owner"),
-    (req, res) => {
-      const { orgId, userId } = req.user;
-      const studentId = Number(req.params.id);
+    notify(db, { orgId, userId: studentId, type: "nudge", blockageId: null, body: message });
+    res.json({ ok: true });
+  });
 
-      const student = db
-        .prepare(
-          "SELECT id, name FROM users WHERE id = ? AND org_id = ? AND role = 'student'"
-        )
-        .get(studentId, orgId);
+  // POST /api/students/:id/flag — create a check_in row for the student.
+  router.post("/students/:id/flag", requireAuth, requireStaff, (req, res) => {
+    const { orgId, userId } = req.user;
+    const studentId = Number(req.params.id);
+    const note = (req.body.note || "").trim() || null;
 
-      if (!student) return res.status(404).json({ error: "Student not found" });
-
-      const result = db
-        .prepare(
-          `INSERT INTO check_ins (org_id, student_id, instructor_id, note, status)
-           VALUES (?, ?, ?, ?, 'open')`
-        )
-        .run(orgId, studentId, userId, req.body.note || null);
-
-      const checkIn = db
-        .prepare("SELECT * FROM check_ins WHERE id = ?")
-        .get(result.lastInsertRowid);
-
-      res.status(201).json({ checkIn });
+    const student = db
+      .prepare("SELECT id, org_id FROM users WHERE id = ? AND role = 'student'")
+      .get(studentId);
+    if (!student || student.org_id !== orgId) {
+      return res.status(404).json({ error: "Student not found." });
     }
-  );
+
+    const info = db
+      .prepare(
+        `INSERT INTO check_ins (org_id, student_id, instructor_id, note)
+         VALUES (?, ?, ?, ?)`
+      )
+      .run(orgId, studentId, userId, note);
+
+    const checkIn = db
+      .prepare("SELECT * FROM check_ins WHERE id = ?")
+      .get(info.lastInsertRowid);
+
+    res.json({ ok: true, checkIn });
+  });
 
   return router;
 };

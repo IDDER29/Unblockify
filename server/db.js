@@ -247,6 +247,9 @@ function migrate(db) {
       created_at    TEXT NOT NULL DEFAULT (datetime('now')),
       resolved_at   TEXT
     );
+
+    CREATE INDEX IF NOT EXISTS idx_checkins_org ON check_ins(org_id);
+    CREATE INDEX IF NOT EXISTS idx_checkins_student ON check_ins(student_id);
   `);
   // Additive columns (safe on an existing data.db).
   addColumnIfMissing(db, "users", "email_verified", "INTEGER NOT NULL DEFAULT 0");

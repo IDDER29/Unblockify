@@ -115,9 +115,9 @@ function atRiskHtml(rows) {
         <span class="rs">${(s.reasons || []).map((t) => `<span class="atrisk-tag">${escapeHtml(t)}</span>`).join("")}</span>
         <div class="atrisk-actions">
           <button class="btn btn-sm" onclick="nudgeStudent(${s.id})">Send nudge</button>
-          <a class="btn btn-sm btn-ghost" href="owner_blockages.html?student=${s.id}">View blockages</a>
+          <a class="btn btn-sm btn-ghost" href="owner_blockages.html?student=${encodeURIComponent(s.id)}">View blockages</a>
           <button class="btn btn-sm btn-ghost" onclick="flagStudent(${s.id})">Flag for check-in</button>
-          ${s.lastInterventionAt ? `<span class="atrisk-last">Last action: ${fmtRelative(s.lastInterventionAt)}</span>` : ""}
+          ${s.lastInterventionAt ? `<span class="atrisk-last">Last action: ${escapeHtml(fmtRelative(s.lastInterventionAt))}</span>` : ""}
           ${s.recovered ? `<span class="pill pill-resolved">Recovered</span>` : ""}
         </div>
       </div>`
@@ -127,19 +127,19 @@ function atRiskHtml(rows) {
 
 async function nudgeStudent(id) {
   try {
-    await API.post(`/students/${id}/nudge`, {});
-    toast("Nudge sent");
+    await API.post(`/api/students/${id}/nudge`, { message: "Your instructor is checking in on you." });
+    toast("Nudge sent", "success");
   } catch (e) {
-    toast("Failed to send nudge");
+    toast(e.message || "Couldn't send nudge.", "error");
   }
 }
 
 async function flagStudent(id) {
   try {
-    await API.post(`/students/${id}/flag`, {});
-    toast("Flagged for check-in");
+    await API.post(`/api/students/${id}/flag`, {});
+    toast("Flagged for check-in", "success");
   } catch (e) {
-    toast("Failed to flag student");
+    toast(e.message || "Couldn't flag student.", "error");
   }
 }
 

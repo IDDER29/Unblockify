@@ -23,6 +23,7 @@ const cannedRoutes = require("./routes/canned");
 const auditRoutes = require("./routes/audit");
 const gdprRoutes = require("./routes/gdpr");
 const slaRoutes = require("./routes/sla");
+const studentRoutes = require("./routes/students");
 const { requestLogger, errorHandler, healthz } = require("./lib/logger");
 
 const ROOT = path.join(__dirname, "..");
@@ -63,6 +64,7 @@ function createApp(db) {
   app.use("/api", auditRoutes(db));
   app.use("/api", gdprRoutes(db));
   app.use("/api", slaRoutes(db));
+  app.use("/api", studentRoutes(db));
   app.use("/api", notificationRoutes(db));
   app.use("/api", analyticsRoutes(db));
 
