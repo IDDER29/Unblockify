@@ -106,16 +106,41 @@ function atRiskHtml(rows) {
   if (!rows || !rows.length) return `<p class="atrisk-empty">No students at risk right now. 🎉</p>`;
   return `<div class="atrisk-list">${rows
     .map(
-      (r) => `<div class="atrisk-item">
+      (s) => `<div class="atrisk-item">
         <span class="nm">${
-          r.id != null
-            ? `<a href="student_profile.html?id=${encodeURIComponent(r.id)}" style="color:inherit">${escapeHtml(r.name)}</a>`
-            : escapeHtml(r.name)
+          s.id != null
+            ? `<a href="student_profile.html?id=${encodeURIComponent(s.id)}" style="color:inherit">${escapeHtml(s.name)}</a>`
+            : escapeHtml(s.name)
         }</span>
-        <span class="rs">${(r.reasons || []).map((t) => `<span class="atrisk-tag">${escapeHtml(t)}</span>`).join("")}</span>
+        <span class="rs">${(s.reasons || []).map((t) => `<span class="atrisk-tag">${escapeHtml(t)}</span>`).join("")}</span>
+        <div class="atrisk-actions">
+          <button class="btn btn-sm" onclick="nudgeStudent(${s.id})">Send nudge</button>
+          <a class="btn btn-sm btn-ghost" href="owner_blockages.html?student=${s.id}">View blockages</a>
+          <button class="btn btn-sm btn-ghost" onclick="flagStudent(${s.id})">Flag for check-in</button>
+          ${s.lastInterventionAt ? `<span class="atrisk-last">Last action: ${fmtRelative(s.lastInterventionAt)}</span>` : ""}
+          ${s.recovered ? `<span class="pill pill-resolved">Recovered</span>` : ""}
+        </div>
       </div>`
     )
     .join("")}</div>`;
+}
+
+async function nudgeStudent(id) {
+  try {
+    await API.post(`/students/${id}/nudge`, {});
+    toast("Nudge sent");
+  } catch (e) {
+    toast("Failed to send nudge");
+  }
+}
+
+async function flagStudent(id) {
+  try {
+    await API.post(`/students/${id}/flag`, {});
+    toast("Flagged for check-in");
+  } catch (e) {
+    toast("Failed to flag student");
+  }
 }
 
 (async function () {

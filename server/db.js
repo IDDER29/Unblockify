@@ -226,6 +226,17 @@ function migrate(db) {
     CREATE INDEX IF NOT EXISTS idx_views_user ON saved_views(user_id);
     CREATE INDEX IF NOT EXISTS idx_csat_org ON csat(org_id);
     CREATE INDEX IF NOT EXISTS idx_canned_org ON canned_responses(org_id);
+
+    CREATE TABLE IF NOT EXISTS check_ins (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      org_id        INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      student_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      instructor_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      note          TEXT,
+      status        TEXT NOT NULL DEFAULT 'open',
+      created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+      resolved_at   TEXT
+    );
   `);
   // Additive columns (safe on an existing data.db).
   addColumnIfMissing(db, "users", "email_verified", "INTEGER NOT NULL DEFAULT 0");

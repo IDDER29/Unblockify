@@ -18,6 +18,7 @@ const tagRoutes = require("./routes/tags");
 const viewRoutes = require("./routes/views");
 const csatRoutes = require("./routes/csat");
 const nudgeRoutes = require("./routes/nudges");
+const studentsRoutes = require("./routes/students");
 const cannedRoutes = require("./routes/canned");
 const auditRoutes = require("./routes/audit");
 const gdprRoutes = require("./routes/gdpr");
@@ -57,6 +58,7 @@ function createApp(db) {
   app.use("/api", viewRoutes(db));
   app.use("/api", csatRoutes(db));
   app.use("/api", nudgeRoutes(db));
+  app.use("/api", studentsRoutes(db));
   app.use("/api", cannedRoutes(db));
   app.use("/api", auditRoutes(db));
   app.use("/api", gdprRoutes(db));

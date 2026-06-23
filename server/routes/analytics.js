@@ -128,7 +128,39 @@ module.exports = function analyticsRoutes(db) {
         if (open.length) reasons.push(`${open.length} open`);
         if (maxOpenHours > 24) reasons.push(`stuck ${Math.round(maxOpenHours)}h`);
         if (last7 >= 3) reasons.push(`${last7} this week`);
-        return { id: s.id, name: s.name, open: open.length, score, reasons };
+
+        // Last intervention (nudge or flag)
+        const lastCheckIn = db
+          .prepare(
+            `SELECT MAX(created_at) AS last_at FROM check_ins
+              WHERE student_id = ? AND org_id = ?`
+          )
+          .get(s.id, orgId);
+        const lastInterventionAt = lastCheckIn ? lastCheckIn.last_at : null;
+
+        // Recovered: resolved a blockage within 7 days after first check-in
+        let recovered = false;
+        if (lastInterventionAt) {
+          const firstCheckIn = db
+            .prepare(
+              `SELECT MIN(created_at) AS first_at FROM check_ins
+                WHERE student_id = ? AND org_id = ?`
+            )
+            .get(s.id, orgId);
+          if (firstCheckIn && firstCheckIn.first_at) {
+            const resolvedAfter = db
+              .prepare(
+                `SELECT COUNT(*) AS cnt FROM blockages
+                  WHERE user_id = ? AND org_id = ? AND status = 'resolved'
+                    AND resolved_at >= ?
+                    AND resolved_at <= datetime(?, '+7 days')`
+              )
+              .get(s.id, orgId, firstCheckIn.first_at, firstCheckIn.first_at);
+            recovered = resolvedAfter && resolvedAfter.cnt > 0;
+          }
+        }
+
+        return { id: s.id, name: s.name, open: open.length, score, reasons, lastInterventionAt, recovered };
       })
       .filter((s) => s && s.score >= 3);
 
