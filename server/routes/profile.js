@@ -94,5 +94,57 @@ module.exports = function profileRoutes(db) {
     });
   });
 
+  // GET /api/me/momentum — student's own unblocking trajectory (Phase 2.4)
+  // Personal only — no cross-student data, no rankings.
+  router.get("/me/momentum", requireAuth, (req, res) => {
+    const { orgId, userId } = req.user;
+
+    const blks = db.prepare(
+      `SELECT id, title, status, resolution_type, ai_topics, created_at, resolved_at,
+              (julianday(resolved_at) - julianday(created_at)) * 24 AS hours
+         FROM blockages WHERE org_id = ? AND user_id = ? ORDER BY created_at DESC`
+    ).all(orgId, userId);
+
+    const resolved = blks.filter((b) => b.resolved_at);
+    const resolvedHours = resolved.map((b) => b.hours).filter((h) => h != null);
+    const fastestHours = resolvedHours.length ? Math.min(...resolvedHours) : null;
+
+    // Active days: days with at least one resolve in the last 30 days
+    const activeDays = new Set(
+      resolved
+        .filter((b) => {
+          const d = new Date(b.resolved_at);
+          return (Date.now() - d.getTime()) < 30 * 86400000;
+        })
+        .map((b) => b.resolved_at.slice(0, 10))
+    ).size;
+
+    // Top stuck topics from AI triage
+    const topicMap = {};
+    blks.forEach((b) => {
+      let topics = [];
+      try { topics = JSON.parse(b.ai_topics) || []; } catch (_) {}
+      topics.forEach((t) => { topicMap[t] = (topicMap[t] || 0) + 1; });
+    });
+    const topTopics = Object.entries(topicMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([topic, count]) => ({ topic, count }));
+
+    // Recent history (last 10)
+    const history = blks.slice(0, 10).map((b) => ({
+      id: b.id, title: b.title, status: b.status,
+      createdAt: b.created_at, resolvedAt: b.resolved_at,
+    }));
+
+    res.json({
+      totalCleared: resolved.length,
+      fastestResolveHours: fastestHours != null ? Math.round(fastestHours * 10) / 10 : null,
+      activeDaysLast30: activeDays,
+      topStuckTopics: topTopics,
+      history,
+    });
+  });
+
   return router;
 };

@@ -24,6 +24,14 @@
       <div class="stat is-pending"><div class="k">In support</div><div class="v" data-stat="in_support">0</div></div>
       <div class="stat is-resolved"><div class="k">Resolved</div><div class="v" data-stat="resolved">0</div></div>
     </section>
+    <div id="momentumStrip" style="display:none">
+      <section class="kpi-strip momentum-strip">
+        <div class="kpi is-resolved"><div class="kpi-v" id="momCleared">—</div><div class="kpi-k">Cleared this term</div></div>
+        <div class="kpi"><div class="kpi-v" id="momFastest">—</div><div class="kpi-k">Fastest resolve</div></div>
+        <div class="kpi"><div class="kpi-v" id="momActive">—</div><div class="kpi-k">Active days (30d)</div></div>
+        <div class="kpi" id="momTopicKpi" style="display:none"><div class="kpi-v" id="momTopTopic">—</div><div class="kpi-k">Most blocked on</div></div>
+      </section>
+    </div>
     <div class="filters">
       <input type="search" id="search" placeholder="Search…" autocomplete="off">
     </div>
@@ -330,6 +338,21 @@
     </div>`;
   }
   loadCohort();
+
+  // Load momentum stats (Phase 2.4) — non-blocking, failure is silent
+  API.get("/api/me/momentum").then((m) => {
+    if (!m || m.totalCleared === undefined) return;
+    const strip = document.getElementById("momentumStrip");
+    if (!strip) return;
+    document.getElementById("momCleared").textContent = m.totalCleared;
+    document.getElementById("momFastest").textContent = m.fastestResolveHours != null ? m.fastestResolveHours + "h" : "—";
+    document.getElementById("momActive").textContent = m.activeDaysLast30 + " day" + (m.activeDaysLast30 !== 1 ? "s" : "");
+    if (m.topStuckTopics && m.topStuckTopics.length) {
+      document.getElementById("momTopTopic").textContent = m.topStuckTopics[0].topic;
+      document.getElementById("momTopicKpi").style.display = "";
+    }
+    if (m.totalCleared > 0) strip.style.display = "";
+  }).catch(() => {});
 
   // Live updates: a relevant event (claim, AI reply, resolve, comment…) arrived
   // on the shared stream — re-fetch the board, debounced.
