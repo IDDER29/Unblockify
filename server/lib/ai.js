@@ -276,7 +276,39 @@ Themes:\n${themes || "(none)"}`;
   }
 }
 
+// --- Resolution summary (Phase 2.1) ----------------------------------
+// Called on blockage resolve. Returns 1-2 sentence "what finally worked" summary.
+async function resolutionSummary({ title, thread, resolutionNote }) {
+  const c = getClient();
+  if (!c) return fallbackResolutionSummary({ title, thread, resolutionNote });
+  const convo = (thread || []).map((m) => `${m.author} (${m.author_role}): ${m.body}`).join("\n");
+  const user = `Write 1–2 sentences summarizing what finally unblocked the student. Be concrete and actionable — focus on the fix, not the problem.
+Title: ${title}
+Resolution note: ${resolutionNote || "—"}
+Thread:
+${convo || "(no thread)"}`;
+  try {
+    const msg = await c.messages.create({
+      model: MODEL, max_tokens: 120,
+      system: "You write concise resolution summaries for a student knowledge base.",
+      messages: [{ role: "user", content: user }],
+    });
+    return extractText(msg) || fallbackResolutionSummary({ title, thread, resolutionNote });
+  } catch (_) {
+    return fallbackResolutionSummary({ title, thread, resolutionNote });
+  }
+}
+
+function fallbackResolutionSummary({ title, thread, resolutionNote }) {
+  if (resolutionNote && resolutionNote.trim().length > 10) {
+    return resolutionNote.trim().slice(0, 300);
+  }
+  const lastInstructor = [...(thread || [])].reverse().find((m) => m.author_role === "instructor" || m.author_role === "owner");
+  if (lastInstructor) return lastInstructor.body.slice(0, 300);
+  return `Resolved: ${title}`.slice(0, 300);
+}
+
 module.exports = {
-  unblock, draftReply, followup, triage, summarize, digestSummary,
+  unblock, draftReply, followup, triage, summarize, digestSummary, resolutionSummary,
   aiConfigured, AI_NAME, MODEL, AI_FOLLOWUP_MAX,
 };

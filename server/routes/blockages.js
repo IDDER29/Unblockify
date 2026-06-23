@@ -82,6 +82,7 @@ module.exports = function blockageRoutes(db) {
       aiTopics: parseTopics(r.ai_topics),
       aiUrgency: r.ai_urgency || null,
       needsBackup: needsBackupFlag(r.id, r.status, openHours),
+      resolutionSummary: r.resolution_summary || null,
     };
   }
 
@@ -636,6 +637,23 @@ module.exports = function blockageRoutes(db) {
       type: "resolved",
       blockageId: row.id,
       body: `Your blockage "${row.title}" was resolved`,
+    });
+    // Generate resolution summary in background (Phase 2.1)
+    const blockageId = row.id;
+    setImmediate(async () => {
+      try {
+        const thread = db.prepare(
+          `SELECT cm.body, COALESCE(u.name, cm.ai_author) AS author,
+                  CASE WHEN cm.is_ai=1 THEN 'ai' ELSE u.role END AS author_role
+             FROM comments cm LEFT JOIN users u ON u.id = cm.user_id
+            WHERE cm.blockage_id = ? ORDER BY cm.created_at`
+        ).all(blockageId);
+        // Skip if already has a summary (not overwritten on reopen→resolve)
+        const existing = db.prepare("SELECT resolution_summary FROM blockages WHERE id = ?").get(blockageId);
+        if (existing && existing.resolution_summary) return;
+        const s = await ai.resolutionSummary({ title: row.title, thread, resolutionNote: note });
+        if (s) db.prepare("UPDATE blockages SET resolution_summary = ? WHERE id = ?").run(s, blockageId);
+      } catch (_) {}
     });
     res.json({ blockage: summary(joinedById(row.id)) });
   });
