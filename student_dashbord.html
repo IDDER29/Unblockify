@@ -20,29 +20,30 @@
     <section class="modal" id="newModal">
       <form class="add_new_blockage" id="newForm">
         <div class="flex-row header">
-          <h1>New blockage</h1>
+          <h1>I'm stuck</h1>
           <button type="button" class="close-modal" id="newClose">&times;</button>
         </div>
         <div id="newFields">
-          <label for="title">Title</label>
-          <input type="text" id="title" name="title" placeholder="What are you stuck on?" required />
+          <label for="title">What are you stuck on?</label>
+          <input type="text" id="title" name="title" placeholder="e.g. My fetch returns 401 even with a token" required autocomplete="off" />
+          <div class="social-proof" id="socialProof" hidden></div>
 
-          <label for="briefSelect">Brief</label>
+          <label for="briefSelect">Which part of the course?</label>
           <select id="briefSelect" name="brief">
             <option value="">— none —</option>
           </select>
 
-          <label for="difficulty">Difficulty</label>
+          <label for="difficulty">How stuck are you?</label>
           <input type="text" id="difficulty" name="difficulty" placeholder="Short summary of the difficulty" />
 
-          <label for="details">Details</label>
-          <textarea id="details" name="details" placeholder="What have you tried? What's the error?" required></textarea>
+          <label for="details">What have you tried so far?</label>
+          <textarea id="details" name="details" placeholder="What you expected, what happened, and what you've already tried. The more you share, the faster you're unblocked." required></textarea>
 
-          <label for="reportFiles">Attach files (optional)</label>
+          <label for="reportFiles">Attach a screenshot or file (optional)</label>
           <input type="file" id="reportFiles" multiple
             accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,text/plain,application/pdf" />
 
-          <input type="submit" value="Report blockage" />
+          <input type="submit" value="Get unblocked" />
         </div>
       </form>
     </section>

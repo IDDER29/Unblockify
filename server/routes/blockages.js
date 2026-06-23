@@ -58,6 +58,7 @@ module.exports = function blockageRoutes(db) {
       tags: tagsFor(r.id),
       createdAt: r.created_at,
       resolvedAt: r.resolved_at,
+      resolutionType: r.resolution_type || null,
       aiDifficulty: r.ai_difficulty || null,
       aiTopics: parseTopics(r.ai_topics),
       aiUrgency: r.ai_urgency || null,
@@ -123,6 +124,28 @@ module.exports = function blockageRoutes(db) {
     }
     sql += " ORDER BY b.created_at DESC";
     res.json({ blockages: db.prepare(sql).all(...args).map(summary) });
+  });
+
+  // GET /api/blockages/similar?text=...&cohortId=... — "you're not alone":
+  // resolved blockages in THIS workspace that look like what the caller is about
+  // to report. Powers pre-submit deflection on the student report form. Real data
+  // only (reuses the knowledge-base retrieval); org-scoped, so never cross-tenant.
+  // Registered before "/blockages/:id" so the literal path wins.
+  router.get("/blockages/similar", (req, res) => {
+    const { orgId, userId } = req.user;
+    const text = String(req.query.text || "").trim();
+    if (text.length < 4) return res.json({ matches: [], count: 0 });
+    let cohortId = req.query.cohortId ? Number(req.query.cohortId) || null : null;
+    if (!cohortId) {
+      const u = db.prepare("SELECT cohort_id FROM users WHERE id = ?").get(userId);
+      cohortId = u && u.cohort_id ? u.cohort_id : null;
+    }
+    // Pull a wide set for an honest count, surface only the top few.
+    const all = similarResolved(db, { orgId, cohortId, text, limit: 20 });
+    res.json({
+      matches: all.slice(0, 3).map((m) => ({ id: m.id, title: m.title, resolutionType: m.resolutionType })),
+      count: all.length,
+    });
   });
 
   // GET /api/blockages/export.csv — staff download all visible blockages as CSV

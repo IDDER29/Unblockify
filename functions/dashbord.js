@@ -1,4 +1,7 @@
-/* Student "My blockages" board — talks to the API via the shared runtime. */
+/* Student "My blockages" board — talks to the API via the shared runtime.
+   Reframed around momentum (your own progress) and pull (you're not alone),
+   not just a status tracker. All figures are computed from the student's real
+   blockages; the "solved before" social proof comes from /blockages/similar. */
 
 (async function () {
   const s = await requireRole("student");
@@ -10,20 +13,15 @@
     active: "student_dashbord.html",
     title: "My blockages",
     crumb: "Student",
-    actions: '<button class="btn btn-primary" id="newBtn">+ New blockage</button>',
+    actions: '<button class="btn btn-primary" id="newBtn">I\'m stuck</button>',
   });
 
   view.innerHTML = `
     <div class="page-head">
       <h1>Welcome back, ${escapeHtml(s.user.name)}</h1>
-      <p>Everything you've reported and where it stands.</p>
+      <p id="momentumLine">Loading your momentum…</p>
     </div>
-    <section class="stat-row">
-      <div class="stat"><div class="k">Total</div><div class="v" data-stat="total">0</div></div>
-      <div class="stat is-blocked"><div class="k">Blocked</div><div class="v" data-stat="open">0</div></div>
-      <div class="stat is-pending"><div class="k">In support</div><div class="v" data-stat="in_support">0</div></div>
-      <div class="stat is-resolved"><div class="k">Resolved</div><div class="v" data-stat="resolved">0</div></div>
-    </section>
+    <section id="momentum"></section>
     <div class="filters">
       <input type="search" id="search" placeholder="Search…" autocomplete="off">
     </div>
@@ -45,6 +43,91 @@
     history.replaceState(null, "", qs ? "?" + qs : window.location.pathname);
   }
 
+  // --- Momentum (the student's own progress, from real data) -----------
+  function fmtDur(h) {
+    if (h == null) return "—";
+    if (h < 1) return "<1h";
+    if (h < 48) return Math.round(h) + "h";
+    return Math.round(h / 24) + "d";
+  }
+  function durationHours(b) {
+    const c = parseDate(b.createdAt), r = parseDate(b.resolvedAt);
+    return c && r ? (r - c) / 3600000 : null;
+  }
+  function median(nums) {
+    const s2 = nums.filter((x) => x != null && x >= 0).sort((a, b) => a - b);
+    return s2.length ? s2[Math.floor((s2.length - 1) / 2)] : null;
+  }
+  function computeMomentum(list) {
+    const resolved = list.filter((b) => b.status === "resolved");
+    const active = list.filter((b) => b.status === "open" || b.status === "in_support");
+    const self = resolved.filter((b) => b.resolutionType === "ai");
+    const selfRate = resolved.length ? Math.round((self.length / resolved.length) * 100) : 0;
+    const med = median(resolved.map(durationHours));
+
+    // Trend: are recent unblocks faster than earlier ones? Only claim it with
+    // enough resolved history and a real (>=10%) improvement — never invent one.
+    let trend = null;
+    if (resolved.length >= 4) {
+      const chron = resolved
+        .filter((b) => parseDate(b.resolvedAt))
+        .sort((a, b) => parseDate(a.resolvedAt) - parseDate(b.resolvedAt));
+      const half = Math.floor(chron.length / 2);
+      const early = median(chron.slice(0, half).map(durationHours));
+      const late = median(chron.slice(half).map(durationHours));
+      if (early != null && late != null && early > 0 && late < early) {
+        const pct = Math.round((1 - late / early) * 100);
+        if (pct >= 10) trend = pct;
+      }
+    }
+    return { total: list.length, resolved: resolved.length, active: active.length, selfRate, median: med, trend };
+  }
+
+  function renderMomentum(list) {
+    const m = computeMomentum(list);
+    const line = document.getElementById("momentumLine");
+    const slot = document.getElementById("momentum");
+
+    if (m.total === 0) {
+      if (line) line.textContent =
+        "Stuck on something? You're in the right place — reporting a blocker is how you get moving. No judgment, ever.";
+      slot.innerHTML = `
+        <section class="momentum first">
+          <div class="momentum-lead">
+            <div class="momentum-k">Your momentum</div>
+            <div class="momentum-head">No blockers yet. When you hit a wall, this is where you get unblocked — fast, and in private.</div>
+            <p class="momentum-note">Most students who ask for help finish. The ones who stay stuck in silence don't. Be the first kind.</p>
+          </div>
+          <button class="btn btn-primary" id="momentumNew">I'm stuck</button>
+        </section>`;
+      const mn = document.getElementById("momentumNew");
+      if (mn) mn.addEventListener("click", showModal);
+      return;
+    }
+
+    if (line) {
+      line.textContent = m.resolved
+        ? `You've cleared ${m.resolved} blocker${m.resolved === 1 ? "" : "s"}` +
+          (m.selfRate ? ` and figured out ${m.selfRate}% of them yourself` : "") + ". Keep the signal going."
+        : `${m.active} in progress. Every blocker you clear makes the next one faster.`;
+    }
+    const trendChip = m.trend
+      ? `<div class="momentum-trend">⚡ ${m.trend}% faster than when you started</div>` : "";
+    slot.innerHTML = `
+      <section class="momentum">
+        <div class="momentum-lead">
+          <div class="momentum-k">Your momentum</div>
+          <div class="momentum-figs">
+            <div><span class="f">${m.resolved}</span><span class="l">Unblocked</span></div>
+            <div><span class="f">${m.selfRate}%</span><span class="l">You solved yourself</span></div>
+            <div><span class="f">${fmtDur(m.median)}</span><span class="l">Typical unblock</span></div>
+            <div><span class="f">${m.active}</span><span class="l">In progress</span></div>
+          </div>
+          ${trendChip}
+        </div>
+      </section>`;
+  }
+
   // --- Card / column rendering ----------------------------------------
   const COLS = [
     { status: "open", cls: "col-blocked", label: "Blocked" },
@@ -62,6 +145,8 @@
   function cardHtml(b) {
     const { cls, label } = statusMeta(b.status);
     const replies = b.commentCount || 0;
+    const selfTag = b.status === "resolved" && b.resolutionType === "ai"
+      ? '<span class="self-solve" title="You marked this solved yourself">✓ self-solved</span>' : "";
     return `<article class="blk-card linkish status-${cls}" data-id="${b.id}">
       <div class="blk-card-top">
         <span class="blk-id">BLK-${String(b.id).padStart(3, "0")}</span>
@@ -69,23 +154,12 @@
         <span class="pill pill-${cls}">${label}</span>
       </div>
       <h3>${escapeHtml(b.title)}</h3>
-      <div class="blk-meta">${escapeHtml(fmtDate(b.createdAt))} · ${replies} ${replies === 1 ? "reply" : "replies"}</div>
+      <div class="blk-meta">${escapeHtml(fmtDate(b.createdAt))} · ${replies} ${replies === 1 ? "reply" : "replies"}${selfTag}</div>
     </article>`;
   }
 
   function render(blockages) {
-    // Stat tiles always reflect the full (unfiltered) set.
-    const counts = { open: 0, in_support: 0, resolved: 0 };
-    blockages.forEach((b) => {
-      if (counts[b.status] === undefined) counts[b.status] = 0;
-      counts[b.status]++;
-    });
-
-    const total = blockages.length;
-    const stats = { total, open: counts.open, in_support: counts.in_support, resolved: counts.resolved };
-    document.querySelectorAll("[data-stat]").forEach((el) => {
-      el.textContent = stats[el.dataset.stat] != null ? stats[el.dataset.stat] : 0;
-    });
+    renderMomentum(blockages);
 
     const q = searchQuery.trim().toLowerCase();
     const filtered = q
@@ -99,9 +173,14 @@
 
     board.innerHTML = COLS.map((col) => {
       const cards = filtered.filter((b) => b.status === col.status);
+      const empty = {
+        open: "Nothing blocked right now.",
+        in_support: "Nothing in support.",
+        resolved: "Cleared blockers will land here.",
+      }[col.status];
       const body = cards.length
         ? cards.map(cardHtml).join("")
-        : `<div class="col-empty">Nothing here</div>`;
+        : `<div class="col-empty">${empty}</div>`;
       return `<div class="board-col ${col.cls}">
         <div class="board-col-head"><span class="t">${col.label}</span><span class="c">${cards.length}</span></div>
         ${body}
@@ -138,6 +217,7 @@
   const fields = document.getElementById("newFields");
   const briefSelect = document.getElementById("briefSelect");
   const newBtn = document.getElementById("newBtn");
+  const socialProof = document.getElementById("socialProof");
   let cohort = null; // {id, name}
 
   // Upgrade the free-text difficulty input to a structured <select> whose
@@ -152,10 +232,10 @@
     select.name = "difficulty";
     select.innerHTML =
       '<option value="">— not sure —</option>' +
-      '<option value="low">Low</option>' +
-      '<option value="medium">Medium</option>' +
-      '<option value="high">High</option>' +
-      '<option value="blocker">Blocker</option>';
+      '<option value="low">A little stuck</option>' +
+      '<option value="medium">Properly stuck</option>' +
+      '<option value="high">Very stuck</option>' +
+      '<option value="blocker">Totally blocked</option>';
     old.replaceWith(select);
   })();
 
@@ -165,11 +245,15 @@
   const closeBtn = document.getElementById("newClose");
   if (closeBtn && !closeBtn.getAttribute("aria-label")) closeBtn.setAttribute("aria-label", "Close");
 
+  function clearSocialProof() {
+    if (socialProof) { socialProof.hidden = true; socialProof.innerHTML = ""; }
+  }
   function showModal() {
     openModal(modal, { labelledby: modalHeading ? modalHeading.id : undefined });
   }
   function hideModal() {
     closeModal(modal);
+    clearSocialProof();
   }
 
   if (newBtn) newBtn.addEventListener("click", showModal);
@@ -177,6 +261,45 @@
   modal.addEventListener("click", (e) => {
     if (e.target === modal) hideModal();
   });
+
+  // --- "You're not alone": surface look-alikes as the student types ----
+  const titleInput = form.querySelector("#title");
+  let spTimer = null, spSeq = 0;
+  function renderSocialProof(data) {
+    if (!socialProof) return;
+    if (!data || !data.count) {
+      socialProof.className = "social-proof first";
+      socialProof.hidden = false;
+      socialProof.innerHTML =
+        `<div class="sp-head">✨ You might be the first here</div>` +
+        `Nobody in your workspace has logged this yet — what you work out will help whoever hits it next.`;
+      return;
+    }
+    const links = data.matches
+      .map((m) => `<a href="blockage.html?id=${encodeURIComponent(m.id)}">${escapeHtml(m.title)}</a>`)
+      .join("");
+    socialProof.className = "social-proof";
+    socialProof.hidden = false;
+    socialProof.innerHTML =
+      `<div class="sp-head">💡 ${data.count} ${data.count === 1 ? "person" : "people"} in your workspace hit something like this — and got unblocked</div>` +
+      links;
+  }
+  if (titleInput && socialProof) {
+    titleInput.addEventListener("input", () => {
+      const text = titleInput.value.trim();
+      clearTimeout(spTimer);
+      if (text.length < 4) { clearSocialProof(); return; }
+      const seq = ++spSeq;
+      spTimer = setTimeout(async () => {
+        try {
+          const q = "/api/blockages/similar?text=" + encodeURIComponent(text) +
+            (cohort && cohort.id ? "&cohortId=" + encodeURIComponent(cohort.id) : "");
+          const data = await API.get(q);
+          if (seq === spSeq) renderSocialProof(data);
+        } catch (_) {}
+      }, 350);
+    });
+  }
 
   // Load the student's cohort + its briefs to populate the form.
   async function loadCohort() {
@@ -235,8 +358,9 @@
       await API.post("/api/blockages", payload);
       hideModal();
       form.reset();
+      clearSocialProof();
       await refresh();
-      toast("Blockage reported.", "success");
+      toast("You're on the board — help is on the way.", "success");
     } catch (err) {
       toast(err.message, "error");
     }
