@@ -367,5 +367,57 @@ module.exports = function analyticsRoutes(db) {
     });
   });
 
+  // GET /api/analytics/progression?cohortId= — topic co-occurrence patterns (Phase 5.1)
+  router.get("/analytics/progression", (req, res) => {
+    const { orgId } = req.user;
+    const cohortId = req.query.cohortId ? Number(req.query.cohortId) : null;
+
+    // Pull all resolved blockages with AI topics, grouped by student
+    let blkQuery = `SELECT user_id, ai_topics, cohort_id FROM blockages
+       WHERE org_id = ? AND status = 'resolved' AND ai_topics IS NOT NULL`;
+    const args = [orgId];
+    if (cohortId) { blkQuery += " AND cohort_id = ?"; args.push(cohortId); }
+    blkQuery += " ORDER BY user_id, created_at";
+
+    const rows = db.prepare(blkQuery).all(...args);
+
+    // Build co-occurrence: for each student, collect topic sequences and count A→B pairs
+    const coMap = {};
+    let curUser = null;
+    let userTopics = [];
+    function flush() {
+      // For each pair (A before B) within this student's topic sequence
+      const seen = new Set();
+      for (let i = 0; i < userTopics.length; i++) {
+        for (let j = i + 1; j < userTopics.length && j <= i + 3; j++) {
+          const a = userTopics[i], b = userTopics[j];
+          if (a !== b) {
+            const key = `${a}|||${b}`;
+            if (!seen.has(key)) { coMap[key] = (coMap[key] || 0) + 1; seen.add(key); }
+          }
+        }
+      }
+    }
+    for (const row of rows) {
+      if (row.user_id !== curUser) {
+        if (curUser !== null) flush();
+        curUser = row.user_id; userTopics = [];
+      }
+      let topics = [];
+      try { topics = JSON.parse(row.ai_topics) || []; } catch (_) {}
+      userTopics.push(...topics);
+    }
+    if (curUser !== null) flush();
+
+    // Return top patterns sorted by count
+    const patterns = Object.entries(coMap)
+      .map(([key, count]) => { const [topicA, topicB] = key.split("|||"); return { topicA, topicB, count }; })
+      .filter((p) => p.count >= 2)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 20);
+
+    res.json({ patterns, cohortId });
+  });
+
   return router;
 };

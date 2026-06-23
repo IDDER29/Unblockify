@@ -255,6 +255,29 @@ function migrate(db) {
   addColumnIfMissing(db, "comments", "ai_confidence", "REAL");
   addColumnIfMissing(db, "comments", "scaffold_level", "INTEGER");
   addColumnIfMissing(db, "briefs", "max_scaffold", "INTEGER");
+  addColumnIfMissing(db, "briefs", "content", "TEXT");
+  // brief_versions table (idempotent)
+  db.exec(`CREATE TABLE IF NOT EXISTS brief_versions (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    brief_id   INTEGER NOT NULL REFERENCES briefs(id) ON DELETE CASCADE,
+    org_id     INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    content    TEXT,
+    name       TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_bv_brief ON brief_versions(brief_id);`);
+  // brief_suggestions table (Phase 4.2)
+  db.exec(`CREATE TABLE IF NOT EXISTS brief_suggestions (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    brief_id   INTEGER NOT NULL REFERENCES briefs(id) ON DELETE CASCADE,
+    org_id     INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    topic      TEXT NOT NULL,
+    content    TEXT NOT NULL,
+    rationale  TEXT,
+    status     TEXT NOT NULL DEFAULT 'pending',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );`);
   addColumnIfMissing(db, "blockages", "resolution_summary", "TEXT");
   addColumnIfMissing(db, "users", "email_verified", "INTEGER NOT NULL DEFAULT 0");
   addColumnIfMissing(db, "users", "verify_token", "TEXT");
@@ -264,6 +287,18 @@ function migrate(db) {
   addColumnIfMissing(db, "blockages", "ai_urgency", "TEXT");
   addColumnIfMissing(db, "cohorts", "assign_strategy", "TEXT NOT NULL DEFAULT 'none'");
   addColumnIfMissing(db, "cohorts", "rr_cursor", "INTEGER NOT NULL DEFAULT 0");
+  // Phase 5.1: cohort progression patterns (topic co-occurrence)
+  db.exec(`CREATE TABLE IF NOT EXISTS progression_patterns (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    org_id      INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    cohort_id   INTEGER REFERENCES cohorts(id) ON DELETE CASCADE,
+    topic_a     TEXT NOT NULL,
+    topic_b     TEXT NOT NULL,
+    count       INTEGER NOT NULL DEFAULT 1,
+    updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(org_id, cohort_id, topic_a, topic_b)
+  );
+  CREATE INDEX IF NOT EXISTS idx_prog_org ON progression_patterns(org_id);`);
 }
 
 function addColumnIfMissing(db, table, col, decl) {
