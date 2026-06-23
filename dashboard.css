@@ -1761,3 +1761,8 @@ tr:has(.skel-line) td { border-color: transparent !important; }
 .hotspot-info { display:flex; flex-direction:column; gap:.15rem; min-width:0; }
 .hotspot-topic { font-weight:600; font-size:.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .hotspot-meta { font-size:.75rem; font-family:var(--font-mono); color:var(--muted,#666); }
+
+/* ── Phase 1.3 · AI Needs Backup ─────────────────────────── */
+.backup-chip { display:none; background:var(--pending); color:#fff; border:none; }
+.backup-chip.active { background:var(--ink,#0C111B); color:#fff; }
+.blk-card.needs-backup { border-left:3px solid var(--pending); }

@@ -43,7 +43,26 @@ module.exports = function blockageRoutes(db) {
         WHERE bt.blockage_id = ? ORDER BY t.name`
     ).all(blockageId);
 
+  function needsBackupFlag(blockageId, status, openHours) {
+    if (status !== "open") return false;
+    if (!openHours || openHours < 0.5) return false; // < 30 min
+    const comments = db.prepare(
+      `SELECT cm.is_ai, cm.user_id, u.role, cm.created_at
+         FROM comments cm LEFT JOIN users u ON u.id = cm.user_id
+        WHERE cm.blockage_id = ? ORDER BY cm.created_at`
+    ).all(blockageId);
+    const hasAiComment = comments.some((c) => c.is_ai);
+    if (!hasAiComment) return false;
+    const lastAiIdx = comments.map((c) => c.is_ai).lastIndexOf(1);
+    if (lastAiIdx === -1) return false;
+    const afterAi = comments.slice(lastAiIdx + 1);
+    const studentRepliedAfterAi = afterAi.some((c) => c.role === "student");
+    const instructorReplied = comments.some((c) => c.role === "instructor" || c.role === "owner");
+    return studentRepliedAfterAi && !instructorReplied;
+  }
+
   function summary(r) {
+    const openHours = r.resolved_at ? 0 : (Date.now() - new Date(r.created_at).getTime()) / 3600000;
     return {
       id: r.id,
       title: r.title,
@@ -62,6 +81,7 @@ module.exports = function blockageRoutes(db) {
       aiDifficulty: r.ai_difficulty || null,
       aiTopics: parseTopics(r.ai_topics),
       aiUrgency: r.ai_urgency || null,
+      needsBackup: needsBackupFlag(r.id, r.status, openHours),
     };
   }
 

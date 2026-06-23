@@ -252,6 +252,7 @@ function migrate(db) {
     CREATE INDEX IF NOT EXISTS idx_checkins_student ON check_ins(student_id);
   `);
   // Additive columns (safe on an existing data.db).
+  addColumnIfMissing(db, "comments", "ai_confidence", "REAL");
   addColumnIfMissing(db, "users", "email_verified", "INTEGER NOT NULL DEFAULT 0");
   addColumnIfMissing(db, "users", "verify_token", "TEXT");
   addColumnIfMissing(db, "blockages", "ai_followup_count", "INTEGER NOT NULL DEFAULT 0");

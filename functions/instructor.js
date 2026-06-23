@@ -19,6 +19,7 @@
         <button data-status="in_support">In support</button>
         <button data-status="resolved">Resolved</button>
       </div>
+      <button data-backup="1" class="btn-mini backup-chip" id="backupChip">AI needs backup</button>
       <select id="cohort"><option value="">All cohorts</option></select>
       <select id="tag"><option value="">All tags</option></select>
       <input type="search" id="search" placeholder="Search…" autocomplete="off">
@@ -42,6 +43,7 @@
   const saveViewBtn = document.getElementById("saveView");
   const savedViews = document.getElementById("savedViews");
   const escalateBtn = document.getElementById("escalateOverdue");
+  const backupChip = document.getElementById("backupChip");
 
   // --- Read persisted filter state from the URL query string. ----------
   const params = new URLSearchParams(window.location.search);
@@ -49,6 +51,7 @@
   let cohortFilter = params.get("cohort") || "";
   let tagFilter = params.get("tag") || "";
   let searchQuery = params.get("q") || "";
+  let backupOnly = params.get("backup") === "1";
 
   let blockages = [];
 
@@ -66,8 +69,16 @@
     if (cohortFilter) p.set("cohort", cohortFilter);
     if (tagFilter) p.set("tag", tagFilter);
     if (searchQuery) p.set("q", searchQuery);
+    if (backupOnly) p.set("backup", "1");
     const qs = p.toString();
     history.replaceState(null, "", qs ? "?" + qs : window.location.pathname);
+  }
+
+  function updateBackupChip() {
+    const backupCount = blockages.filter((b) => b.needsBackup).length;
+    backupChip.textContent = `AI needs backup (${backupCount})`;
+    backupChip.classList.toggle("active", backupOnly);
+    backupChip.style.display = backupCount > 0 || backupOnly ? "" : "none";
   }
 
   // Show skeleton loaders while data loads.
@@ -183,12 +194,13 @@
     const replies = b.commentCount || 0;
     const replyText = replies === 1 ? "1 reply" : replies + " replies";
     const sla = slaBadge(b);
-    return `<article class="blk-card linkish status-${cls}" data-id="${escapeHtml(b.id)}">
+    return `<article class="blk-card linkish status-${cls}${b.needsBackup ? " needs-backup" : ""}" data-id="${escapeHtml(b.id)}">
       <div class="blk-card-top">
         <span class="blk-id">BLK-${escapeHtml(pad)}</span>
         ${difficultyBadge(b.difficulty)}
         <span class="pill pill-${cls}">${escapeHtml(label)}</span>
         ${sla ? `<span class="blk-card-sla">${sla}</span>` : ""}
+        ${b.needsBackup ? `<span class="pill" style="background:var(--pending);color:#fff;font-size:.68rem">AI needs backup</span>` : ""}
       </div>
       <h3>${escapeHtml(b.title)}</h3>
       <div class="who">${escapeHtml(b.studentName)} · ${escapeHtml(b.cohortName)}</div>
@@ -215,6 +227,7 @@
   function renderGrid() {
     const q = searchQuery.trim().toLowerCase();
     const list = blockages.filter((b) => {
+      if (backupOnly && !b.needsBackup) return false;
       if (statusFilter && b.status !== statusFilter) return false;
       if (cohortFilter && String(b.cohortId) !== cohortFilter) return false;
       if (tagFilter && !(b.tags || []).some((t) => String(t.id) === tagFilter)) return false;
@@ -232,7 +245,15 @@
       return;
     }
     grid.innerHTML = `<div class="blk-grid">${list.map(cardHtml).join("")}</div>`;
+    updateBackupChip();
   }
+
+  backupChip.addEventListener("click", () => {
+    backupOnly = !backupOnly;
+    backupChip.classList.toggle("active", backupOnly);
+    syncUrl();
+    renderGrid();
+  });
 
   seg.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-status]");
