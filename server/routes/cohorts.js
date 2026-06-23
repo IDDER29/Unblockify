@@ -181,18 +181,53 @@ module.exports = function cohortRoutes(db) {
     res.status(201).json({ brief: { id: info.lastInsertRowid, name } });
   });
 
-  // PUT /api/briefs/:id { name } — owner renames a brief
+  // GET /api/briefs/:id — brief detail with content
+  router.get("/briefs/:id", (req, res) => {
+    const b = db
+      .prepare("SELECT * FROM briefs WHERE id = ? AND org_id = ?")
+      .get(Number(req.params.id), req.user.orgId);
+    if (!b) return res.status(404).json({ error: "Brief not found." });
+    res.json({ brief: { id: b.id, name: b.name, content: b.content || null, maxScaffold: b.max_scaffold || null, cohortId: b.cohort_id, createdAt: b.created_at } });
+  });
+
+  // GET /api/briefs/:id/history — version snapshots newest-first
+  router.get("/briefs/:id/history", requireRole("owner"), (req, res) => {
+    const b = db
+      .prepare("SELECT * FROM briefs WHERE id = ? AND org_id = ?")
+      .get(Number(req.params.id), req.user.orgId);
+    if (!b) return res.status(404).json({ error: "Brief not found." });
+    const versions = db
+      .prepare(
+        `SELECT bv.id, bv.name, bv.content, bv.created_at, u.name as author_name
+           FROM brief_versions bv
+           LEFT JOIN users u ON u.id = bv.created_by
+          WHERE bv.brief_id = ? AND bv.org_id = ?
+          ORDER BY bv.created_at DESC`
+      )
+      .all(b.id, req.user.orgId)
+      .map((v) => ({ id: v.id, name: v.name, content: v.content, authorName: v.author_name, createdAt: v.created_at }));
+    res.json({ versions });
+  });
+
+  // PUT /api/briefs/:id { name, content } — owner updates brief, snapshots prior version
   router.put("/briefs/:id", requireRole("owner"), (req, res) => {
     const b = db
       .prepare("SELECT * FROM briefs WHERE id = ? AND org_id = ?")
       .get(Number(req.params.id), req.user.orgId);
     if (!b) return res.status(404).json({ error: "Brief not found." });
-    const name = (req.body.name || "").trim();
+    const name = req.body.name !== undefined ? (req.body.name || "").trim() : b.name;
     if (!name) return res.status(400).json({ error: "Brief name is required." });
     const lenErr = tooLong(name, 100, "Brief name");
     if (lenErr) return res.status(400).json({ error: lenErr });
-    db.prepare("UPDATE briefs SET name = ? WHERE id = ?").run(name, b.id);
-    res.json({ brief: { id: b.id, name } });
+    const content = req.body.content !== undefined ? req.body.content : b.content;
+    // Snapshot prior version if name or content actually changed
+    if (name !== b.name || content !== b.content) {
+      db.prepare(
+        "INSERT INTO brief_versions (brief_id, org_id, name, content, created_by) VALUES (?, ?, ?, ?, ?)"
+      ).run(b.id, req.user.orgId, b.name, b.content || null, req.user.userId);
+    }
+    db.prepare("UPDATE briefs SET name = ?, content = ? WHERE id = ?").run(name, content || null, b.id);
+    res.json({ brief: { id: b.id, name, content: content || null } });
   });
 
   // DELETE /api/briefs/:id — owner
