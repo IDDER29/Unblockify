@@ -231,6 +231,23 @@ module.exports = function cohortRoutes(db) {
     res.json({ brief: { id: b.id, name, content: content || null } });
   });
 
+  // GET /api/briefs/:id/impact — blockage volume and resolve rate for this brief
+  router.get("/briefs/:id/impact", requireRole("owner", "instructor"), (req, res) => {
+    const b = db
+      .prepare("SELECT * FROM briefs WHERE id = ? AND org_id = ?")
+      .get(Number(req.params.id), req.user.orgId);
+    if (!b) return res.status(404).json({ error: "Brief not found." });
+    const total = db.prepare("SELECT COUNT(*) n FROM blockages WHERE brief_id = ? AND org_id = ?").get(b.id, req.user.orgId).n;
+    const resolved = db.prepare("SELECT COUNT(*) n FROM blockages WHERE brief_id = ? AND org_id = ? AND status = 'resolved'").get(b.id, req.user.orgId).n;
+    const medianRow = db.prepare(
+      `SELECT AVG(julianday(resolved_at) - julianday(created_at)) * 24 as avg_hours
+         FROM blockages WHERE brief_id = ? AND org_id = ? AND status = 'resolved' AND resolved_at IS NOT NULL`
+    ).get(b.id, req.user.orgId);
+    const resolveRate = total > 0 ? Math.round((resolved / total) * 100) / 100 : 0;
+    const avgResolveHours = medianRow && medianRow.avg_hours != null ? Math.round(medianRow.avg_hours * 10) / 10 : null;
+    res.json({ impact: { totalBlockages: total, resolvedBlockages: resolved, resolveRate, avgResolveHours } });
+  });
+
   // POST /api/briefs/:id/suggestions { topic, rationale } — generate AI suggestion
   router.post("/briefs/:id/suggestions", requireRole("owner"), async (req, res) => {
     const b = db
