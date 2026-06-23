@@ -367,6 +367,54 @@ module.exports = function analyticsRoutes(db) {
     });
   });
 
+  // GET /api/analytics/teaching-quality — multi-cohort teaching quality intelligence (Phase 5.3)
+  // Owner only.
+  router.get("/analytics/teaching-quality", (req, res) => {
+    const { orgId, role } = req.user;
+    if (role !== "owner") return res.status(403).json({ error: "Owner only." });
+
+    const cohorts = db.prepare("SELECT * FROM cohorts WHERE org_id = ?").all(orgId);
+
+    // Per-cohort metrics
+    const byCohort = cohorts.map((c) => {
+      const total = db.prepare("SELECT COUNT(*) n FROM blockages WHERE org_id = ? AND cohort_id = ?").get(orgId, c.id).n;
+      const resolved = db.prepare("SELECT COUNT(*) n FROM blockages WHERE org_id = ? AND cohort_id = ? AND status = 'resolved'").get(orgId, c.id).n;
+      const medRow = db.prepare(
+        `SELECT AVG(julianday(resolved_at) - julianday(created_at)) * 24 AS avg_h
+           FROM blockages WHERE org_id = ? AND cohort_id = ? AND status = 'resolved' AND resolved_at IS NOT NULL`
+      ).get(orgId, c.id);
+      const aiDeflected = db.prepare("SELECT COUNT(*) n FROM blockages WHERE org_id = ? AND cohort_id = ? AND resolution_type = 'ai'").get(orgId, c.id).n;
+      return {
+        cohortId: c.id,
+        cohortName: c.name,
+        totalBlockages: total,
+        resolvedBlockages: resolved,
+        resolveRate: total > 0 ? Math.round((resolved / total) * 1000) / 1000 : 0,
+        avgResolveHours: medRow && medRow.avg_h != null ? Math.round(medRow.avg_h * 10) / 10 : null,
+        aiDeflectionRate: resolved > 0 ? Math.round((aiDeflected / resolved) * 1000) / 1000 : 0,
+      };
+    });
+
+    // Org-level resolve rate
+    const orgTotal = byCohort.reduce((a, c) => a + c.totalBlockages, 0);
+    const orgResolved = byCohort.reduce((a, c) => a + c.resolvedBlockages, 0);
+    const orgResolveRate = orgTotal > 0 ? Math.round((orgResolved / orgTotal) * 1000) / 1000 : 0;
+
+    // Ranked factors: identify cohorts above/below org average
+    const ranked = byCohort
+      .filter((c) => c.totalBlockages >= 3)
+      .map((c) => ({
+        cohortId: c.cohortId,
+        cohortName: c.cohortName,
+        factor: c.resolveRate >= orgResolveRate ? "above_average_resolution" : "below_average_resolution",
+        delta: Math.round((c.resolveRate - orgResolveRate) * 1000) / 1000,
+        impact: Math.abs(c.resolveRate - orgResolveRate),
+      }))
+      .sort((a, b) => b.impact - a.impact);
+
+    res.json({ quality: { orgResolveRate, byCohort, rankedFactors: ranked } });
+  });
+
   // GET /api/analytics/progression?cohortId= — topic co-occurrence patterns (Phase 5.1)
   router.get("/analytics/progression", (req, res) => {
     const { orgId } = req.user;
