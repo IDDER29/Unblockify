@@ -446,9 +446,10 @@ module.exports = function blockageRoutes(db) {
       title: row.title, details: row.details, thread, similar,
       turn: row.ai_followup_count + 1, scaffoldLevel: nextLevel,
     });
+    const followupConfidence = ai.aiConfigured() ? (body.length < 100 ? 0.6 : 0.85) : 0.5;
     db.prepare(
-      "INSERT INTO comments (org_id, blockage_id, user_id, is_ai, ai_author, body, scaffold_level) VALUES (?, ?, NULL, 1, ?, ?, ?)"
-    ).run(row.org_id, row.id, ai.AI_NAME, body, nextLevel);
+      "INSERT INTO comments (org_id, blockage_id, user_id, is_ai, ai_author, body, scaffold_level, ai_confidence) VALUES (?, ?, NULL, 1, ?, ?, ?, ?)"
+    ).run(row.org_id, row.id, ai.AI_NAME, body, nextLevel, followupConfidence);
     db.prepare("UPDATE blockages SET ai_followup_count = ai_followup_count + 1 WHERE id = ?").run(row.id);
     addEvent(db, { orgId: row.org_id, blockageId: row.id, type: "ai_reply", actorId: null });
     notify(db, { orgId: row.org_id, userId: row.user_id, type: "ai_reply", blockageId: row.id, body: `${ai.AI_NAME} replied on "${row.title}"` });
@@ -483,9 +484,13 @@ module.exports = function blockageRoutes(db) {
       return;
     }
     if (!body) return;
+    // Confidence heuristic (Phase 3.2): real API = 0.85, fallback = 0.5, short = 0.6
+    const confidence = ai.aiConfigured()
+      ? (body.length < 100 ? 0.6 : 0.85)
+      : 0.5;
     db.prepare(
-      "INSERT INTO comments (org_id, blockage_id, user_id, is_ai, ai_author, body) VALUES (?, ?, NULL, 1, ?, ?)"
-    ).run(row.org_id, row.id, ai.AI_NAME, body);
+      "INSERT INTO comments (org_id, blockage_id, user_id, is_ai, ai_author, body, ai_confidence) VALUES (?, ?, NULL, 1, ?, ?, ?)"
+    ).run(row.org_id, row.id, ai.AI_NAME, body, confidence);
     addEvent(db, { orgId: row.org_id, blockageId: row.id, type: "ai_reply", actorId: null });
     notify(db, {
       orgId: row.org_id,
