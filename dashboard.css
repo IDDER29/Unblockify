@@ -1521,3 +1521,36 @@
 
 /* At-risk card */
 .atrisk-card { margin-bottom: 1.25rem; }
+
+/* ── Phase 4: Confirm modal + result count ───────────────────────────── */
+
+.confirm-modal { z-index: 1100; }
+.confirm-panel {
+  max-width: 380px;
+  padding: 1.5rem;
+}
+.confirm-msg {
+  margin: 0 0 1.25rem;
+  font-size: .95rem;
+  color: var(--ink);
+  line-height: 1.5;
+}
+.confirm-actions {
+  display: flex;
+  gap: .5rem;
+  justify-content: flex-end;
+}
+.btn-danger {
+  background: var(--blocked);
+  color: #fff;
+  border: none;
+}
+.btn-danger:hover { background: #e04035; }
+
+.result-count {
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  letter-spacing: .05em;
+  color: var(--muted);
+  margin-bottom: .6rem;
+}

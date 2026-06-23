@@ -563,7 +563,7 @@
         const delBtn = e.target.closest(".canned-del");
         if (delBtn) {
           const cid = delBtn.getAttribute("data-canned-id");
-          if (!confirm("Delete this canned response?")) return;
+          if (!await confirmModal("Delete this canned response?", { confirmLabel: "Delete", danger: true })) return;
           try {
             await API.del("/api/canned/" + encodeURIComponent(cid));
             toast("Canned response deleted.", "success");
@@ -723,7 +723,7 @@
         const delBtn = e.target.closest(".cmt-del");
         if (delBtn) {
           const cid = delBtn.getAttribute("data-cid");
-          if (!confirm("Delete this message? This can't be undone.")) return;
+          if (!await confirmModal("Delete this message? This can't be undone.", { confirmLabel: "Delete message", danger: true })) return;
           try {
             await API.del(
               "/api/blockages/" + encodeURIComponent(id) + "/comments/" + encodeURIComponent(cid)
@@ -909,7 +909,7 @@
   }
 
   async function doDelete() {
-    if (!confirm("Delete this blockage? This can't be undone.")) return;
+    if (!await confirmModal("Delete this blockage? This can't be undone.", { confirmLabel: "Delete blockage", danger: true })) return;
     try {
       await API.del("/api/blockages/" + encodeURIComponent(id));
       toast("Blockage deleted.", "success");

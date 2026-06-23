@@ -142,7 +142,7 @@
   membersWrap.addEventListener("click", async (e) => {
     const mo = e.target.closest("[data-makeowner]");
     if (mo) {
-      if (!confirm(`Make ${mo.dataset.name} the owner? You will become an instructor.`)) return;
+      if (!await confirmModal(`Make ${mo.dataset.name} the owner? You will become an instructor.`, { confirmLabel: "Transfer ownership", danger: true })) return;
       mo.disabled = true;
       try {
         await API.post("/api/members/" + mo.dataset.makeowner + "/transfer-ownership");
@@ -156,7 +156,7 @@
     }
     const rm = e.target.closest("[data-remove]");
     if (!rm) return;
-    if (!confirm(`Remove ${rm.dataset.name}? Their blockages will be deleted. This can't be undone.`)) return;
+    if (!await confirmModal(`Remove ${rm.dataset.name}? Their blockages will be deleted. This can't be undone.`, { confirmLabel: "Remove member", danger: true })) return;
     try {
       await API.del("/api/members/" + rm.dataset.remove);
       toast("Member removed.", "success");

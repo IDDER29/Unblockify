@@ -80,7 +80,8 @@
     const name = profileForm.querySelector("#profileName").value.trim();
     if (!name) { toast("Name can't be empty.", "error"); return; }
     const btn = profileForm.querySelector("#saveProfileBtn");
-    btn.disabled = true;
+    const origText = btn.textContent;
+    btn.disabled = true; btn.textContent = "Saving…";
     try {
       const r = await API.put("/api/auth/me", { name });
       toast("Profile updated.", "success");
@@ -93,7 +94,7 @@
     } catch (err) {
       toast(err.message || "Couldn't update profile.", "error");
     } finally {
-      btn.disabled = false;
+      btn.disabled = false; btn.textContent = origText;
     }
   });
 
@@ -105,7 +106,8 @@
     if (newPassword.length < 6) { toast("Password must be at least 6 characters.", "error"); return; }
     if (newPassword !== confirmPassword) { toast("New passwords don't match.", "error"); return; }
     const btn = passwordForm.querySelector("#changePwdBtn");
-    btn.disabled = true;
+    const origText = btn.textContent;
+    btn.disabled = true; btn.textContent = "Saving…";
     try {
       await API.put("/api/auth/me", { currentPassword, newPassword });
       toast("Password changed.", "success");
@@ -113,7 +115,7 @@
     } catch (err) {
       toast(err.message || "Couldn't change password.", "error");
     } finally {
-      btn.disabled = false;
+      btn.disabled = false; btn.textContent = origText;
     }
   });
 
@@ -123,7 +125,8 @@
       const input = view.querySelector("#orgName");
       const name = input.value.trim();
       if (!name) { toast("Organization name can't be empty.", "error"); return; }
-      saveOrgBtn.disabled = true;
+      const origText = saveOrgBtn.textContent;
+      saveOrgBtn.disabled = true; saveOrgBtn.textContent = "Saving…";
       try {
         const r = await API.put("/api/org", { name });
         toast("Organization renamed.", "success");
@@ -134,7 +137,7 @@
       } catch (err) {
         toast(err.message || "Couldn't rename organization.", "error");
       } finally {
-        saveOrgBtn.disabled = false;
+        saveOrgBtn.disabled = false; saveOrgBtn.textContent = origText;
       }
     });
   }

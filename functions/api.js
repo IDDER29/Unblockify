@@ -178,6 +178,30 @@ function toast(message, type = "info") {
   setTimeout(() => { el.classList.remove("show"); setTimeout(() => el.remove(), 250); }, 3500);
 }
 
+// --- Styled confirm dialog (replaces window.confirm) -----------------
+function confirmModal(message, { confirmLabel = "Confirm", danger = false } = {}) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "modal confirm-modal";
+    overlay.style.display = "flex";
+    overlay.innerHTML = `<div class="modal-panel confirm-panel" role="dialog" aria-modal="true">
+      <p class="confirm-msg">${escapeHtml(message)}</p>
+      <div class="confirm-actions">
+        <button class="btn btn-ghost" id="_cmCancel">Cancel</button>
+        <button class="btn ${danger ? "btn-danger" : "btn-primary"}" id="_cmConfirm">${escapeHtml(confirmLabel)}</button>
+      </div>
+    </div>`;
+    document.body.appendChild(overlay);
+    const cleanup = (result) => { overlay.remove(); resolve(result); };
+    overlay.querySelector("#_cmConfirm").addEventListener("click", () => cleanup(true));
+    overlay.querySelector("#_cmCancel").addEventListener("click", () => cleanup(false));
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) cleanup(false); });
+    const onKey = (e) => { if (e.key === "Escape") { document.removeEventListener("keydown", onKey); cleanup(false); } };
+    document.addEventListener("keydown", onKey);
+    overlay.querySelector("#_cmConfirm").focus();
+  });
+}
+
 // --- Accessible modal helpers (used by app pages with modals) --------
 let _modalLastFocus = null;
 function trapFocus(container) {
