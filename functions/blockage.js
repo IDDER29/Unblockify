@@ -358,7 +358,10 @@
             ${isStaff ? '<div class="canned-menu" id="cannedMenu" hidden></div>' : ""}
             <div class="attach-pending" id="attachPending"></div>
             ${role === "student" && blk.status !== "resolved" && (blk.comments || []).some((c) => c.is_ai || c.author_role === "ai")
-              ? '<button type="button" class="btn btn-ghost" id="askAgainBtn" style="margin-top:.5rem">✦ Ask AI again</button>'
+              ? `<div style="display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap">
+                  <button type="button" class="btn btn-ghost" id="askAgainBtn">✦ Show me more</button>
+                  <button type="button" class="btn btn-ghost" id="stuckBtn" style="color:var(--pending)">Still stuck — get an instructor</button>
+                </div>`
               : ""}
           </div>
         </div>
@@ -708,6 +711,22 @@
         } catch (err) {
           toast(err.message || "Couldn't ask the AI.", "error");
           askAgainBtn.disabled = false;
+        }
+      });
+    }
+
+    // Student: "I'm still stuck" — escalate to instructor (adds a comment signaling need)
+    const stuckBtn = document.getElementById("stuckBtn");
+    if (stuckBtn) {
+      stuckBtn.addEventListener("click", async () => {
+        stuckBtn.disabled = true;
+        try {
+          await API.post("/api/blockages/" + encodeURIComponent(id) + "/comments", { body: "I've tried the AI suggestions but I'm still stuck — I need an instructor's help." });
+          toast("Flagged for instructor attention.", "info");
+          await load();
+        } catch (err) {
+          toast(err.message || "Couldn't flag.", "error");
+          stuckBtn.disabled = false;
         }
       });
     }

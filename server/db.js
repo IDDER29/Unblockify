@@ -253,6 +253,8 @@ function migrate(db) {
   `);
   // Additive columns (safe on an existing data.db).
   addColumnIfMissing(db, "comments", "ai_confidence", "REAL");
+  addColumnIfMissing(db, "comments", "scaffold_level", "INTEGER");
+  addColumnIfMissing(db, "briefs", "max_scaffold", "INTEGER");
   addColumnIfMissing(db, "blockages", "resolution_summary", "TEXT");
   addColumnIfMissing(db, "users", "email_verified", "INTEGER NOT NULL DEFAULT 0");
   addColumnIfMissing(db, "users", "verify_token", "TEXT");

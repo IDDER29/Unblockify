@@ -335,7 +335,8 @@ module.exports = function blockageRoutes(db) {
       .prepare(
         `SELECT cm.id, cm.body, cm.created_at, cm.is_ai, cm.user_id AS authorId,
                 COALESCE(u.name, cm.ai_author) AS author,
-                CASE WHEN cm.is_ai = 1 THEN 'ai' ELSE u.role END AS author_role
+                CASE WHEN cm.is_ai = 1 THEN 'ai' ELSE u.role END AS author_role,
+                cm.scaffold_level, cm.ai_confidence
            FROM comments cm LEFT JOIN users u ON u.id = cm.user_id
           WHERE cm.blockage_id = ? ORDER BY cm.created_at`
       )
@@ -432,13 +433,22 @@ module.exports = function blockageRoutes(db) {
       orgId: row.org_id, cohortId: row.cohort_id,
       text: row.title + " " + (row.details || ""), excludeId: row.id,
     });
+    // Determine scaffold level (monotonically increasing, capped by brief max_scaffold)
+    const lastAiScaffold = db.prepare(
+      `SELECT MAX(COALESCE(scaffold_level, 1)) AS level FROM comments WHERE blockage_id = ? AND is_ai = 1`
+    ).get(row.id);
+    const currentLevel = (lastAiScaffold && lastAiScaffold.level) || 1;
+    const brief = row.brief_id ? db.prepare("SELECT max_scaffold FROM briefs WHERE id = ?").get(row.brief_id) : null;
+    const maxScaffold = (brief && brief.max_scaffold) || 4;
+    const nextLevel = Math.min(currentLevel + 1, maxScaffold);
+
     const body = await ai.followup({
       title: row.title, details: row.details, thread, similar,
-      turn: row.ai_followup_count + 1,
+      turn: row.ai_followup_count + 1, scaffoldLevel: nextLevel,
     });
     db.prepare(
-      "INSERT INTO comments (org_id, blockage_id, user_id, is_ai, ai_author, body) VALUES (?, ?, NULL, 1, ?, ?)"
-    ).run(row.org_id, row.id, ai.AI_NAME, body);
+      "INSERT INTO comments (org_id, blockage_id, user_id, is_ai, ai_author, body, scaffold_level) VALUES (?, ?, NULL, 1, ?, ?, ?)"
+    ).run(row.org_id, row.id, ai.AI_NAME, body, nextLevel);
     db.prepare("UPDATE blockages SET ai_followup_count = ai_followup_count + 1 WHERE id = ?").run(row.id);
     addEvent(db, { orgId: row.org_id, blockageId: row.id, type: "ai_reply", actorId: null });
     notify(db, { orgId: row.org_id, userId: row.user_id, type: "ai_reply", blockageId: row.id, body: `${ai.AI_NAME} replied on "${row.title}"` });
