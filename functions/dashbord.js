@@ -25,7 +25,9 @@
     <div class="filters">
       <input type="search" id="search" placeholder="Search…" autocomplete="off">
     </div>
+    <div class="board-tabs" id="boardTabs"></div>
     <div class="board" id="board"></div>`;
+  view.classList.add("board-page");
 
   const board = document.getElementById("board");
   const searchInput = document.getElementById("search");
@@ -34,6 +36,7 @@
   let searchQuery = new URLSearchParams(window.location.search).get("q") || "";
   searchInput.value = searchQuery;
   let allBlockages = [];
+  let _mobileActiveCol = "open";
 
   function syncUrl() {
     const p = new URLSearchParams(window.location.search);
@@ -171,24 +174,48 @@
       return;
     }
 
+    // Mobile tab bar
+    const counts = { open: 0, in_support: 0, resolved: 0 };
+    filtered.forEach((b) => { if (counts[b.status] != null) counts[b.status]++; });
+    const tabsEl = document.getElementById("boardTabs");
+    if (tabsEl) {
+      tabsEl.innerHTML = COLS.map((col) =>
+        `<button class="board-tab${_mobileActiveCol === col.status ? " t-active" : ""}" data-col="${col.status}">
+          ${col.label} <span class="tab-n">${counts[col.status]}</span>
+        </button>`
+      ).join("");
+    }
+
+    const EMPTY = {
+      open: { icon: "🎯", strong: "Nothing blocked", sub: "Keep building. When you hit a wall, this is where you get unblocked." },
+      in_support: { icon: "💬", strong: "Nothing in support", sub: "Blockages you report get picked up by your instructor here." },
+      resolved: { icon: "✓", strong: "Cleared blockers land here", sub: "Every resolved blockage adds to your momentum score." },
+    };
+
     board.innerHTML = COLS.map((col) => {
       const cards = filtered.filter((b) => b.status === col.status);
-      const empty = {
-        open: "Nothing blocked right now.",
-        in_support: "Nothing in support.",
-        resolved: "Cleared blockers will land here.",
-      }[col.status];
+      const es = EMPTY[col.status];
       const body = cards.length
         ? cards.map(cardHtml).join("")
-        : `<div class="col-empty">${empty}</div>`;
-      return `<div class="board-col ${col.cls}">
+        : `<div class="col-empty"><span class="col-empty-icon">${es.icon}</span><strong>${es.strong}</strong>${es.sub}</div>`;
+      const isActive = _mobileActiveCol === col.status;
+      return `<div class="board-col ${col.cls}${isActive ? " t-active" : ""}">
         <div class="board-col-head"><span class="t">${col.label}</span><span class="c">${cards.length}</span></div>
         ${body}
       </div>`;
     }).join("");
   }
 
+  function renderSkeleton() {
+    const skelCard = () => `<div class="skel-card"><div class="skel w-40"></div><div class="skel w-80 h-title"></div><div class="skel w-60"></div></div>`;
+    board.innerHTML = `
+      <div class="board-col col-blocked t-active"><div class="board-col-head"><span class="t">Blocked</span><span class="c">—</span></div>${skelCard()}${skelCard()}</div>
+      <div class="board-col col-pending"><div class="board-col-head"><span class="t">In support</span><span class="c">—</span></div>${skelCard()}</div>
+      <div class="board-col col-resolved"><div class="board-col-head"><span class="t">Resolved</span><span class="c">—</span></div>${skelCard()}${skelCard()}</div>`;
+  }
+
   async function refresh() {
+    renderSkeleton();
     const { blockages } = await API.get("/api/blockages");
     allBlockages = blockages || [];
     render(allBlockages);
@@ -209,6 +236,14 @@
     const card = e.target.closest(".blk-card[data-id]");
     if (!card) return;
     window.location.href = "blockage.html?id=" + card.dataset.id;
+  });
+
+  // Mobile tab switching
+  document.getElementById("boardTabs").addEventListener("click", (e) => {
+    const btn = e.target.closest(".board-tab[data-col]");
+    if (!btn) return;
+    _mobileActiveCol = btn.dataset.col;
+    render(allBlockages);
   });
 
   // --- New blockage modal ---------------------------------------------
@@ -381,4 +416,14 @@
     clearTimeout(liveTimer);
     liveTimer = setTimeout(() => { refresh().catch(() => {}); }, 300);
   });
+
+  // Mobile sticky "I'm stuck" CTA — injected outside #view so it doesn't scroll
+  if (!document.getElementById("boardMobileCta")) {
+    const cta = document.createElement("div");
+    cta.className = "board-mobile-cta";
+    cta.id = "boardMobileCta";
+    cta.innerHTML = '<button class="btn btn-primary" id="mobileStickyNew">I\'m stuck</button>';
+    document.body.appendChild(cta);
+    cta.querySelector("#mobileStickyNew").addEventListener("click", showModal);
+  }
 })();

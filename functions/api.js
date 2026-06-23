@@ -270,7 +270,7 @@ function renderShell({ user, org, active, title, crumb, actions = "" }) {
   app.className = "app";
   app.innerHTML = `
     <a class="skip-link" href="#view">Skip to content</a>
-    <aside class="sidebar" aria-label="Sidebar">
+    <aside class="sidebar" id="sidebar" aria-label="Sidebar">
       <a href="${dashboardFor(user.role)}" class="brand"><svg class="brand-mark" aria-hidden="true"><use href="#mark"/></svg><span>Unblockify</span></a>
       <div class="side-section">${escapeHtml(org.name)}</div>
       <nav aria-label="Main"><ul class="side-nav">${items}</ul></nav>
@@ -282,15 +282,43 @@ function renderShell({ user, org, active, title, crumb, actions = "" }) {
     </aside>
     <div class="app-main">
       <header class="topbar">
-        <div><div class="crumb">${escapeHtml(crumb || ROLE_LABEL[user.role])}</div><div class="page-title">${escapeHtml(title || "")}</div></div>
+        <div style="display:flex;align-items:center;gap:0.5rem;min-width:0">
+          <button class="hamburger" id="hamburger" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 20 20"><path d="M3 5h14M3 10h14M3 15h14" stroke-linecap="round"/></svg>
+          </button>
+          <div style="min-width:0"><div class="crumb">${escapeHtml(crumb || ROLE_LABEL[user.role])}</div><div class="page-title">${escapeHtml(title || "")}</div></div>
+        </div>
         <div class="topbar-actions">
           ${actions}
-          <a class="icon-btn notif-bell" href="notifications.html" title="Notifications" style="position:relative">${ICONS.bell}<span class="notif-dot" hidden></span></a>
+          <a class="icon-btn notif-bell" href="notifications.html" title="Notifications" style="position:relative">${ICONS.bell}<span class="notif-count" id="notifCount" hidden>0</span></a>
         </div>
       </header>
       <main class="content" id="view" tabindex="-1"></main>
     </div>`;
   document.getElementById("logoutBtn").addEventListener("click", logout);
+
+  // Mobile sidebar drawer
+  const _ham = document.getElementById("hamburger");
+  const _sidebar = document.getElementById("sidebar");
+  if (_ham && _sidebar) {
+    function _closeSidebar() {
+      document.body.classList.remove("sidebar-open");
+      _ham.setAttribute("aria-expanded", "false");
+    }
+    _ham.addEventListener("click", () => {
+      const open = document.body.classList.toggle("sidebar-open");
+      _ham.setAttribute("aria-expanded", String(open));
+    });
+    // Close when overlay (shadow on body) is clicked
+    document.body.addEventListener("click", (e) => {
+      if (document.body.classList.contains("sidebar-open") && !_sidebar.contains(e.target) && e.target !== _ham && !_ham.contains(e.target)) {
+        _closeSidebar();
+      }
+    }, { capture: true, passive: true });
+    // Close when a nav link is tapped on mobile
+    _sidebar.querySelectorAll("a").forEach((a) => a.addEventListener("click", _closeSidebar));
+  }
+
   refreshNotifDot();
   ensureStream();
   return document.getElementById("view");
@@ -298,9 +326,16 @@ function renderShell({ user, org, active, title, crumb, actions = "" }) {
 
 async function refreshNotifDot() {
   try {
-    const { unread } = await API.get("/api/notifications");
+    const res = await API.get("/api/notifications");
+    const count = res.unread || 0;
+    const badge = document.getElementById("notifCount");
+    if (badge) {
+      badge.hidden = count === 0;
+      badge.textContent = count > 9 ? "9+" : String(count);
+    }
+    // Legacy dot support
     const dot = document.querySelector(".notif-dot");
-    if (dot) dot.hidden = !unread;
+    if (dot) dot.hidden = count === 0;
   } catch (_) {}
 }
 

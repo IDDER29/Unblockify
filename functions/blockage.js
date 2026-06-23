@@ -263,6 +263,28 @@
     </div>`;
   }
 
+  // ---- Featured AI response (student view — first AI comment, promoted) ----
+  function aiFeaturedHtml() {
+    if (role !== "student") return "";
+    const aiComment = (blk.comments || []).find((c) => c.is_ai || c.author_role === "ai");
+    if (!aiComment) return "";
+    const canUnblock = blk.status !== "resolved";
+    return `<div class="ai-featured">
+      <div class="ai-featured-head">
+        <div class="ai-featured-av">✦</div>
+        <div>
+          <div class="ai-featured-who">${escapeHtml(blk.aiName || "AI Teaching Assistant")}</div>
+          <div class="ai-featured-sub">Responded ${fmtRelative(aiComment.created_at)}</div>
+        </div>
+      </div>
+      <div class="ai-featured-body md">${renderMarkdown(aiComment.body)}</div>
+      ${canUnblock ? `<div class="ai-cta-row">
+        <button type="button" class="btn btn-flow ai-unblock" data-cid="${aiComment.id}">✓ This unblocked me</button>
+        <button type="button" class="btn btn-ghost" id="aiStillStuck">Still stuck — add context</button>
+      </div>` : ""}
+    </div>`;
+  }
+
   // ---- Main render ------------------------------------------------------
   function render() {
     const meta = statusMeta(blk.status);
@@ -280,6 +302,15 @@
         }
       </div>`;
     }
+
+    // For students: filter the first AI comment out of the thread — it renders
+    // as the featured card above, so don't show it again in the flat thread.
+    const featuredAiId = role === "student"
+      ? ((blk.comments || []).find((c) => c.is_ai || c.author_role === "ai") || {}).id
+      : null;
+    const threadComments = featuredAiId
+      ? (blk.comments || []).filter((c) => c.id !== featuredAiId)
+      : (blk.comments || []);
 
     view.innerHTML = `
       ${actionsHtml()}
@@ -301,11 +332,13 @@
             ${csatBlock()}
           </div>
 
+          ${aiFeaturedHtml()}
+
           <div class="panel">
             <h2>Conversation</h2>
             ${role !== "student" ? '<button type="button" class="btn btn-ghost" id="summarizeBtn" style="margin-bottom:.6rem">✦ Summarize thread</button>' : ""}
             <div id="summaryCard"></div>
-            <div class="thread" id="thread">${threadHtml(blk.comments)}</div>
+            <div class="thread" id="thread">${threadHtml(threadComments)}</div>
             <form class="composer" id="composer">
               <textarea id="commentBody" placeholder="Write a reply…" rows="1"></textarea>
               <label class="btn btn-ghost attach-btn" title="Attach a file">📎
@@ -796,6 +829,30 @@
           toast(err.message || "Couldn't reopen this blockage.", "error");
         }
       });
+
+    // Featured AI card: "This unblocked me" and "Still stuck" buttons
+    const aiFeatured = document.querySelector(".ai-featured");
+    if (aiFeatured) {
+      const aiUnblockBtn = aiFeatured.querySelector(".ai-unblock");
+      if (aiUnblockBtn) {
+        aiUnblockBtn.addEventListener("click", async () => {
+          try {
+            await API.post("/api/blockages/" + encodeURIComponent(id) + "/ai-resolve");
+            toast("Nice — marked as unblocked by AI.", "success");
+            await load();
+          } catch (err) {
+            toast(err.message || "Couldn't update.", "error");
+          }
+        });
+      }
+      const stillStuckBtn = document.getElementById("aiStillStuck");
+      if (stillStuckBtn) {
+        stillStuckBtn.addEventListener("click", () => {
+          const ta = document.getElementById("commentBody");
+          if (ta) { ta.focus(); ta.scrollIntoView({ behavior: "smooth", block: "center" }); }
+        });
+      }
+    }
   }
 
   // Staff: inline reassign control — fetch eligible instructors then POST on confirm.
