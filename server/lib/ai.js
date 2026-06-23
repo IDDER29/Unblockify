@@ -330,7 +330,38 @@ function fallbackResolutionSummary({ title, thread, resolutionNote }) {
   return `Resolved: ${title}`.slice(0, 300);
 }
 
+// --- Brief suggestion (Phase 4.2) ------------------------------------
+async function suggestBriefAddition({ briefName, briefContent, topic, rationale, sampleTitles }) {
+  const c = getClient();
+  if (!c) return fallbackSuggestBrief({ briefName, topic, rationale });
+  const user = `A coding bootcamp brief needs improvement. Students are frequently blocked on "${topic}".
+Brief name: ${briefName}
+Current brief content:
+${briefContent || "(no content yet)"}
+
+Reason for suggestion: ${rationale || "(none provided)"}
+Sample blockage titles on this topic: ${(sampleTitles || []).join("; ") || "—"}
+
+Write a SHORT addition (50–120 words) to add to this brief that would proactively address "${topic}".
+Format as markdown. Be concrete and actionable. Start with a heading like "## ${topic}".`;
+  try {
+    const msg = await c.messages.create({
+      model: MODEL, max_tokens: 300,
+      system: "You write concise, actionable additions to coding bootcamp project briefs.",
+      messages: [{ role: "user", content: user }],
+    });
+    return extractText(msg) || fallbackSuggestBrief({ briefName, topic, rationale });
+  } catch (_) {
+    return fallbackSuggestBrief({ briefName, topic, rationale });
+  }
+}
+
+function fallbackSuggestBrief({ briefName, topic }) {
+  return `## ${topic}\n\nStudents often get blocked on **${topic}**. Before you start:\n\n- Review the relevant documentation for ${topic}.\n- Try a minimal working example in isolation before integrating.\n- Log intermediate values to confirm your assumptions.\n\nIf you're still stuck after 30 minutes, raise a blockage with what you've tried.`;
+}
+
 module.exports = {
   unblock, draftReply, followup, triage, summarize, digestSummary, resolutionSummary,
+  suggestBriefAddition,
   aiConfigured, AI_NAME, MODEL, AI_FOLLOWUP_MAX,
 };

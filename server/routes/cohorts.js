@@ -3,6 +3,7 @@
 const express = require("express");
 const { requireAuth, requireRole } = require("../auth");
 const { tooLong } = require("../lib/validate");
+const ai = require("../lib/ai");
 
 module.exports = function cohortRoutes(db) {
   const router = express.Router();
@@ -228,6 +229,54 @@ module.exports = function cohortRoutes(db) {
     }
     db.prepare("UPDATE briefs SET name = ?, content = ? WHERE id = ?").run(name, content || null, b.id);
     res.json({ brief: { id: b.id, name, content: content || null } });
+  });
+
+  // POST /api/briefs/:id/suggestions { topic, rationale } — generate AI suggestion
+  router.post("/briefs/:id/suggestions", requireRole("owner"), async (req, res) => {
+    const b = db
+      .prepare("SELECT * FROM briefs WHERE id = ? AND org_id = ?")
+      .get(Number(req.params.id), req.user.orgId);
+    if (!b) return res.status(404).json({ error: "Brief not found." });
+    const topic = (req.body.topic || "").trim();
+    if (!topic) return res.status(400).json({ error: "Topic is required." });
+    const rationale = (req.body.rationale || "").trim();
+    const sampleTitles = req.body.sampleTitles || [];
+    const content = await ai.suggestBriefAddition({
+      briefName: b.name, briefContent: b.content, topic, rationale, sampleTitles,
+    });
+    const info = db.prepare(
+      "INSERT INTO brief_suggestions (brief_id, org_id, topic, content, rationale) VALUES (?, ?, ?, ?, ?)"
+    ).run(b.id, req.user.orgId, topic, content, rationale || null);
+    const suggestion = db.prepare("SELECT * FROM brief_suggestions WHERE id = ?").get(info.lastInsertRowid);
+    res.status(201).json({ suggestion: { id: suggestion.id, topic: suggestion.topic, content: suggestion.content, rationale: suggestion.rationale, status: suggestion.status, createdAt: suggestion.created_at } });
+  });
+
+  // GET /api/briefs/:id/suggestions — list suggestions for a brief
+  router.get("/briefs/:id/suggestions", requireRole("owner"), (req, res) => {
+    const b = db
+      .prepare("SELECT * FROM briefs WHERE id = ? AND org_id = ?")
+      .get(Number(req.params.id), req.user.orgId);
+    if (!b) return res.status(404).json({ error: "Brief not found." });
+    const status = req.query.status || null;
+    const rows = status
+      ? db.prepare("SELECT * FROM brief_suggestions WHERE brief_id = ? AND org_id = ? AND status = ? ORDER BY created_at DESC").all(b.id, req.user.orgId, status)
+      : db.prepare("SELECT * FROM brief_suggestions WHERE brief_id = ? AND org_id = ? ORDER BY created_at DESC").all(b.id, req.user.orgId);
+    res.json({ suggestions: rows.map((s) => ({ id: s.id, topic: s.topic, content: s.content, rationale: s.rationale, status: s.status, createdAt: s.created_at })) });
+  });
+
+  // PATCH /api/briefs/:id/suggestions/:sid { status } — accept or dismiss
+  router.patch("/briefs/:id/suggestions/:sid", requireRole("owner"), (req, res) => {
+    const b = db
+      .prepare("SELECT * FROM briefs WHERE id = ? AND org_id = ?")
+      .get(Number(req.params.id), req.user.orgId);
+    if (!b) return res.status(404).json({ error: "Brief not found." });
+    const status = req.body.status;
+    if (!["accepted", "dismissed"].includes(status))
+      return res.status(400).json({ error: "status must be accepted or dismissed" });
+    const s = db.prepare("SELECT * FROM brief_suggestions WHERE id = ? AND brief_id = ? AND org_id = ?").get(Number(req.params.sid), b.id, req.user.orgId);
+    if (!s) return res.status(404).json({ error: "Suggestion not found." });
+    db.prepare("UPDATE brief_suggestions SET status = ? WHERE id = ?").run(status, s.id);
+    res.json({ suggestion: { id: s.id, topic: s.topic, content: s.content, status } });
   });
 
   // DELETE /api/briefs/:id — owner

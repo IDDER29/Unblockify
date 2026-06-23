@@ -50,6 +50,7 @@ function makeClient(base) {
     get: (p) => req("GET", p),
     post: (p, b) => req("POST", p, b),
     put: (p, b) => req("PUT", p, b),
+    patch: (p, b) => req("PATCH", p, b),
     del: (p) => req("DELETE", p),
     getCookie: () => cookie, // for raw fetch (e.g. opening the SSE stream)
   };
