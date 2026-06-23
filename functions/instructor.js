@@ -25,6 +25,11 @@
       <button type="button" class="btn-mini" id="saveView">Save view</button>
       <button type="button" class="btn-mini" id="escalateOverdue">Escalate overdue</button>
     </div>
+    <div class="save-view-row" id="saveViewRow" hidden>
+      <input type="text" id="saveViewName" placeholder="Name this view…" autocomplete="off" maxlength="60" />
+      <button type="button" class="btn btn-primary btn-sm" id="saveViewConfirm">Save</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="saveViewCancel">Cancel</button>
+    </div>
     <div class="saved-views" id="savedViews"></div>
     <div id="grid"></div>`;
 
@@ -150,8 +155,8 @@
     const replyText = replies === 1 ? "1 reply" : replies + " replies";
     return `<article class="blk-card linkish status-${cls}" data-id="${escapeHtml(b.id)}">
       <div class="blk-card-top"><span class="blk-id">BLK-${escapeHtml(pad)}</span>${difficultyBadge(b.difficulty)}${slaBadge(b)}<span class="pill pill-${cls}">${escapeHtml(label)}</span></div>
-      <div class="who">${escapeHtml(b.studentName)} · ${escapeHtml(b.cohortName)}</div>
       <h3>${escapeHtml(b.title)}</h3>
+      <div class="who">${escapeHtml(b.studentName)} · ${escapeHtml(b.cohortName)}</div>
       ${b.tags && b.tags.length ? `<div class="blk-tags">${tagPills(b.tags)}</div>` : ""}
       <div class="blk-meta">${escapeHtml(fmtDate(b.createdAt))} · ${escapeHtml(replyText)}</div>
     </article>`;
@@ -302,9 +307,25 @@
     renderGrid();
   });
 
-  saveViewBtn.addEventListener("click", async () => {
-    const name = (window.prompt("Name this view") || "").trim();
-    if (!name) return;
+  const saveViewRow = document.getElementById("saveViewRow");
+  const saveViewName = document.getElementById("saveViewName");
+  const saveViewConfirm = document.getElementById("saveViewConfirm");
+  const saveViewCancel = document.getElementById("saveViewCancel");
+
+  saveViewBtn.addEventListener("click", () => {
+    saveViewRow.hidden = false;
+    saveViewName.value = "";
+    saveViewName.focus();
+  });
+
+  saveViewCancel.addEventListener("click", () => {
+    saveViewRow.hidden = true;
+  });
+
+  async function doSaveView() {
+    const name = saveViewName.value.trim();
+    if (!name) { saveViewName.focus(); return; }
+    saveViewConfirm.disabled = true;
     try {
       const res = await API.post("/api/views", {
         name,
@@ -320,7 +341,16 @@
       }
     } catch (_) {
       toast("Couldn't save that view.");
+    } finally {
+      saveViewConfirm.disabled = false;
+      saveViewRow.hidden = true;
     }
+  }
+
+  saveViewConfirm.addEventListener("click", doSaveView);
+  saveViewName.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); doSaveView(); }
+    if (e.key === "Escape") { saveViewRow.hidden = true; }
   });
 
   // SLA: escalate overdue blockages, then refresh the queue.

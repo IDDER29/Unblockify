@@ -1429,3 +1429,95 @@
   margin-bottom: 1.25rem;
 }
 .step-indicator strong { color: var(--ink); }
+
+/* ── Phase 3: Owner dashboard KPI strip + AI stats + inline save-view ──── */
+
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: .75rem;
+  margin-bottom: 1.25rem;
+}
+@media (max-width: 1100px) { .kpi-strip { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 640px)  { .kpi-strip { grid-template-columns: repeat(2, 1fr); } }
+
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: .9rem 1rem;
+  text-align: center;
+}
+.kpi-v {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ink);
+}
+.kpi-k {
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: .3rem;
+}
+.kpi.is-blocked .kpi-v { color: var(--blocked); }
+.kpi.is-pending .kpi-v { color: var(--pending); }
+.kpi.is-resolved .kpi-v { color: var(--flow); }
+
+/* AI stats row inside chart-card */
+.ai-stats-row {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  padding-top: .5rem;
+}
+.ai-stat { text-align: center; }
+.ai-stat-v {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--flow);
+  line-height: 1;
+}
+.ai-stat-k {
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: .3rem;
+}
+
+/* Inline save-view row (replaces window.prompt) */
+.save-view-row {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin: .5rem 0 .75rem;
+  padding: .65rem .75rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.save-view-row input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  padding: .4rem .65rem;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  font-size: .875rem;
+  background: var(--bg);
+  color: var(--ink);
+}
+.save-view-row input[type="text"]:focus {
+  outline: 2px solid var(--flow);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+.btn-sm { padding: .35rem .75rem; font-size: .8rem; }
+
+/* At-risk card */
+.atrisk-card { margin-bottom: 1.25rem; }

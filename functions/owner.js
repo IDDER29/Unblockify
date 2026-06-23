@@ -136,17 +136,19 @@ function atRiskHtml(rows) {
 
   el.innerHTML = `
     ${welcome}
-    <section class="stat-row">
-      <div class="stat is-blocked"><div class="k">Blocked</div><div class="v">${a.totals.open || 0}</div></div>
-      <div class="stat is-pending"><div class="k">In support</div><div class="v">${a.totals.in_support || 0}</div></div>
-      <div class="stat is-resolved"><div class="k">Resolved</div><div class="v">${a.totals.resolved || 0}</div></div>
-      <div class="stat"><div class="k">Median time to unblock</div><div class="v">${a.medianHoursToUnblock || 0}h</div></div>
-      <div class="stat"><div class="k">Avg satisfaction</div><div class="v">${
-        a.csatCount
-          ? `<span class="csat-inline">${csatStars(a.avgCsat)}</span> <span class="csat-n">${a.avgCsat}</span>`
-          : "—"
-      }</div></div>
+    <section class="kpi-strip">
+      <div class="kpi is-blocked"><div class="kpi-v">${a.totals.open || 0}</div><div class="kpi-k">Blocked</div></div>
+      <div class="kpi is-pending"><div class="kpi-v">${a.totals.in_support || 0}</div><div class="kpi-k">In support</div></div>
+      <div class="kpi is-resolved"><div class="kpi-v">${a.totals.resolved || 0}</div><div class="kpi-k">Resolved</div></div>
+      <div class="kpi"><div class="kpi-v">${a.resolveRate || 0}%</div><div class="kpi-k">Resolve rate</div></div>
+      <div class="kpi"><div class="kpi-v">${a.medianHoursToUnblock || 0}h</div><div class="kpi-k">Median to unblock</div></div>
+      <div class="kpi"><div class="kpi-v">${a.deflectionRate || 0}%</div><div class="kpi-k">AI deflection</div></div>
     </section>
+
+    ${(a.atRisk && a.atRisk.length) ? `<div class="chart-card atrisk-card" style="border-left:3px solid var(--pending);margin-bottom:1.25rem">
+      <h3 style="display:flex;align-items:center;gap:.5rem">Students who need attention <span style="background:var(--pending);color:#fff;border-radius:99px;font-size:.7rem;padding:.1rem .45rem;font-family:var(--font-mono)">${a.atRisk.length}</span></h3>
+      ${atRiskHtml(a.atRisk)}
+    </div>` : ""}
 
     <div class="chart-grid">
       <div class="chart-card"><h3>Volume · last 14 days</h3>${lineChart(a.volumeByDay)}</div>
@@ -157,18 +159,18 @@ function atRiskHtml(rows) {
             <div class="row"><span class="sw" style="background:var(--blocked)"></span>Blocked · ${a.totals.open || 0}</div>
             <div class="row"><span class="sw" style="background:var(--pending)"></span>In support · ${a.totals.in_support || 0}</div>
             <div class="row"><span class="sw" style="background:var(--flow)"></span>Resolved · ${a.totals.resolved || 0}</div>
-            <div class="row" style="margin-top:.4rem;color:var(--muted)"><span class="sw" style="background:transparent"></span>${a.resolveRate}% resolve rate</div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="chart-grid">
-      <div class="chart-card"><h3>AI deflection</h3>
-        <div class="deflect-big">${a.deflectionRate || 0}%</div>
-        <div class="deflect-sub">${a.aiResolved || 0} blockage${(a.aiResolved || 0) === 1 ? "" : "s"} cleared by the AI TA · ~${a.hoursSaved || 0}h of instructor time saved</div>
+    <div class="chart-card">
+      <h3>AI Teaching Assistant</h3>
+      <div class="ai-stats-row">
+        <div class="ai-stat"><div class="ai-stat-v">${a.deflectionRate || 0}%</div><div class="ai-stat-k">Deflection rate</div></div>
+        <div class="ai-stat"><div class="ai-stat-v">${a.aiResolved || 0}</div><div class="ai-stat-k">Cleared by AI</div></div>
+        <div class="ai-stat"><div class="ai-stat-v">~${a.hoursSaved || 0}h</div><div class="ai-stat-k">Instructor time saved</div></div>
       </div>
-      <div class="chart-card"><h3>Students who need a human</h3>${atRiskHtml(a.atRisk)}</div>
     </div>
 
     <div class="chart-grid">
