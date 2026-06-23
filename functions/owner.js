@@ -213,6 +213,8 @@ async function flagStudent(id) {
 
     <div class="chart-card"><h3>Recent activity</h3><div id="activityFeed"><p class="thread-empty">Loading…</p></div></div>
 
+    <div class="chart-card" id="hotspotsCard"><h3>Curriculum hot-spots <span class="eyebrow" style="font-size:.72rem;margin-left:.4rem">last 7 days</span></h3><p class="thread-empty">Loading…</p></div>
+
     <div class="chart-card"><h3>Nudge a cohort</h3>
       <p class="thread-empty" style="margin:.2rem 0 .8rem">Send an in-app nudge to every student in a cohort.</p>
       <div class="form-row" style="margin-bottom:.7rem">
@@ -287,4 +289,27 @@ async function flagStudent(id) {
       nudgeSend.disabled = false;
     }
   });
+
+  // Curriculum hot-spots (loads last; failure is non-fatal)
+  const hc = document.getElementById("hotspotsCard");
+  try {
+    const { hotspots } = await API.get("/api/analytics/hotspots?windowDays=7");
+    if (!hotspots || !hotspots.length) {
+      hc.querySelector("p").textContent = "No topic clusters yet — hot-spots appear once AI has triaged a few blockages.";
+    } else {
+      hc.innerHTML = `<h3>Curriculum hot-spots <span class="eyebrow" style="font-size:.72rem;margin-left:.4rem">last 7 days</span></h3>
+        <div class="hotspot-list">
+          ${hotspots.map((h) => `
+            <div class="hotspot-row">
+              <div class="hotspot-info">
+                <span class="hotspot-topic">${escapeHtml(h.topic)}</span>
+                <span class="hotspot-meta">${h.count} student${h.count !== 1 ? "s" : ""} stuck${h.medianResolveHours != null ? ` · median ${h.medianResolveHours}h to resolve` : ""}</span>
+              </div>
+              <span class="pill ${h.count >= 5 ? "pill-blocked" : h.count >= 3 ? "pill-pending" : "pill-resolved"}" style="min-width:2rem;text-align:center">${h.count}</span>
+            </div>`).join("")}
+        </div>`;
+    }
+  } catch (_) {
+    hc.querySelector("p").textContent = "Couldn't load hot-spots.";
+  }
 })();

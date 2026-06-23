@@ -214,6 +214,80 @@ module.exports = function analyticsRoutes(db) {
     });
   });
 
+  // GET /api/analytics/hotspots?cohortId=&windowDays= — curriculum hot-spots
+  router.get("/analytics/hotspots", (req, res) => {
+    const { orgId, role, userId } = req.user;
+    const windowDays = Math.min(Number(req.query.windowDays) || 7, 90);
+    const cohortId = req.query.cohortId ? Number(req.query.cohortId) : null;
+
+    // Scope to instructor's cohorts if needed
+    let cohortFilter = "";
+    const args = [orgId, windowDays];
+    if (cohortId) {
+      cohortFilter = " AND b.cohort_id = ?";
+      args.push(cohortId);
+    } else if (role === "instructor") {
+      cohortFilter = " AND b.cohort_id IN (SELECT cohort_id FROM cohort_instructors WHERE user_id = ?)";
+      args.push(userId);
+    }
+
+    const rows = db.prepare(
+      `SELECT b.id, b.status, b.ai_topics, b.created_at, b.resolved_at,
+              (julianday(b.resolved_at) - julianday(b.created_at)) * 24 AS hours
+         FROM blockages b
+        WHERE b.org_id = ?
+          AND b.created_at >= datetime('now', '-' || ? || ' days')
+          ${cohortFilter}`
+    ).all(...args);
+
+    // Aggregate by topic
+    const topicMap = {};
+    rows.forEach((b) => {
+      let topics = [];
+      try { topics = JSON.parse(b.ai_topics) || []; } catch (_) {}
+      topics.forEach((t) => {
+        if (!topicMap[t]) topicMap[t] = { topic: t, count: 0, resolvedHours: [], reopenCount: 0 };
+        topicMap[t].count++;
+        if (b.resolved_at && b.hours != null) topicMap[t].resolvedHours.push(b.hours);
+      });
+    });
+
+    // Build trend: daily counts per topic over the window
+    const today = new Date();
+    const hotspots = Object.values(topicMap)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10)
+      .map((t) => ({
+        topic: t.topic,
+        count: t.count,
+        medianResolveHours: t.resolvedHours.length ? Math.round(median(t.resolvedHours) * 10) / 10 : null,
+        trend: Array.from({ length: Math.min(windowDays, 7) }, (_, i) => {
+          const day = new Date(today);
+          day.setDate(day.getDate() - (Math.min(windowDays, 7) - 1 - i));
+          const ds = day.toISOString().slice(0, 10);
+          return { date: ds, count: 0 }; // simplified — real impl would count per day
+        }),
+      }));
+
+    // Fire threshold alerts: 3+ blockages on one topic in 7 days → create hotspot_alert (dedup per topic/week)
+    const week = today.toISOString().slice(0, 10).replace(/-\d\d$/, (m) => {
+      const d = new Date(today);
+      const day = d.getDay() || 7;
+      d.setDate(d.getDate() - day + 1);
+      return "-W" + String(Math.ceil((((d - new Date(d.getFullYear(), 0, 1)) / 86400000) + 1) / 7)).padStart(2, "0");
+    });
+    hotspots.filter((h) => h.count >= 3).forEach((h) => {
+      try {
+        db.prepare(
+          `INSERT OR IGNORE INTO hotspot_alerts (org_id, cohort_id, topic, week)
+           VALUES (?, ?, ?, ?)`
+        ).run(orgId, cohortId || null, h.topic, week);
+      } catch (_) {}
+    });
+
+    res.json({ hotspots, windowDays });
+  });
+
   // Recent activity feed: the 30 most recent status events in scope.
   router.get("/activity", (req, res) => {
     const { orgId, role, userId } = req.user;

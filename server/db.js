@@ -227,6 +227,16 @@ function migrate(db) {
     CREATE INDEX IF NOT EXISTS idx_csat_org ON csat(org_id);
     CREATE INDEX IF NOT EXISTS idx_canned_org ON canned_responses(org_id);
 
+    CREATE TABLE IF NOT EXISTS hotspot_alerts (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      org_id     INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      cohort_id  INTEGER REFERENCES cohorts(id) ON DELETE CASCADE,
+      topic      TEXT NOT NULL,
+      week       TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(org_id, cohort_id, topic, week)
+    );
+
     CREATE TABLE IF NOT EXISTS check_ins (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,
       org_id        INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,

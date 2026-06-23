@@ -1754,3 +1754,10 @@ tr:has(.skel-line) td { border-color: transparent !important; }
   color: var(--muted);
   margin-bottom: .6rem;
 }
+
+/* ── Phase 1.2 · Curriculum Hot-Spots ─────────────────────── */
+.hotspot-list { display:flex; flex-direction:column; gap:.5rem; }
+.hotspot-row { display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.5rem .75rem; background:var(--surface,#f9f9fb); border-radius:6px; }
+.hotspot-info { display:flex; flex-direction:column; gap:.15rem; min-width:0; }
+.hotspot-topic { font-weight:600; font-size:.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hotspot-meta { font-size:.75rem; font-family:var(--font-mono); color:var(--muted,#666); }
