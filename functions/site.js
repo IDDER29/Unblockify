@@ -19,10 +19,13 @@
       return '<li><a href="' + n.href + '"' + (active === n.href ? ' class="active"' : "") + ">" + n.label + "</a></li>";
     }).join("");
     return (
-      '<nav class="site-nav"><div class="container">' +
+      '<nav class="site-nav" role="navigation" aria-label="Main navigation"><div class="container">' +
       '<a href="index.html" class="brand"><svg class="brand-mark" aria-hidden="true"><use href="#mark"/></svg>Unblockify</a>' +
-      '<ul class="nav-links">' + links + "</ul>" +
+      '<ul class="nav-links" id="nav-links-list">' + links + "</ul>" +
       '<div class="nav-cta"><a href="login.html" class="btn btn-ghost-dark">Log in</a><a href="signup.html" class="btn btn-flow">Get started</a></div>' +
+      '<button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="nav-links-list" aria-label="Toggle navigation menu">' +
+      '<span></span><span></span><span></span>' +
+      '</button>' +
       "</div></nav>"
     );
   }
@@ -38,7 +41,7 @@
     return (
       '<footer class="site-footer-xl"><div class="container">' +
       '<div class="footer-brand"><a href="index.html" class="brand" style="color:#fff"><svg class="brand-mark" aria-hidden="true"><use href="#mark"/></svg>Unblockify</a>' +
-      "<p>Turn “I'm stuck” into shipped. The support platform that keeps your students moving — with an AI Teaching Assistant at its core.</p></div>" +
+      "<p>Turn “I’m stuck” into shipped. The support platform that keeps your students moving — with an AI Teaching Assistant at its core.</p></div>" +
       col("Product", [
         { href: "features.html", label: "Features" },
         { href: "pricing.html", label: "Pricing" },
@@ -68,4 +71,22 @@
   var footSlot = document.getElementById("site-footer");
   if (footSlot) footSlot.outerHTML = footerHtml();
   else document.body.insertAdjacentHTML("beforeend", footerHtml());
+
+  // Mobile nav toggle
+  var toggle = document.getElementById("nav-toggle");
+  var navList = document.getElementById("nav-links-list");
+  if (toggle && navList) {
+    toggle.addEventListener("click", function () {
+      var expanded = toggle.getAttribute("aria-expanded") === "true";
+      toggle.setAttribute("aria-expanded", String(!expanded));
+      navList.classList.toggle("nav-open", !expanded);
+    });
+    // Close menu when a link is clicked
+    navList.addEventListener("click", function (e) {
+      if (e.target.tagName === "A") {
+        toggle.setAttribute("aria-expanded", "false");
+        navList.classList.remove("nav-open");
+      }
+    });
+  }
 })();

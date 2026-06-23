@@ -23,7 +23,7 @@
       <select id="tag"><option value="">All tags</option></select>
       <input type="search" id="search" placeholder="Search…" autocomplete="off">
       <button type="button" class="btn-mini" id="saveView">Save view</button>
-      <button type="button" class="btn-mini" id="escalateOverdue">Escalate overdue</button>
+      <button type="button" class="btn-mini btn-mini-danger" id="escalateOverdue">Escalate overdue</button>
     </div>
     <div class="save-view-row" id="saveViewRow" hidden>
       <input type="text" id="saveViewName" placeholder="Name this view…" autocomplete="off" maxlength="60" />
@@ -70,6 +70,25 @@
     history.replaceState(null, "", qs ? "?" + qs : window.location.pathname);
   }
 
+  // Show skeleton loaders while data loads.
+  function showSkeletons() {
+    // Stat skeletons.
+    stats.innerHTML = Array.from({ length: 5 }, () =>
+      `<div class="skel-stat"><div class="skel h-sm"></div><div class="skel h-lg"></div></div>`
+    ).join("");
+    // Card skeletons.
+    grid.innerHTML = `<div class="blk-grid">${Array.from({ length: 6 }, () =>
+      `<div class="skel-card">
+        <div class="skel w-40"></div>
+        <div class="skel h-title w-80"></div>
+        <div class="skel w-60"></div>
+        <div class="skel w-40"></div>
+      </div>`
+    ).join("")}</div>`;
+  }
+
+  showSkeletons();
+
   // Populate cohort select.
   try {
     const { cohorts } = await API.get("/api/cohorts");
@@ -114,13 +133,23 @@
   }
 
   function renderStats() {
-    const totals = { total: blockages.length, open: 0, in_support: 0, resolved: 0 };
-    blockages.forEach((b) => { if (totals[b.status] != null) totals[b.status]++; });
+    const totals = { total: blockages.length, open: 0, in_support: 0, resolved: 0, mine: 0 };
+    blockages.forEach((b) => {
+      if (totals[b.status] != null) totals[b.status]++;
+      if (b.assigneeId && String(b.assigneeId) === String(s.user.id)) totals.mine++;
+    });
     stats.innerHTML = `
       <div class="stat"><div class="k">Total</div><div class="v">${totals.total}</div></div>
       <div class="stat is-blocked"><div class="k">Blocked</div><div class="v">${totals.open}</div></div>
       <div class="stat is-pending"><div class="k">In support</div><div class="v">${totals.in_support}</div></div>
-      <div class="stat is-resolved"><div class="k">Resolved</div><div class="v">${totals.resolved}</div></div>`;
+      <div class="stat is-resolved"><div class="k">Resolved</div><div class="v">${totals.resolved}</div></div>
+      <div class="stat"><div class="k">Mine</div><div class="v">${totals.mine}</div></div>`;
+  }
+
+  function tagPills(tags) {
+    return (tags || [])
+      .map((t) => `<span class="blk-tag">${escapeHtml(t.name)}</span>`)
+      .join("");
   }
 
   function difficultyBadge(d) {
@@ -153,13 +182,34 @@
     const pad = String(b.id).padStart(3, "0");
     const replies = b.commentCount || 0;
     const replyText = replies === 1 ? "1 reply" : replies + " replies";
+    const sla = slaBadge(b);
     return `<article class="blk-card linkish status-${cls}" data-id="${escapeHtml(b.id)}">
-      <div class="blk-card-top"><span class="blk-id">BLK-${escapeHtml(pad)}</span>${difficultyBadge(b.difficulty)}${slaBadge(b)}<span class="pill pill-${cls}">${escapeHtml(label)}</span></div>
+      <div class="blk-card-top">
+        <span class="blk-id">BLK-${escapeHtml(pad)}</span>
+        ${difficultyBadge(b.difficulty)}
+        <span class="pill pill-${cls}">${escapeHtml(label)}</span>
+        ${sla ? `<span class="blk-card-sla">${sla}</span>` : ""}
+      </div>
       <h3>${escapeHtml(b.title)}</h3>
       <div class="who">${escapeHtml(b.studentName)} · ${escapeHtml(b.cohortName)}</div>
       ${b.tags && b.tags.length ? `<div class="blk-tags">${tagPills(b.tags)}</div>` : ""}
       <div class="blk-meta">${escapeHtml(fmtDate(b.createdAt))} · ${escapeHtml(replyText)}</div>
     </article>`;
+  }
+
+  function emptyStateHtml(hasFilters) {
+    if (hasFilters) {
+      return `<div class="blk-empty">
+        <div class="blk-empty-icon">&#9906;</div>
+        <div class="blk-empty-title">No matches</div>
+        <div class="blk-empty-hint">Try adjusting your filters or search query.</div>
+      </div>`;
+    }
+    return `<div class="blk-empty">
+      <div class="blk-empty-icon">&#10003;</div>
+      <div class="blk-empty-title">Your queue is clear</div>
+      <div class="blk-empty-hint">No blockages right now. Check back soon or ask a student to report a new one.</div>
+    </div>`;
   }
 
   function renderGrid() {
@@ -177,7 +227,8 @@
       return true;
     });
     if (!list.length) {
-      grid.innerHTML = `<div class="blk-empty">Nothing in your queue yet.</div>`;
+      const hasFilters = !!(statusFilter || cohortFilter || tagFilter || q);
+      grid.innerHTML = emptyStateHtml(hasFilters);
       return;
     }
     grid.innerHTML = `<div class="blk-grid">${list.map(cardHtml).join("")}</div>`;
@@ -356,6 +407,11 @@
   // SLA: escalate overdue blockages, then refresh the queue.
   if (escalateBtn) {
     escalateBtn.addEventListener("click", async () => {
+      const confirmed = await confirmModal(
+        "Escalate all overdue blockages? This will flag them as high-priority.",
+        { confirmLabel: "Escalate", danger: true }
+      );
+      if (!confirmed) return;
       escalateBtn.disabled = true;
       try {
         const res = await API.post("/api/sla/escalate");

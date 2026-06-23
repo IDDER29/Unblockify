@@ -1304,6 +1304,206 @@
 .toast.toast-warning { background: var(--pending-soft); color: var(--pending-deep); border-left-color: var(--pending); }
 .toast.toast-info { border-left-color: var(--flow); }
 
+/* ── Phase 5: Full-sweep additions ───────────────────────── */
+
+/* ---- Colorblind-accessible status pill icon prefixes ---- */
+.pill-blocked::before {
+  content: "●";
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.65em;
+  line-height: 1;
+}
+.pill-pending::before {
+  content: "◐";
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.65em;
+  line-height: 1;
+}
+.pill-resolved::before {
+  content: "✓";
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.65em;
+  line-height: 1;
+}
+
+/* ---- Composer: hint text for Ctrl+Enter shortcut ---- */
+.composer {
+  position: relative;
+}
+.composer::after {
+  content: "Ctrl+Enter to send";
+  position: absolute;
+  bottom: calc(100% + 4px);
+  right: 0;
+  font-size: 0.7rem;
+  color: var(--muted-2, #9aa0ad);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.composer:focus-within::after {
+  opacity: 1;
+}
+
+/* ---- blk-empty: ensure actionable error states look right ---- */
+.blk-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+}
+.blk-empty p {
+  margin: 0;
+}
+
+/* ---- Profile grid stat tiles (nested) ---- */
+.profile-grid .stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+.profile-grid .stat .k {
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+.profile-grid .stat .v {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ---- csat-inline alignment ---- */
+.csat-inline {
+  display: inline-flex;
+  gap: 1px;
+  vertical-align: middle;
+}
+
+/* ── Instructor queue: danger-tinted escalate button ── */
+.btn-mini-danger {
+  border-color: var(--blocked, #FF5A4D);
+  color: var(--blocked, #FF5A4D);
+}
+.btn-mini-danger:hover {
+  background: var(--blocked, #FF5A4D);
+  color: #fff;
+  border-color: var(--blocked, #FF5A4D);
+}
+
+/* ── SLA badge wrapper ── */
+.blk-card-sla {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.blk-card-sla .pill {
+  font-size: 0.68rem;
+  padding: 0.15em 0.55em;
+  white-space: nowrap;
+}
+
+@media (max-width: 400px) {
+  .blk-card-top {
+    flex-wrap: wrap;
+  }
+  .blk-card-sla {
+    margin-left: 0;
+    width: 100%;
+    margin-top: 0.25rem;
+  }
+}
+
+/* ── Filter row: stack vertically on mobile (column layout variant) ── */
+@media (max-width: 640px) {
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filters .seg {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .filters select,
+  .filters input[type="search"],
+  .filters .btn-mini {
+    width: 100%;
+    min-width: 0;
+    flex-shrink: 1;
+  }
+}
+
+/* ── Empty-state improvements ── */
+.blk-empty-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.45;
+  line-height: 1;
+}
+.blk-empty-title {
+  font-family: var(--font-display, 'Space Grotesk', sans-serif);
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--ink);
+  margin-bottom: 0.3rem;
+}
+.blk-empty-hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+  max-width: 32ch;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* nudge char-count helper */
+.char-count {
+  text-align: right;
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  color: var(--muted);
+  margin-top: 0.25rem;
+  transition: color 0.15s;
+}
+
+/* Skeleton loader lines — shimmer placeholders during data fetch */
+.skel-line {
+  display: block;
+  height: 0.85rem;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--line) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: skel-shimmer 1.4s infinite;
+  width: 100%;
+}
+/* Skeleton rows inside tables have no border/hover interaction */
+tr:has(.skel-line) td { border-color: transparent !important; }
+
+/* Copy button "Copied!" state */
+.copy-btn:disabled {
+  opacity: 1;
+  color: var(--flow);
+  border-color: var(--flow);
+  cursor: default;
+}
+
 /* ---- Inline auth form error ---------------------------------------- */
 .form-error {
   color: var(--blocked-deep);

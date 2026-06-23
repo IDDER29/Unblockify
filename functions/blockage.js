@@ -43,10 +43,16 @@
       data = await API.get("/api/blockages/" + encodeURIComponent(id));
     } catch (e) {
       if (e.status === 404) {
-        view.innerHTML = `<div class="blk-empty">Blockage not found.</div>`;
+        view.innerHTML = `<div class="blk-empty">
+          <p>Blockage not found — it may have been deleted or you may not have access.</p>
+          <a class="btn btn-ghost" href="${dashboardFor(role)}">Back to dashboard</a>
+        </div>`;
         return false;
       }
-      view.innerHTML = `<div class="blk-empty">Couldn't load this blockage.</div>`;
+      view.innerHTML = `<div class="blk-empty">
+        <p>Couldn't load this blockage. Check your connection and try again.</p>
+        <button class="btn btn-ghost" onclick="location.reload()">Retry</button>
+      </div>`;
       return false;
     }
     blk = data.blockage;
@@ -438,23 +444,39 @@
     // Owner: create a brand-new tag inline, then attach it.
     const tagNewBtn = document.getElementById("tagNewBtn");
     if (tagNewBtn) {
-      tagNewBtn.addEventListener("click", async () => {
-        const name = (prompt("New tag name") || "").trim();
-        if (!name) return;
-        try {
-          const { tag } = await API.post("/api/tags", { name });
-          await API.post("/api/blockages/" + encodeURIComponent(id) + "/tags", {
-            tagId: tag.id,
-          });
-          toast("Tag created and added.", "success");
-          await load();
-        } catch (err) {
-          if (err.status === 403) {
-            toast("Only owners can create tags.", "warning");
-          } else {
-            toast(err.message || "Couldn't create that tag.", "error");
+      tagNewBtn.addEventListener("click", () => {
+        // Replace the button with an inline input row (idempotent — only one at a time).
+        if (document.getElementById("tagNewForm")) return;
+        const form = document.createElement("form");
+        form.id = "tagNewForm";
+        form.style.cssText = "display:flex;align-items:center;gap:.4rem;margin-top:.4rem";
+        form.innerHTML =
+          `<input id="tagNewInput" type="text" placeholder="Tag name" autocomplete="off" style="flex:1;padding:.35rem .6rem;border:1px solid var(--line-2);border-radius:var(--r-sm);font-size:.88rem" />` +
+          `<button type="submit" class="btn btn-ghost" style="flex:0 0 auto">Create</button>` +
+          `<button type="button" class="btn btn-ghost" id="tagNewCancel" style="flex:0 0 auto">✕</button>`;
+        tagNewBtn.insertAdjacentElement("afterend", form);
+        document.getElementById("tagNewInput").focus();
+        document.getElementById("tagNewCancel").addEventListener("click", () => form.remove());
+        form.addEventListener("submit", async (ev) => {
+          ev.preventDefault();
+          const name = (document.getElementById("tagNewInput").value || "").trim();
+          if (!name) return;
+          try {
+            const { tag } = await API.post("/api/tags", { name });
+            await API.post("/api/blockages/" + encodeURIComponent(id) + "/tags", {
+              tagId: tag.id,
+            });
+            toast("Tag created and added.", "success");
+            form.remove();
+            await load();
+          } catch (err) {
+            if (err.status === 403) {
+              toast("Only owners can create tags.", "warning");
+            } else {
+              toast(err.message || "Couldn't create that tag.", "error");
+            }
           }
-        }
+        });
       });
     }
 
@@ -542,20 +564,37 @@
       });
 
       cannedMenu.addEventListener("click", async (e) => {
-        // Create a new canned response.
+        // Create a new canned response — inline form inside the menu.
         const newBtn = e.target.closest(".canned-new");
         if (newBtn) {
-          const title = (prompt("Canned response title") || "").trim();
-          if (!title) return;
-          const body = (prompt("Canned response body") || "").trim();
-          if (!body) return;
-          try {
-            await API.post("/api/canned", { title, body });
-            toast("Canned response saved.", "success");
-            await renderCannedMenu();
-          } catch (err) {
-            toast(err.message || "Couldn't save that canned response.", "error");
-          }
+          if (cannedMenu.querySelector(".canned-create-form")) return;
+          const formEl = document.createElement("form");
+          formEl.className = "canned-create-form";
+          formEl.style.cssText = "display:flex;flex-direction:column;gap:.4rem;padding:.5rem .6rem;border-top:1px solid var(--line)";
+          formEl.innerHTML =
+            `<input class="canned-title-input" type="text" placeholder="Title" autocomplete="off" required style="padding:.35rem .6rem;border:1px solid var(--line-2);border-radius:var(--r-sm);font-size:.88rem" />` +
+            `<textarea class="canned-body-input" rows="3" placeholder="Response body" required style="padding:.35rem .6rem;border:1px solid var(--line-2);border-radius:var(--r-sm);font-size:.88rem;font-family:inherit;resize:vertical"></textarea>` +
+            `<div style="display:flex;gap:.4rem">` +
+            `<button type="submit" class="btn btn-primary" style="flex:1">Save</button>` +
+            `<button type="button" class="canned-create-cancel btn btn-ghost">Cancel</button>` +
+            `</div>`;
+          newBtn.insertAdjacentElement("beforebegin", formEl);
+          formEl.querySelector(".canned-title-input").focus();
+          formEl.querySelector(".canned-create-cancel").addEventListener("click", () => formEl.remove());
+          formEl.addEventListener("submit", async (ev) => {
+            ev.preventDefault();
+            const title = (formEl.querySelector(".canned-title-input").value || "").trim();
+            const body = (formEl.querySelector(".canned-body-input").value || "").trim();
+            if (!title || !body) return;
+            try {
+              await API.post("/api/canned", { title, body });
+              toast("Canned response saved.", "success");
+              formEl.remove();
+              await renderCannedMenu();
+            } catch (err) {
+              toast(err.message || "Couldn't save that canned response.", "error");
+            }
+          });
           return;
         }
 
@@ -615,6 +654,22 @@
         }
         fileInput.value = "";
         renderPending();
+      });
+    }
+
+    // Ctrl+Enter / Cmd+Enter submits the composer.
+    const composerTa = form.querySelector("#commentBody");
+    if (composerTa) {
+      composerTa.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+        }
+      });
+      // Auto-grow textarea.
+      composerTa.addEventListener("input", () => {
+        composerTa.style.height = "auto";
+        composerTa.style.height = Math.min(composerTa.scrollHeight, 200) + "px";
       });
     }
 

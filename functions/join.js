@@ -7,14 +7,17 @@ const sub = document.getElementById("joinSub");
 const form = document.getElementById("joinForm");
 const fallback = document.getElementById("joinFallback");
 const heading = document.getElementById("joinHeading");
+const errorDiv = document.getElementById("joinError");
 
-function showError(input, message) {
-  const next = input.nextElementSibling;
-  if (next && next.tagName.toLowerCase() === "p") next.remove();
-  const p = document.createElement("p");
-  p.textContent = message;
-  input.after(p);
-  input.focus();
+function showJoinError(message, focusEl) {
+  errorDiv.textContent = message;
+  errorDiv.classList.toggle("show", !!message);
+  if (focusEl) focusEl.focus();
+}
+
+function clearJoinError() {
+  errorDiv.textContent = "";
+  errorDiv.classList.remove("show");
 }
 
 (async function init() {
@@ -29,6 +32,9 @@ function showError(input, message) {
     sub.innerHTML = `You're invited as a <strong>${escapeHtml(info.role)}</strong>.`;
     document.getElementById("asideTitle").textContent = `Welcome to ${info.orgName}.`;
     form.hidden = false;
+    // Autofocus first visible input once form is shown
+    const firstInput = form.querySelector("input");
+    if (firstInput) firstInput.focus();
   } catch (err) {
     sub.textContent = err.message || "This invite is no longer valid.";
     fallback.hidden = false;
@@ -37,12 +43,15 @@ function showError(input, message) {
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const name = document.getElementById("name");
-  const email = document.getElementById("email");
-  const password = document.getElementById("password");
-  if (!name.value.trim()) return showError(name, "Enter your name.");
-  if (!email.value.trim()) return showError(email, "Enter your email.");
-  if (password.value.length < 6) return showError(password, "Password must be at least 6 characters.");
+  clearJoinError();
+
+  const nameInput = document.getElementById("name");
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+
+  if (!nameInput.value.trim()) return showJoinError("Enter your name.", nameInput);
+  if (!emailInput.value.trim()) return showJoinError("Enter your email.", emailInput);
+  if (passwordInput.value.length < 6) return showJoinError("Password must be at least 6 characters.", passwordInput);
 
   const btn = document.getElementById("joinBtn");
   btn.disabled = true;
@@ -50,14 +59,18 @@ form.addEventListener("submit", async (e) => {
   try {
     const { user } = await API.post("/api/auth/join", {
       code,
-      name: name.value.trim(),
-      email: email.value.trim().toLowerCase(),
-      password: password.value,
+      name: nameInput.value.trim(),
+      email: emailInput.value.trim().toLowerCase(),
+      password: passwordInput.value,
     });
     window.location.href = dashboardFor(user.role);
   } catch (err) {
-    showError(email, err.message || "Could not join.");
+    showJoinError(err.message || "Could not join.", emailInput);
     btn.disabled = false;
     btn.textContent = "Join organization";
   }
+});
+
+form.querySelectorAll("input").forEach((input) => {
+  input.addEventListener("input", clearJoinError);
 });

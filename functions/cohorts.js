@@ -118,8 +118,16 @@
 
   async function openCohort(id) {
     currentId = id;
-    cohortModalContent.innerHTML = `<div class="modal-header"><h2 id="cohortModalTitle">Loading…</h2>
-      <button class="close" type="button" data-close="cohortModal" aria-label="Close">&times;</button></div>`;
+    cohortModalContent.innerHTML = `
+      <div class="modal-header">
+        <h2 id="cohortModalTitle"><span class="skel-line" style="width:140px;display:inline-block"></span></h2>
+        <button class="close" type="button" data-close="cohortModal" aria-label="Close">&times;</button>
+      </div>
+      <div style="padding:1.6rem;display:flex;flex-direction:column;gap:1rem">
+        <span class="skel-line" style="width:60%;height:1rem"></span>
+        <span class="skel-line" style="width:40%;height:1rem"></span>
+        <span class="skel-line" style="width:80%;height:1rem"></span>
+      </div>`;
     openModal(cohortModal, { labelledby: "cohortModalTitle" });
     await renderCohortDetail();
   }
@@ -433,11 +441,15 @@
         const bid = row.dataset.bid;
         const name = input.value.trim();
         if (!name) return;
+        saveBtn.textContent = "Saving…";
+        saveBtn.disabled = true;
         try {
           await API.put(`/api/briefs/${encodeURIComponent(bid)}`, { name });
           toast("Brief renamed.", "success");
           await renderCohortDetail();
         } catch (err) {
+          saveBtn.textContent = "Save";
+          saveBtn.disabled = false;
           toast(err.message || "Couldn't rename brief.", "error");
         }
       });

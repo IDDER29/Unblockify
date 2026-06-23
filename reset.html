@@ -11,6 +11,12 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="./stylesheet.main.css" />
+    <style>
+      .pw-toggle { position: absolute; right: 0.6rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--muted); padding: 0.35rem; display: flex; align-items: center; border-radius: 6px; }
+      .pw-toggle:hover { color: var(--ink); }
+      .field { position: relative; }
+      .field input[type="password"], .field input[type="text"] { padding-right: 2.5rem; }
+    </style>
   </head>
   <body>
     <svg width="0" height="0" style="position: absolute">
@@ -48,13 +54,23 @@
           <h1>Choose a new password</h1>
           <p class="sub">Remembered it? <a href="login.html">Back to log in</a></p>
 
-          <form class="login-form">
+          <form class="login-form" id="resetForm" novalidate>
             <div class="field">
               <label for="password">New password</label>
-              <input type="password" id="password" autocomplete="new-password" placeholder="At least 6 characters" required />
-              <button type="button" class="pw-toggle" data-target="password">Show</button>
+              <input type="password" id="password" name="password" autocomplete="new-password" placeholder="At least 6 characters" required autofocus />
+              <button type="button" class="pw-toggle" data-target="password" aria-label="Show password">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
             </div>
-            <button type="button" class="btn btn-primary btn-block btn-lg" id="reset-btn">Set new password</button>
+            <div class="field">
+              <label for="confirm-password">Confirm new password</label>
+              <input type="password" id="confirm-password" name="confirm-password" autocomplete="new-password" placeholder="Re-enter your password" required />
+              <button type="button" class="pw-toggle" data-target="confirm-password" aria-label="Show password">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <div class="form-error" id="resetError" role="alert" aria-live="assertive"></div>
+            <button type="submit" class="btn btn-primary btn-block btn-lg" id="reset-btn">Set new password</button>
           </form>
         </div>
       </main>
@@ -63,13 +79,16 @@
     <script src="./functions/api.js"></script>
     <script src="./reset.js"></script>
     <script>
+      const EYE_OPEN = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+      const EYE_CLOSED = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
       document.querySelectorAll(".pw-toggle").forEach((btn) => {
         btn.addEventListener("click", () => {
           const i = document.getElementById(btn.dataset.target);
           if (!i) return;
           const show = i.type === "password";
           i.type = show ? "text" : "password";
-          btn.textContent = show ? "Hide" : "Show";
+          btn.innerHTML = show ? EYE_CLOSED : EYE_OPEN;
+          btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
         });
       });
     </script>

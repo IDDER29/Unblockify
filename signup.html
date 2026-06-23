@@ -54,10 +54,10 @@
           <h1>Create your workspace</h1>
           <p class="sub">Already have one? <a href="login.html">Log in</a></p>
 
-          <form class="signup-form">
+          <form class="signup-form" id="signupForm" novalidate>
             <div class="field">
               <label for="orgName">Organization</label>
-              <input type="text" id="orgName" name="orgName" placeholder="e.g. Acme Academy" required />
+              <input type="text" id="orgName" name="orgName" autocomplete="organization" placeholder="e.g. Acme Academy" required autofocus />
             </div>
             <div class="field">
               <label for="name">Your name</label>
@@ -81,7 +81,7 @@
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
             </div>
-            <div class="form-error" id="signupError" role="alert"></div>
+            <div class="form-error" id="signupError" role="alert" aria-live="assertive"></div>
             <button type="submit" class="btn btn-primary btn-block btn-lg submit-button">Create account</button>
             <p class="auth-terms">By signing up you agree to the organization's terms &amp; privacy.</p>
           </form>

@@ -51,20 +51,34 @@
     const full = location.origin + url;
     return `<div class="copy-field">
       <input type="text" readonly value="${escapeHtml(full)}" />
-      <button class="btn btn-ghost" type="button" data-copy="${escapeHtml(full)}">Copy</button>
+      <button class="btn btn-ghost copy-btn" type="button" data-copy="${escapeHtml(full)}">Copy</button>
     </div>`;
   }
-  async function copyLink(text) {
+  async function copyLink(text, btn) {
     try {
       await navigator.clipboard.writeText(text);
-      toast("Invite link copied.", "success");
+      if (btn) {
+        const orig = btn.textContent;
+        btn.textContent = "Copied!";
+        btn.disabled = true;
+        setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1800);
+      } else {
+        toast("Invite link copied.", "success");
+      }
     } catch (_) {
       toast("Couldn't copy the link.", "error");
     }
   }
 
+  // ----- skeleton helpers -----
+  function skeletonRows(cols, count = 3) {
+    const cells = Array(cols).fill(`<td><span class="skel-line"></span></td>`).join("");
+    return Array(count).fill(`<tr>${cells}</tr>`).join("");
+  }
+
   // ----- pending invites -----
   async function loadInvites() {
+    invitesWrap.innerHTML = `<table class="data-table"><thead><tr><th>Role</th><th>Cohort</th><th>Link</th><th></th></tr></thead><tbody>${skeletonRows(4)}</tbody></table>`;
     let data;
     try { data = await API.get("/api/invites"); }
     catch (_) { invitesWrap.innerHTML = `<div class="blk-empty">Couldn't load invites.</div>`; return; }
@@ -77,15 +91,20 @@
         <td style="text-align:right"><button class="btn btn-ghost" type="button" data-revoke="${escapeHtml(inv.id)}">Revoke</button></td>
       </tr>`).join("");
 
+    if (!rows) {
+      invitesWrap.innerHTML = `<div class="blk-empty">No pending invites — create one above to share access.</div>`;
+      return;
+    }
     invitesWrap.innerHTML = `
       <table class="data-table">
         <thead><tr><th>Role</th><th>Cohort</th><th>Link</th><th></th></tr></thead>
-        <tbody>${rows || `<tr><td colspan="4">No pending invites.</td></tr>`}</tbody>
+        <tbody>${rows}</tbody>
       </table>`;
   }
 
   // ----- members -----
   async function loadMembers() {
+    membersWrap.innerHTML = `<table class="data-table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Cohort</th><th>Joined</th><th></th></tr></thead><tbody>${skeletonRows(6)}</tbody></table>`;
     let data;
     try { data = await API.get("/api/members"); await ensureCohorts(); }
     catch (_) { membersWrap.innerHTML = `<div class="blk-empty">Couldn't load members.</div>`; return; }
@@ -113,10 +132,14 @@
       </tr>`;
     }).join("");
 
+    if (!rows) {
+      membersWrap.innerHTML = `<div class="blk-empty">No members yet — invite people to get started.</div>`;
+      return;
+    }
     membersWrap.innerHTML = `
       <table class="data-table">
         <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Cohort</th><th>Joined</th><th></th></tr></thead>
-        <tbody>${rows || `<tr><td colspan="6">No members yet.</td></tr>`}</tbody>
+        <tbody>${rows}</tbody>
       </table>`;
   }
 
@@ -169,7 +192,7 @@
   // ----- delegated table actions -----
   invitesWrap.addEventListener("click", async (e) => {
     const copyBtn = e.target.closest("[data-copy]");
-    if (copyBtn) { copyLink(copyBtn.getAttribute("data-copy")); return; }
+    if (copyBtn) { copyLink(copyBtn.getAttribute("data-copy"), copyBtn); return; }
 
     const revokeBtn = e.target.closest("[data-revoke]");
     if (revokeBtn) {
@@ -222,7 +245,7 @@
   // result box delegation (copy the freshly created link)
   resultBox.addEventListener("click", (e) => {
     const copyBtn = e.target.closest("[data-copy]");
-    if (copyBtn) copyLink(copyBtn.getAttribute("data-copy"));
+    if (copyBtn) copyLink(copyBtn.getAttribute("data-copy"), copyBtn);
   });
 
   createBtn.addEventListener("click", async () => {

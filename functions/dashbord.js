@@ -86,29 +86,29 @@
 
   function render(blockages) {
     // Stat tiles always reflect the full (unfiltered) set.
-    const counts = { open: 0, in_support: 0, resolved: 0 };
+    const allCounts = { open: 0, in_support: 0, resolved: 0 };
     blockages.forEach((b) => {
-      if (counts[b.status] === undefined) counts[b.status] = 0;
-      counts[b.status]++;
+      if (allCounts[b.status] === undefined) allCounts[b.status] = 0;
+      allCounts[b.status]++;
     });
 
     const total = blockages.length;
-    const stats = { total, open: counts.open, in_support: counts.in_support, resolved: counts.resolved };
-    document.querySelectorAll("[data-stat]").forEach((el) => {
+    const stats = { total, open: allCounts.open, in_support: allCounts.in_support, resolved: allCounts.resolved };
+    document.querySelectorAll(“[data-stat]”).forEach((el) => {
       el.textContent = stats[el.dataset.stat] != null ? stats[el.dataset.stat] : 0;
     });
 
     const q = searchQuery.trim().toLowerCase();
     const filtered = q
-      ? blockages.filter((b) => String(b.title == null ? "" : b.title).toLowerCase().includes(q))
+      ? blockages.filter((b) => String(b.title == null ? “” : b.title).toLowerCase().includes(q))
       : blockages;
 
     if (q && !filtered.length) {
-      board.innerHTML = `<div class="blk-empty">No matches for “${escapeHtml(searchQuery.trim())}”.</div>`;
+      board.innerHTML = `<div class=”blk-empty”>No matches for “${escapeHtml(searchQuery.trim())}”. <button class=”btn btn-ghost” onclick=”document.getElementById('search').value='';document.getElementById('search').dispatchEvent(new Event('input'))”>Clear search</button></div>`;
       return;
     }
 
-    // Mobile tab bar
+    // Mobile tab bar — per-filtered counts
     const counts = { open: 0, in_support: 0, resolved: 0 };
     filtered.forEach((b) => { if (counts[b.status] != null) counts[b.status]++; });
     const activeMobileCol = _mobileActiveCol || "open";
@@ -300,7 +300,10 @@
   try {
     await refresh();
   } catch (_) {
-    board.innerHTML = `<div class="blk-empty">Couldn't load your blockages.</div>`;
+    board.innerHTML = `<div class="blk-empty">
+      <p>Couldn't load your blockages. Check your connection and try again.</p>
+      <button class="btn btn-ghost" onclick="location.reload()">Retry</button>
+    </div>`;
   }
   loadCohort();
 

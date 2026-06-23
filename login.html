@@ -54,14 +54,14 @@
           <h1>Log in</h1>
           <p class="sub">New here? <a href="signup.html">Create an account</a></p>
 
-          <form class="login-form">
+          <form class="login-form" id="loginForm" novalidate>
             <div class="field">
               <label for="email">Email</label>
-              <input type="email" id="email" autocomplete="email" placeholder="you@school.com" required autofocus />
+              <input type="email" id="email" name="email" autocomplete="email" placeholder="you@school.com" required autofocus />
             </div>
             <div class="field">
               <label for="password">Password</label>
-              <input type="password" id="password" autocomplete="current-password" placeholder="Your password" required />
+              <input type="password" id="password" name="password" autocomplete="current-password" placeholder="Your password" required />
               <button type="button" class="pw-toggle" data-target="password" aria-label="Show password">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
@@ -69,8 +69,8 @@
             <p class="sub" style="margin: -4px 0 4px; text-align: right">
               <a href="forgot.html">Forgot password?</a>
             </p>
-            <div class="form-error" id="loginError" role="alert"></div>
-            <button type="button" class="btn btn-primary btn-block btn-lg" id="login-form-btn">Log in</button>
+            <div class="form-error" id="loginError" role="alert" aria-live="assertive"></div>
+            <button type="submit" class="btn btn-primary btn-block btn-lg" id="login-form-btn">Log in</button>
           </form>
         </div>
       </main>

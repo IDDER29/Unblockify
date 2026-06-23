@@ -32,6 +32,7 @@
         <div class="form-row">
           <label>Role</label>
           <input type="text" value="${escapeHtml(ROLE_LABEL[s.user.role] || s.user.role)}" disabled />
+          <div class="hint">Your role is set by your organization admin.</div>
         </div>
         <button type="submit" class="btn btn-primary" id="saveProfileBtn">Save</button>
       </form>

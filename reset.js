@@ -2,17 +2,23 @@
 
 const resetToken = new URLSearchParams(window.location.search).get("token") || "";
 
-function showError(input, message) {
-  const next = input.nextElementSibling;
-  if (next && next.tagName.toLowerCase() === "p") next.remove();
-  const p = document.createElement("p");
-  p.textContent = message;
-  input.after(p);
-  input.focus();
+const card = document.querySelector(".auth-card");
+const resetForm = document.getElementById("resetForm");
+const resetBtn = document.getElementById("reset-btn");
+const errorDiv = document.getElementById("resetError");
+
+function showResetError(message, focusEl) {
+  if (!errorDiv) return;
+  errorDiv.textContent = message;
+  errorDiv.classList.toggle("show", !!message);
+  if (focusEl) focusEl.focus();
 }
 
-const card = document.querySelector(".auth-card");
-const resetBtn = document.getElementById("reset-btn");
+function clearResetError() {
+  if (!errorDiv) return;
+  errorDiv.textContent = "";
+  errorDiv.classList.remove("show");
+}
 
 if (!resetToken) {
   card.innerHTML =
@@ -20,12 +26,17 @@ if (!resetToken) {
     '<p class="sub">This reset link is invalid or has expired.</p>' +
     '<p class="sub" style="margin-top:18px"><a href="forgot.html">Request a new link</a></p>';
 } else {
-  resetBtn.addEventListener("click", async (event) => {
+  resetForm.addEventListener("submit", async (event) => {
     event.preventDefault();
+    clearResetError();
+
     const passwordInput = document.getElementById("password");
+    const confirmInput = document.getElementById("confirm-password");
     const password = passwordInput.value;
-    if (password.length < 6)
-      return showError(passwordInput, "Password must be at least 6 characters.");
+    const confirm = confirmInput.value;
+
+    if (password.length < 6) return showResetError("Password must be at least 6 characters.", passwordInput);
+    if (password !== confirm) return showResetError("Passwords do not match.", confirmInput);
 
     resetBtn.disabled = true;
     const original = resetBtn.textContent;
@@ -35,16 +46,13 @@ if (!resetToken) {
       toast("Password updated — please log in.", "success");
       setTimeout(() => { window.location.href = "login.html"; }, 900);
     } catch (err) {
-      showError(passwordInput, err.message || "This reset link is invalid or has expired.");
+      showResetError(err.message || "This reset link is invalid or has expired.", passwordInput);
       resetBtn.disabled = false;
       resetBtn.textContent = original;
     }
   });
 
-  document.querySelectorAll("input").forEach((input) => {
-    input.addEventListener("input", () => {
-      const next = input.nextElementSibling;
-      if (next && next.tagName.toLowerCase() === "p") next.remove();
-    });
+  resetForm.querySelectorAll("input").forEach((input) => {
+    input.addEventListener("input", clearResetError);
   });
 }

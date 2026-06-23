@@ -130,6 +130,11 @@
   });
 
   document.getElementById("clearAll").addEventListener("click", async () => {
+    const ok = await confirmModal("Clear all notifications? This can't be undone.", {
+      confirmLabel: "Clear all",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await API.del("/api/notifications");
     } catch (e) {

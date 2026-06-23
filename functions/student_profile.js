@@ -62,7 +62,7 @@
               href="blockage.html?id=${encodeURIComponent(b.id)}">
             <div class="blk-card-top">
               <span class="blk-id">BLK-${escapeHtml(b.id)}</span>
-              <span class="pill ${m.cls}">${escapeHtml(m.label)}</span>
+              <span class="pill pill-${m.cls}">${escapeHtml(m.label)}</span>
             </div>
             <h3>${escapeHtml(b.title)}</h3>
             <div class="blk-meta">Reported ${escapeHtml(fmtRelative(b.createdAt))}${

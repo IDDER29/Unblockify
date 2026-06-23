@@ -38,22 +38,23 @@
         <div class="auth-card">
           <h1 id="joinHeading">Join</h1>
           <p class="sub" id="joinSub">Checking your invite…</p>
-          <form class="join-form" id="joinForm" hidden>
+          <form class="join-form" id="joinForm" hidden novalidate>
             <div class="field">
               <label for="name">Your name</label>
-              <input type="text" id="name" autocomplete="name" placeholder="Your name" required />
+              <input type="text" id="name" name="name" autocomplete="name" placeholder="Your name" required />
             </div>
             <div class="field">
               <label for="email">Email</label>
-              <input type="email" id="email" autocomplete="email" placeholder="you@email.com" required />
+              <input type="email" id="email" name="email" autocomplete="email" placeholder="you@email.com" required />
             </div>
             <div class="field">
               <label for="password">Password</label>
-              <input type="password" id="password" autocomplete="new-password" placeholder="At least 6 characters" required />
+              <input type="password" id="password" name="password" autocomplete="new-password" placeholder="At least 6 characters" required />
               <button type="button" class="pw-toggle" data-target="password" aria-label="Show password">
                 <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               </button>
             </div>
+            <div class="form-error" id="joinError" role="alert" aria-live="assertive"></div>
             <button type="submit" class="btn btn-primary btn-block btn-lg" id="joinBtn">Join organization</button>
           </form>
           <p class="sub" id="joinFallback" hidden>Already have an account? <a href="login.html">Log in</a></p>

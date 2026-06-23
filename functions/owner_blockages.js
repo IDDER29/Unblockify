@@ -111,7 +111,7 @@
     return `<article class="blk-card linkish status-${cls}" data-id="${escapeHtml(b.id)}">
       <div class="blk-card-top"><span class="blk-id">BLK-${escapeHtml(pad)}</span>${difficultyBadge(b.difficulty)}<span class="pill pill-${cls}">${escapeHtml(label)}</span></div>
       <h3>${escapeHtml(b.title)}</h3>
-      <div class="who">${escapeHtml(b.studentName)} &middot; ${escapeHtml(b.cohortName)}</div>
+      <div class="who">${escapeHtml(b.studentName || "Unknown")} &middot; ${escapeHtml(b.cohortName || "No cohort")}</div>
       <div class="blk-meta">${assignee}${escapeHtml(fmtDate(b.createdAt))}</div>
     </article>`;
   }

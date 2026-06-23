@@ -27,6 +27,9 @@ function donut(totals) {
 }
 
 function lineChart(points) {
+  if (!points || !points.length || points.every((p) => !p.count)) {
+    return `<p class="thread-empty" style="padding:1.5rem 0">No activity in this period yet.</p>`;
+  }
   const W = 520, H = 150, P = 8;
   const max = Math.max(1, ...points.map((p) => p.count));
   const step = points.length > 1 ? (W - P * 2) / (points.length - 1) : 0;
@@ -94,7 +97,7 @@ function welcomeHtml(orgName) {
     <div style="display:flex;gap:.6rem;flex-wrap:wrap">
       <a class="btn btn-primary" href="cohorts.html">Create your first cohort</a>
       <a class="btn" href="members.html">Invite instructors &amp; students</a>
-      <a class="btn btn-ghost" href="cohorts.html">Set up a brief</a>
+      <a class="btn btn-ghost" href="cohorts.html#briefs">Set up a brief</a>
     </div>
   </section>`;
 }
@@ -193,7 +196,8 @@ function atRiskHtml(rows) {
       </div>
       <div class="form-row" style="margin-bottom:.7rem">
         <label for="nudgeMessage">Message</label>
-        <textarea id="nudgeMessage" rows="3" placeholder="e.g. Office hours at 3pm — bring your blockers!"></textarea>
+        <textarea id="nudgeMessage" rows="3" maxlength="500" placeholder="e.g. Office hours at 3pm — bring your blockers!"></textarea>
+        <div class="char-count" id="nudgeCount" style="text-align:right;font-size:.78rem;font-family:var(--font-mono);color:var(--muted);margin-top:.25rem">0 / 500</div>
       </div>
       <button class="btn btn-primary" id="nudgeSend" type="button">Send nudge</button>
     </div>`;
@@ -225,6 +229,12 @@ function atRiskHtml(rows) {
   const nudgeCohort = document.getElementById("nudgeCohort");
   const nudgeMessage = document.getElementById("nudgeMessage");
   const nudgeSend = document.getElementById("nudgeSend");
+  const nudgeCount = document.getElementById("nudgeCount");
+  nudgeMessage.addEventListener("input", () => {
+    const len = nudgeMessage.value.length;
+    nudgeCount.textContent = `${len} / 500`;
+    nudgeCount.style.color = len > 450 ? "var(--blocked)" : "var(--muted)";
+  });
   try {
     const { cohorts } = await API.get("/api/cohorts");
     nudgeCohort.innerHTML = (cohorts && cohorts.length)
@@ -244,6 +254,8 @@ function atRiskHtml(rows) {
       const n = r.sent || 0;
       toast(`Sent to ${n} student${n === 1 ? "" : "s"}.`, "success");
       nudgeMessage.value = "";
+      nudgeCount.textContent = "0 / 500";
+      nudgeCount.style.color = "var(--muted)";
     } catch (err) {
       toast(err.message || "Couldn't send the nudge.", "error");
     } finally {
