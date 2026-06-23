@@ -1,7 +1,7 @@
 "use strict";
 
 const express = require("express");
-const { requireAuth, requireStaff } = require("../auth");
+const { requireAuth, requireStaff, requireRole } = require("../auth");
 
 function median(nums) {
   if (!nums.length) return 0;
@@ -143,6 +143,45 @@ module.exports = function profileRoutes(db) {
       activeDaysLast30: activeDays,
       topStuckTopics: topTopics,
       history,
+    });
+  });
+
+  // GET /api/me/teaching — instructor's personal teaching intelligence (Phase 4.4)
+  // Private to the calling instructor/owner. No cross-instructor rankings.
+  router.get("/me/teaching", requireRole("instructor", "owner"), (req, res) => {
+    const { orgId, userId } = req.user;
+
+    const blks = db.prepare(
+      `SELECT b.id, b.title, b.status, b.ai_topics, b.created_at, b.resolved_at, b.resolution_type,
+              (julianday(b.resolved_at) - julianday(b.created_at)) * 24 AS hours
+         FROM blockages b
+        WHERE b.org_id = ? AND b.assignee_id = ? AND b.status = 'resolved'
+        ORDER BY b.resolved_at DESC`
+    ).all(orgId, userId);
+
+    const resolveHours = blks.map((b) => b.hours).filter((h) => h != null);
+    const avgHours = resolveHours.length
+      ? Math.round((resolveHours.reduce((a, h) => a + h, 0) / resolveHours.length) * 10) / 10
+      : null;
+
+    // Per-topic breakdown from AI triage
+    const topicMap = {};
+    blks.forEach((b) => {
+      let topics = [];
+      try { topics = JSON.parse(b.ai_topics) || []; } catch (_) {}
+      topics.forEach((t) => { topicMap[t] = (topicMap[t] || 0) + 1; });
+    });
+    const byTopic = Object.entries(topicMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([topic, count]) => ({ topic, count }));
+
+    res.json({
+      teaching: {
+        totalResolved: blks.length,
+        avgResolveHours: avgHours,
+        byTopic,
+      },
     });
   });
 
