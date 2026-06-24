@@ -401,12 +401,32 @@
           </div>
 
           ${similarHtml(blk.similar)}
+          <div id="peerMentorPanel"></div>
         </div>
       </div>`;
 
     wireActions();
     wireComposer();
     wireSuccessLayer();
+
+    // Load peer mentors for student on open/in_support blockages (non-blocking, T2-4)
+    if (role === "student" && blk.status !== "resolved") {
+      API.get("/api/blockages/" + encodeURIComponent(id) + "/peer-mentors").then(({ mentors }) => {
+        const panel = document.getElementById("peerMentorPanel");
+        if (!panel || !mentors || !mentors.length) return;
+        panel.innerHTML = `<div class="panel">
+          <h2>Peer who got through this</h2>
+          <p class="kb-sub">They hit a similar wall and unblocked themselves — opt-in to chat.</p>
+          ${mentors.slice(0, 3).map((m) => `
+            <div class="peer-mentor-row">
+              <strong>${escapeHtml(m.name)}</strong> got through
+              <em>${escapeHtml(m.resolvedTitle || "a similar wall")}</em>
+              ${m.resolutionSummary ? `<div class="sp-summary">${escapeHtml(m.resolutionSummary)}</div>` : ""}
+            </div>`).join("")}
+          <p style="font-size:.8rem;color:var(--muted,#666);margin-top:.5rem">Enable peer mentorship in <a href="settings.html">Settings</a> to appear here for others.</p>
+        </div>`;
+      }).catch(() => {});
+    }
   }
 
   // ---- Tags / CSAT / Canned wiring --------------------------------------

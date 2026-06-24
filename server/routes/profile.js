@@ -94,6 +94,65 @@ module.exports = function profileRoutes(db) {
     });
   });
 
+  // POST /api/me/peer-mentor-opt-in — student opts in to be a peer mentor (T2-4)
+  router.post("/me/peer-mentor-opt-in", requireAuth, requireRole("student"), (req, res) => {
+    const { orgId, userId } = req.user;
+    db.prepare("INSERT OR REPLACE INTO peer_mentor_opt_ins (org_id, user_id) VALUES (?, ?)").run(orgId, userId);
+    res.json({ ok: true, optedIn: true });
+  });
+
+  // DELETE /api/me/peer-mentor-opt-in — student opts out
+  router.delete("/me/peer-mentor-opt-in", requireAuth, requireRole("student"), (req, res) => {
+    const { userId } = req.user;
+    db.prepare("DELETE FROM peer_mentor_opt_ins WHERE user_id = ?").run(userId);
+    res.json({ ok: true, optedIn: false });
+  });
+
+  // GET /api/me/peer-mentor-opt-in — check own opt-in status
+  router.get("/me/peer-mentor-opt-in", requireAuth, requireRole("student"), (req, res) => {
+    const { userId } = req.user;
+    const row = db.prepare("SELECT 1 FROM peer_mentor_opt_ins WHERE user_id = ?").get(userId);
+    res.json({ optedIn: !!row });
+  });
+
+  // GET /api/blockages/:id/peer-mentors — find students who resolved a similar blockage (T2-4)
+  // Returns opt-in students who hit same AI topics — student can initiate a connection.
+  router.get("/blockages/:id/peer-mentors", requireAuth, requireRole("student"), (req, res) => {
+    const { orgId, userId } = req.user;
+    const blk = db.prepare("SELECT * FROM blockages WHERE id = ? AND org_id = ? AND user_id = ?").get(Number(req.params.id), orgId, userId);
+    if (!blk) return res.status(404).json({ error: "Blockage not found." });
+
+    let topics = [];
+    try { topics = JSON.parse(blk.ai_topics) || []; } catch (_) {}
+    if (!topics.length) return res.json({ mentors: [] });
+
+    // Find opted-in students (not yourself) in same cohort who resolved a blockage on these topics
+    const placeholders = topics.map(() => "?").join(",");
+    const mentors = db.prepare(
+      `SELECT DISTINCT u.id, u.name, b.title AS resolved_title, b.resolution_type,
+              b.resolution_summary, b.resolved_at
+         FROM blockages b
+         JOIN users u ON u.id = b.user_id
+         JOIN peer_mentor_opt_ins p ON p.user_id = u.id
+        WHERE b.org_id = ? AND b.cohort_id = ? AND b.status = 'resolved'
+          AND b.user_id != ?
+          AND b.ai_topics IS NOT NULL
+          AND (${topics.map(() => "b.ai_topics LIKE ?").join(" OR ")})
+        ORDER BY b.resolved_at DESC LIMIT 5`
+    ).all(orgId, blk.cohort_id, userId, ...topics.map((t) => `%${t}%`));
+
+    res.json({
+      mentors: mentors.map((m) => ({
+        id: m.id,
+        name: m.name,
+        resolvedTitle: m.resolved_title,
+        resolutionType: m.resolution_type,
+        resolutionSummary: m.resolution_summary,
+        resolvedAt: m.resolved_at,
+      })),
+    });
+  });
+
   // GET /api/me/momentum — student's own unblocking trajectory (Phase 2.4)
   // Personal only — no cross-student data, no rankings.
   router.get("/me/momentum", requireAuth, (req, res) => {

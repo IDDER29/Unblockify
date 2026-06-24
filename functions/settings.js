@@ -71,7 +71,16 @@
         <div class="hint">Your workspace slug.</div>
       </div>
       <button class="btn btn-ghost" id="logoutBtn2">Log out</button>
-    </div>`;
+    </div>
+    ${s.user.role === "student" ? `
+    <div class="panel settings-card" id="peerMentorCard">
+      <h2>Peer mentorship</h2>
+      <p style="color:var(--muted,#666);font-size:.9rem;margin-bottom:.75rem">When you enable this, students who are stuck on something you've already unblocked can see your name and what worked for you. Fully opt-in — you can turn it off any time.</p>
+      <label class="form-row" style="align-items:center;gap:.75rem;cursor:pointer">
+        <input type="checkbox" id="peerMentorToggle" style="width:18px;height:18px" />
+        <span>I'm open to being a peer mentor</span>
+      </label>
+    </div>` : ""}`;
 
   const profileForm = view.querySelector("#profileForm");
   const passwordForm = view.querySelector("#passwordForm");
@@ -159,4 +168,28 @@
   }
 
   document.getElementById("logoutBtn2").addEventListener("click", logout);
+
+  // Peer mentorship toggle (student only, T2-4)
+  const peerToggle = view.querySelector("#peerMentorToggle");
+  if (peerToggle) {
+    // Load current state
+    API.get("/api/me/peer-mentor-opt-in").then(({ optedIn }) => {
+      peerToggle.checked = optedIn;
+    }).catch(() => {});
+
+    peerToggle.addEventListener("change", async () => {
+      try {
+        if (peerToggle.checked) {
+          await API.post("/api/me/peer-mentor-opt-in", {});
+          toast("You're now open to peer mentorship. 🎉", "success");
+        } else {
+          await API.del("/api/me/peer-mentor-opt-in");
+          toast("Peer mentorship turned off.", "info");
+        }
+      } catch (err) {
+        peerToggle.checked = !peerToggle.checked; // revert on error
+        toast(err.message || "Couldn't update.", "error");
+      }
+    });
+  }
 })();

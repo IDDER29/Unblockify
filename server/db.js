@@ -287,6 +287,13 @@ function migrate(db) {
   addColumnIfMissing(db, "blockages", "ai_urgency", "TEXT");
   addColumnIfMissing(db, "cohorts", "assign_strategy", "TEXT NOT NULL DEFAULT 'none'");
   addColumnIfMissing(db, "cohorts", "rr_cursor", "INTEGER NOT NULL DEFAULT 0");
+  // T2-4: peer mentorship opt-in
+  db.exec(`CREATE TABLE IF NOT EXISTS peer_mentor_opt_ins (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    org_id     INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    user_id    INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );`);
   // Phase 5.1: cohort progression patterns (topic co-occurrence)
   db.exec(`CREATE TABLE IF NOT EXISTS progression_patterns (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
