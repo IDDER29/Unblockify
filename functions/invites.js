@@ -105,7 +105,8 @@
       const cohortId = document.getElementById("invCohort").value || null;
       const result = document.getElementById("newInviteResult");
       try {
-        const inv = await API.post("/api/invites", { role, cohortId });
+        const res = await API.post("/api/invites", { role, cohortId });
+        const inv = res.invite || res;
         const url = location.origin + (inv.url || "/join.html?code=" + inv.code);
         result.innerHTML = `
           <div style="background:var(--surface-2);border-radius:8px;padding:.75rem 1rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">

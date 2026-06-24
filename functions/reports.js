@@ -24,10 +24,11 @@
   } catch (_) {}
 
   const a = analytics || {};
-  const d = (digest && digest.digest) || {};
+  const d = digest || {};
 
   const byCohort = a.byCohort || [];
   const byInstructor = a.byInstructor || [];
+  const digestThemes = d.themes || [];
 
   el.innerHTML = `
     <div class="page-head">
@@ -38,19 +39,23 @@
     <!-- Weekly digest -->
     <div class="chart-card" style="margin-bottom:1.25rem">
       <h3>Weekly digest</h3>
+      ${d.summary ? `<p style="font-size:.9rem;color:var(--muted);margin:.5rem 0 .75rem">${escapeHtml(d.summary)}</p>` : ""}
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem;margin:.75rem 0">
-        <div class="stat"><div class="k">Reported this week</div><div class="v">${d.reported || 0}</div></div>
-        <div class="stat"><div class="k">Resolved this week</div><div class="v">${d.resolved || 0}</div></div>
-        <div class="stat"><div class="k">AI-resolved</div><div class="v">${d.aiResolved || 0}</div></div>
-        <div class="stat"><div class="k">Avg time (week)</div><div class="v">${d.avgHours != null ? `${d.avgHours}h` : "—"}</div></div>
+        <div class="stat"><div class="k">Resolved this week</div><div class="v">${d.resolvedCount || 0}</div></div>
+        <div class="stat"><div class="k">Period</div><div class="v">${d.periodDays || 7} days</div></div>
+        <div class="stat"><div class="k">Top themes</div><div class="v">${digestThemes.length}</div></div>
       </div>
-      ${(d.topTopics || []).length ? `
+      ${digestThemes.length ? `
       <div style="margin-top:.5rem">
-        <div style="font-size:.8rem;color:var(--muted);margin-bottom:.4rem">Top topics this week</div>
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:.4rem">Top themes this week</div>
         <div style="display:flex;gap:.4rem;flex-wrap:wrap">
-          ${(d.topTopics || []).slice(0, 6).map(t => `<span class="atrisk-tag">${escapeHtml(t.topic)}</span>`).join("")}
+          ${digestThemes.slice(0, 6).map(t => `<span class="atrisk-tag">${escapeHtml(t.theme)} <span style="opacity:.6;font-size:.78rem">${t.count}</span></span>`).join("")}
         </div>
       </div>` : ""}
+      <div style="margin-top:.75rem">
+        <button class="btn btn-ghost btn-sm" id="emailDigestBtn">${d.emailSent ? "Digest sent ✓" : "Email me this digest"}</button>
+        <span id="digestMsg" style="font-size:.85rem;margin-left:.5rem"></span>
+      </div>
     </div>
 
     <!-- Cohort progress table -->
@@ -139,4 +144,26 @@
         </div>
       </div>
     </div>`;
+
+  document.getElementById("emailDigestBtn").addEventListener("click", async () => {
+    const btn = document.getElementById("emailDigestBtn");
+    const msg = document.getElementById("digestMsg");
+    btn.disabled = true;
+    try {
+      const res = await API.get("/api/analytics/digest?email=1");
+      if (res.emailSent) {
+        msg.textContent = "Digest emailed.";
+        msg.style.color = "var(--flow,#12B886)";
+        btn.textContent = "Digest sent ✓";
+      } else {
+        msg.textContent = "No email configured on this server.";
+        msg.style.color = "var(--muted)";
+        btn.disabled = false;
+      }
+    } catch (e) {
+      msg.textContent = e.message || "Couldn't send.";
+      msg.style.color = "var(--blocked)";
+      btn.disabled = false;
+    }
+  });
 })();
