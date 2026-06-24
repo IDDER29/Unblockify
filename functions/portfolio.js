@@ -16,7 +16,7 @@
 
   let portfolio;
   try {
-    portfolio = await API.get("/api/me/export.json");
+    portfolio = await API.get("/api/auth/me/export.json");
   } catch (e) {
     el.innerHTML = `<div class="blk-empty">Couldn't load portfolio data.</div>`;
     return;
@@ -80,7 +80,7 @@
             </div>
             <h3>${escapeHtml(b.title)}</h3>
             <div class="blk-meta">
-              ${escapeHtml(fmtRelative(b.reported_at))}
+              ${escapeHtml(fmtRelative(b.created_at))}
               ${b.resolved_at ? ` · resolved ${escapeHtml(fmtRelative(b.resolved_at))}` : ""}
             </div>
           </a>`;
@@ -94,7 +94,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `unblockify-portfolio-${s.user.name.replace(/\s+/g, "-").toLowerCase()}.json`;
+    a.download = `unblockify-portfolio-${(s.user.name || "student").replace(/\s+/g, "-").toLowerCase()}.json`;
     a.click();
     URL.revokeObjectURL(url);
     toast("Portfolio downloaded.", "success");
