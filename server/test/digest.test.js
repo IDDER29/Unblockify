@@ -16,8 +16,8 @@ function digestFiles() {
   return fs
     .readdirSync(OUTBOX)
     .filter((f) => f.endsWith(".json"))
-    .map((f) => JSON.parse(fs.readFileSync(path.join(OUTBOX, f), "utf8")))
-    .filter((m) => typeof m.subject === "string" && m.subject.includes("updates on Unblockify"));
+    .map((f) => { try { return JSON.parse(fs.readFileSync(path.join(OUTBOX, f), "utf8")); } catch (_) { return null; } })
+    .filter((m) => m && typeof m.subject === "string" && m.subject.includes("updates on Unblockify"));
 }
 
 test("notification digest emails unread notifications", async () => {

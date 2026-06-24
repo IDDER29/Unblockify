@@ -11,3 +11,4 @@ server/outbox/*
 
 server/logs/*
 !server/logs/.gitkeep
+.claude/worktrees/
