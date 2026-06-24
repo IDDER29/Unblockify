@@ -357,10 +357,13 @@
             </form>
             ${isStaff ? '<div class="canned-menu" id="cannedMenu" hidden></div>' : ""}
             <div class="attach-pending" id="attachPending"></div>
-            ${role === "student" && blk.status !== "resolved" && (blk.comments || []).some((c) => c.is_ai || c.author_role === "ai")
-              ? `<div style="display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap">
-                  <button type="button" class="btn btn-ghost" id="askAgainBtn">✦ Show me more</button>
-                  <button type="button" class="btn btn-ghost" id="stuckBtn" style="color:var(--pending)">Still stuck — get an instructor</button>
+            ${role === "student" && blk.status !== "resolved"
+              ? `<div style="display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap;align-items:center">
+                  ${(blk.comments || []).some((c) => c.is_ai || c.author_role === "ai")
+                    ? `<button type="button" class="btn btn-ghost" id="askAgainBtn">✦ Show me more</button>
+                       <button type="button" class="btn btn-ghost" id="stuckBtn" style="color:var(--pending)">Still stuck — get an instructor</button>`
+                    : ""}
+                  <button type="button" class="btn btn-primary" id="selfResolveBtn" style="margin-left:auto">🎉 I figured it out</button>
                 </div>`
               : ""}
           </div>
@@ -727,6 +730,26 @@
         } catch (err) {
           toast(err.message || "Couldn't flag.", "error");
           stuckBtn.disabled = false;
+        }
+      });
+    }
+
+    // Student: "I figured it out" — self-resolve with a note (F2)
+    const selfResolveBtn = document.getElementById("selfResolveBtn");
+    if (selfResolveBtn) {
+      selfResolveBtn.addEventListener("click", async () => {
+        const note = prompt("What finally worked? (One sentence — it'll help the next student who hits this wall.)", "");
+        if (!note || !note.trim()) return;
+        selfResolveBtn.disabled = true;
+        selfResolveBtn.textContent = "Saving…";
+        try {
+          await API.post("/api/blockages/" + encodeURIComponent(id) + "/self-resolve", { note: note.trim() });
+          toast("🎉 Nice work! Your note was saved to the knowledge base.", "success");
+          await load();
+        } catch (err) {
+          toast(err.message || "Couldn't save.", "error");
+          selfResolveBtn.disabled = false;
+          selfResolveBtn.textContent = "🎉 I figured it out";
         }
       });
     }

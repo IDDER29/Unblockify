@@ -253,6 +253,84 @@ module.exports = function blockageRoutes(db) {
     }
   });
 
+  // POST /api/blockages/:id/self-resolve { note } — student marks "I figured it out" (F2)
+  // Distinct from ai-resolve (AI deflection). Student writes one sentence what worked.
+  // Note enters the knowledge base under their name — Stack Overflow psychology.
+  router.post("/blockages/:id/self-resolve", requireRole("student"), (req, res) => {
+    const row = rowById(req.params.id);
+    if (!row || row.user_id !== req.user.userId)
+      return res.status(404).json({ error: "Blockage not found." });
+    if (row.status === "resolved")
+      return res.status(409).json({ error: "Already resolved." });
+    const note = (req.body.note || "").trim();
+    if (!note) return res.status(400).json({ error: "Write one sentence about what worked." });
+    const lenErr = tooLong(note, 1000, "Resolution note");
+    if (lenErr) return res.status(400).json({ error: lenErr });
+
+    db.prepare(
+      `UPDATE blockages SET status = 'resolved', resolution_type = 'self',
+            resolution_note = ?, resolved_at = datetime('now') WHERE id = ?`
+    ).run(note, row.id);
+    addEvent(db, { orgId: row.org_id, blockageId: row.id, type: "resolved", actorId: req.user.userId, meta: "self" });
+    notify(db, {
+      orgId: row.org_id,
+      userId: row.user_id,
+      type: "resolved",
+      blockageId: row.id,
+      body: `You figured it out — "${row.title}" is resolved. Your note was saved to the knowledge base.`,
+    });
+    // Generate resolution summary in background (same as instructor resolve)
+    const blockageId = row.id;
+    setImmediate(async () => {
+      try {
+        const existing = db.prepare("SELECT resolution_summary FROM blockages WHERE id = ?").get(blockageId);
+        if (existing && existing.resolution_summary) return;
+        const thread = db.prepare(
+          `SELECT cm.body, COALESCE(u.name, cm.ai_author) AS author,
+                  CASE WHEN cm.is_ai=1 THEN 'ai' ELSE u.role END AS author_role
+             FROM comments cm LEFT JOIN users u ON u.id = cm.user_id
+            WHERE cm.blockage_id = ? ORDER BY cm.created_at`
+        ).all(blockageId);
+        const updated = db.prepare("SELECT * FROM blockages WHERE id = ?").get(blockageId);
+        const text = await ai.resolutionSummary({ title: updated.title, thread, resolutionNote: updated.resolution_note });
+        if (text) db.prepare("UPDATE blockages SET resolution_summary = ? WHERE id = ?").run(text, blockageId);
+      } catch (_) {}
+    });
+    res.json({ blockage: summary(joinedById(row.id)) });
+  });
+
+  // GET /api/blockages/cohort-stats — cohort social proof for "I'm stuck" modal warmup (F1)
+  // Returns aggregate stats for the student's cohort: total blockages this term,
+  // avg resolve hours, self-resolve rate. Shown before the student types anything.
+  router.get("/blockages/cohort-stats", requireRole("student"), (req, res) => {
+    const { orgId, userId } = req.user;
+    const user = db.prepare("SELECT cohort_id FROM users WHERE id = ?").get(userId);
+    if (!user || !user.cohort_id) return res.json({ cohortStats: null });
+    const cohortId = user.cohort_id;
+
+    const total = db.prepare("SELECT COUNT(*) n FROM blockages WHERE org_id = ? AND cohort_id = ?").get(orgId, cohortId).n;
+    const resolved = db.prepare("SELECT COUNT(*) n FROM blockages WHERE org_id = ? AND cohort_id = ? AND status = 'resolved'").get(orgId, cohortId).n;
+    const selfResolved = db.prepare("SELECT COUNT(*) n FROM blockages WHERE org_id = ? AND cohort_id = ? AND resolution_type = 'self'").get(orgId, cohortId).n;
+    const avgRow = db.prepare(
+      `SELECT AVG(julianday(resolved_at) - julianday(created_at)) * 24 AS avg_h
+         FROM blockages WHERE org_id = ? AND cohort_id = ? AND status = 'resolved' AND resolved_at IS NOT NULL`
+    ).get(orgId, cohortId);
+    const avgHours = avgRow && avgRow.avg_h != null ? Math.round(avgRow.avg_h * 10) / 10 : null;
+
+    // Student's own total (to detect first-ever submission)
+    const studentTotal = db.prepare("SELECT COUNT(*) n FROM blockages WHERE org_id = ? AND user_id = ?").get(orgId, userId).n;
+
+    res.json({
+      cohortStats: {
+        total,
+        resolved,
+        selfResolved,
+        avgResolveHours: avgHours,
+        isFirstEver: studentTotal === 0,
+      },
+    });
+  });
+
   // POST /api/blockages/:id/ai-resolve — student marks "this unblocked me" (AI deflection)
   router.post("/blockages/:id/ai-resolve", requireRole("student"), (req, res) => {
     const row = rowById(req.params.id);

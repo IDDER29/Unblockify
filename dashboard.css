@@ -1770,6 +1770,7 @@ tr:has(.skel-line) td { border-color: transparent !important; }
 /* ── Phase 2.2 · Student Knowledge Pre-Search ─────────────── */
 .social-proof { background:#f0faf5; border:1px solid #c3ebd9; border-radius:8px; padding:.75rem; margin:.5rem 0 .75rem; font-size:.88rem; }
 .sp-head { font-weight:600; color:var(--flow,#12B886); margin-bottom:.5rem; }
+.sp-head--milestone { color:var(--ink,#0C111B); font-style:italic; font-weight:500; font-size:.9rem; line-height:1.4; margin-bottom:0; }
 .sp-item { display:block; padding:.4rem .5rem; border-radius:5px; text-decoration:none; color:inherit; margin-bottom:.25rem; }
 .sp-item:hover { background:rgba(18,184,134,.08); }
 .sp-title { font-weight:500; }

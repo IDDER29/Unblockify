@@ -227,8 +227,29 @@
   const closeBtn = document.getElementById("newClose");
   if (closeBtn && !closeBtn.getAttribute("aria-label")) closeBtn.setAttribute("aria-label", "Close");
 
+  // Cohort warmup: shown when modal first opens (before student types anything).
+  // "X students have asked for help this term. Average unblock: Y hrs." — removes shame.
+  let _cohortStats = null;
+  API.get("/api/blockages/cohort-stats").then((d) => { _cohortStats = d && d.cohortStats; }).catch(() => {});
+
+  function renderCohortWarmup() {
+    if (!socialProof || !_cohortStats) return;
+    const s = _cohortStats;
+    if (s.isFirstEver) {
+      // First-ever submission milestone message
+      socialProof.innerHTML = `<div class="sp-head sp-head--milestone">First one. Students who ask for help finish — students who hide, don't. You're doing the right thing.</div>`;
+      socialProof.hidden = false;
+      return;
+    }
+    if (!s.total) return;
+    const avg = s.avgResolveHours != null ? ` · Average unblock: <strong>${s.avgResolveHours}h</strong>` : "";
+    socialProof.innerHTML = `<div class="sp-head"><strong>${s.total}</strong> student${s.total !== 1 ? "s" : ""} in your cohort have hit walls this term${avg}. You're not alone.</div>`;
+    socialProof.hidden = false;
+  }
+
   function showModal() {
     openModal(modal, { labelledby: modalHeading ? modalHeading.id : undefined });
+    renderCohortWarmup();
   }
   function hideModal() {
     closeModal(modal);
@@ -248,7 +269,7 @@
     titleInput.addEventListener("input", () => {
       clearTimeout(_searchTimer);
       const q = titleInput.value.trim();
-      if (q.length < 4) { socialProof.hidden = true; return; }
+      if (q.length < 4) { renderCohortWarmup(); return; }
       _searchTimer = setTimeout(async () => {
         try {
           const { matches, count } = await API.get(`/api/blockages/similar?text=${encodeURIComponent(q)}`);
