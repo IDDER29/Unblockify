@@ -122,11 +122,12 @@
               <button type="button" class="btn btn-ghost cmt-del" data-cid="${c.id}">Delete</button>
             </div>`
           : "";
-        return `<div class="comment role-${escapeHtml(c.author_role)}">
+        const internalBadge = c.is_internal ? ' <span class="ai-badge" style="background:var(--pending);color:#fff">Internal</span>' : "";
+        return `<div class="comment role-${escapeHtml(c.author_role)}${c.is_internal ? " comment-internal" : ""}">
           <div class="av">${isAi ? "✦" : avatarChar(c.author)}</div>
           <div class="bubble">
             <div class="head">
-              <span class="who">${escapeHtml(c.author)}${isAi ? ' <span class="ai-badge">AI</span>' : ""}</span>
+              <span class="who">${escapeHtml(c.author)}${isAi ? ' <span class="ai-badge">AI</span>' : ""}${internalBadge}</span>
               <span class="when">${fmtRelative(c.created_at)}</span>
             </div>
             <div class="body md" data-cid="${c.id}" data-raw="${escapeHtml(c.body)}">${renderMarkdown(c.body)}</div>
@@ -355,6 +356,9 @@
               ${isStaff ? '<button type="button" class="btn btn-ghost" id="cannedBtn" title="Insert a canned response">Canned ▾</button>' : ""}
               <button type="submit" class="btn btn-primary">Send</button>
             </form>
+            ${isStaff ? `<label class="internal-toggle" style="display:flex;align-items:center;gap:.4rem;margin-top:.4rem;font-size:.8rem;color:var(--pending);cursor:pointer">
+              <input type="checkbox" id="internalToggle"> Internal note (only staff can see)
+            </label>` : ""}
             ${isStaff ? '<div class="canned-menu" id="cannedMenu" hidden></div>' : ""}
             <div class="attach-pending" id="attachPending"></div>
             ${role === "student" && blk.status !== "resolved"
@@ -708,9 +712,11 @@
         return;
       }
       try {
+        const internalChk = document.getElementById("internalToggle");
         await API.post("/api/blockages/" + encodeURIComponent(id) + "/comments", {
           body: body || "(attachment)",
           attachmentIds: pending.map((p) => p.id),
+          is_internal: internalChk && internalChk.checked ? true : false,
         });
         ta.value = "";
         pending = [];

@@ -161,8 +161,26 @@ async function flagStudent(id) {
   const insRows = a.byInstructor.map((i) => ({ label: i.name, resolved: i.resolved }));
 
   const welcome = a.total === 0 ? welcomeHtml(s.org.name) : "";
+  const checklistDismissed = localStorage.getItem("unblockify_checklist_dismissed") === "1";
+  const hasCohorts = a.byCohort && a.byCohort.length > 0;
+  const hasInstructors = a.byInstructor && a.byInstructor.length > 0;
+  const hasBlockages = a.total > 0;
+  const allDone = hasCohorts && hasInstructors && hasBlockages;
+  const showChecklist = !checklistDismissed && !allDone;
+  const checklistHtml = showChecklist ? `<div class="panel" style="margin-bottom:1rem;border-left:3px solid var(--flow,#12B886)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+      <strong>Getting started</strong>
+      <button type="button" class="btn-mini" id="dismissChecklist">Dismiss</button>
+    </div>
+    <ul style="margin:0;padding-left:1.25rem;list-style:none">
+      <li style="margin:.25rem 0">${hasCohorts ? "✅" : "⬜"} <a href="cohorts.html">Create a cohort</a></li>
+      <li style="margin:.25rem 0">${hasInstructors ? "✅" : "⬜"} <a href="members.html">Invite an instructor</a></li>
+      <li style="margin:.25rem 0">${hasBlockages ? "✅" : "⬜"} <span style="color:var(--muted,#666)">Wait for a student's first blockage</span></li>
+    </ul>
+  </div>` : "";
 
   el.innerHTML = `
+    ${checklistHtml}
     ${welcome}
     <section class="kpi-strip">
       <div class="kpi is-blocked"><div class="kpi-v">${a.totals.open || 0}</div><div class="kpi-k">Blocked</div></div>
@@ -233,6 +251,15 @@ async function flagStudent(id) {
       </div>
       <button class="btn btn-primary" id="nudgeSend" type="button">Send nudge</button>
     </div>`;
+
+  // Dismiss checklist.
+  const dismissBtn = document.getElementById("dismissChecklist");
+  if (dismissBtn) {
+    dismissBtn.addEventListener("click", () => {
+      localStorage.setItem("unblockify_checklist_dismissed", "1");
+      dismissBtn.closest(".panel").remove();
+    });
+  }
 
   // Weekly AI digest (loads after the charts).
   const dp = document.getElementById("digestPanel");

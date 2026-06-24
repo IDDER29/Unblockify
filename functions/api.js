@@ -261,11 +261,13 @@ const NAV = {
     { href: "owner_blockages.html", icon: "grid", label: "Blockages" },
     { href: "cohorts.html", icon: "layers", label: "Cohorts" },
     { href: "members.html", icon: "people", label: "Members" },
+    { href: "check-ins.html", icon: "bell", label: "Check-ins" },
     { href: "ops.html", icon: "shield", label: "Ops & trust" },
     { href: "settings.html", icon: "cog", label: "Settings" },
   ],
   instructor: [
     { href: "instructor_queue.html", icon: "grid", label: "Queue" },
+    { href: "check-ins.html", icon: "bell", label: "Check-ins" },
     { href: "cohorts.html", icon: "layers", label: "Cohorts" },
     { href: "settings.html", icon: "cog", label: "Settings" },
   ],

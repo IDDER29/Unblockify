@@ -214,6 +214,51 @@ module.exports = function authRoutes(db) {
     res.json({ user: publicUser(updated), org: publicOrg(orgById(updated.org_id)) });
   });
 
+  // GET /api/me/export.json — student portfolio export.
+  router.get("/me/export.json", requireAuth, (req, res) => {
+    const { userId, orgId, role } = req.user;
+    const user = userById(userId);
+    if (!user) return res.status(401).json({ error: "Not authenticated." });
+
+    const blockages = db.prepare(
+      `SELECT b.id, b.title, b.details, b.status, b.created_at,
+              b.resolution_note, b.resolution_type,
+              c.name AS cohort, br.name AS brief
+         FROM blockages b
+         JOIN cohorts c ON c.id = b.cohort_id
+         LEFT JOIN briefs br ON br.id = b.brief_id
+        WHERE b.user_id = ? AND b.org_id = ?
+        ORDER BY b.created_at`
+    ).all(userId, orgId);
+
+    const timeline = db.prepare(
+      `SELECT e.type, e.created_at
+         FROM status_events e
+         JOIN blockages b ON b.id = e.blockage_id
+        WHERE b.user_id = ? AND b.org_id = ?
+        ORDER BY e.created_at`
+    ).all(userId, orgId);
+
+    const stats = db.prepare(
+      `SELECT
+         COUNT(*) AS total,
+         SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) AS resolved,
+         SUM(CASE WHEN resolution_type = 'ai' THEN 1 ELSE 0 END) AS self_resolved,
+         AVG(CASE WHEN resolved_at IS NOT NULL THEN
+           (julianday(resolved_at) - julianday(created_at)) * 24 ELSE NULL END) AS avg_hours
+         FROM blockages WHERE user_id = ? AND org_id = ?`
+    ).get(userId, orgId);
+
+    res.setHeader("Content-Disposition", 'attachment; filename="unblockify-portfolio.json"');
+    res.json({
+      exported_at: new Date().toISOString(),
+      student: { name: user.name, email: user.email },
+      stats,
+      blockages,
+      activity_timeline: timeline,
+    });
+  });
+
   // POST /api/auth/forgot — start a password reset. Always 200 (never reveal
   // whether the email exists).
   router.post("/forgot", authLimiter, (req, res) => {

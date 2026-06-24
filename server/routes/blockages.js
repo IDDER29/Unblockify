@@ -243,7 +243,8 @@ module.exports = function blockageRoutes(db) {
         body: `${me.name} reported "${title}"`,
       });
     }
-    res.status(201).json({ blockage: summary(joinedById(id)) });
+    const created = joinedById(id);
+    res.status(201).json({ blockage: summary(created) });
     // Fire AI triage + the first tutoring response in the background.
     if (process.env.AI_AUTORESPOND !== "0") {
       setImmediate(async () => {
@@ -251,6 +252,25 @@ module.exports = function blockageRoutes(db) {
         await aiRespond(id).catch(() => {});
       });
     }
+    // Slack webhook notification (fire-and-forget).
+    setImmediate(async () => {
+      try {
+        const org = db.prepare("SELECT slack_webhook_url FROM organizations WHERE id = ?").get(created.org_id);
+        if (org && org.slack_webhook_url) {
+          const payload = {
+            text: `*New blockage* in ${created.cohort_name || "your cohort"}: *${created.title}* — reported by ${created.student_name}`,
+          };
+          const https = require("https");
+          const body = JSON.stringify(payload);
+          const u = new URL(org.slack_webhook_url);
+          const req2 = https.request({ hostname: u.hostname, path: u.pathname + u.search, method: "POST",
+            headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(body) } });
+          req2.on("error", () => {});
+          req2.write(body);
+          req2.end();
+        }
+      } catch (_) {}
+    });
   });
 
   // POST /api/blockages/:id/self-resolve { note } — student marks "I figured it out" (F2)
@@ -414,9 +434,10 @@ module.exports = function blockageRoutes(db) {
         `SELECT cm.id, cm.body, cm.created_at, cm.is_ai, cm.user_id AS authorId,
                 COALESCE(u.name, cm.ai_author) AS author,
                 CASE WHEN cm.is_ai = 1 THEN 'ai' ELSE u.role END AS author_role,
-                cm.scaffold_level, cm.ai_confidence
+                cm.scaffold_level, cm.ai_confidence, cm.is_internal
            FROM comments cm LEFT JOIN users u ON u.id = cm.user_id
-          WHERE cm.blockage_id = ? ORDER BY cm.created_at`
+          WHERE cm.blockage_id = ?${req.user.role === "student" ? " AND cm.is_internal = 0" : ""}
+          ORDER BY cm.created_at`
       )
       .all(row.id);
     // Attach files to their comment (or the report itself when comment_id is null).
@@ -812,9 +833,11 @@ module.exports = function blockageRoutes(db) {
     if (!body) return res.status(400).json({ error: "Write a message first." });
     const lenErr = tooLong(body, 5000, "Comment");
     if (lenErr) return res.status(400).json({ error: lenErr });
+    // Internal notes only allowed for staff; silently strip flag for students.
+    const isInternal = req.user.role !== "student" && !!req.body.is_internal ? 1 : 0;
     const cmtInfo = db.prepare(
-      "INSERT INTO comments (org_id, blockage_id, user_id, body) VALUES (?, ?, ?, ?)"
-    ).run(row.org_id, row.id, req.user.userId, body);
+      "INSERT INTO comments (org_id, blockage_id, user_id, body, is_internal) VALUES (?, ?, ?, ?, ?)"
+    ).run(row.org_id, row.id, req.user.userId, body, isInternal);
     bindToComment(req.user, req.body.attachmentIds, row.id, cmtInfo.lastInsertRowid);
     addEvent(db, { orgId: row.org_id, blockageId: row.id, type: "comment", actorId: req.user.userId });
 

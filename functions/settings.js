@@ -80,6 +80,19 @@
         <input type="checkbox" id="peerMentorToggle" style="width:18px;height:18px" />
         <span>I'm open to being a peer mentor</span>
       </label>
+    </div>` : ""}
+    ${s.user.role === "owner" ? `
+    <div class="panel settings-card" id="slackCard">
+      <h2>Slack integration</h2>
+      <p style="color:var(--muted,#666);font-size:.9rem;margin-bottom:.75rem">Post a message to a Slack channel when a new blockage is reported. Paste an <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noreferrer">incoming webhook URL</a> below.</p>
+      <div class="form-row">
+        <label for="slackUrl">Webhook URL</label>
+        <input type="url" id="slackUrl" placeholder="https://hooks.slack.com/services/…" style="font-family:var(--font-mono);font-size:.82rem" />
+      </div>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.5rem">
+        <button class="btn btn-primary btn-sm" id="saveSlackBtn" type="button">Save</button>
+        <button class="btn btn-ghost btn-sm" id="clearSlackBtn" type="button">Clear</button>
+      </div>
     </div>` : ""}`;
 
   const profileForm = view.querySelector("#profileForm");
@@ -168,6 +181,32 @@
   }
 
   document.getElementById("logoutBtn2").addEventListener("click", logout);
+
+  // Slack webhook (owner only)
+  const slackInput = view.querySelector("#slackUrl");
+  if (slackInput) {
+    API.get("/api/org/integrations").then(({ slackWebhookUrl }) => {
+      slackInput.value = slackWebhookUrl || "";
+    }).catch(() => {});
+
+    view.querySelector("#saveSlackBtn").addEventListener("click", async () => {
+      try {
+        await API.put("/api/org/integrations/slack", { url: slackInput.value.trim() });
+        toast("Slack webhook saved.", "success");
+      } catch (err) {
+        toast(err.message || "Couldn't save webhook.", "error");
+      }
+    });
+    view.querySelector("#clearSlackBtn").addEventListener("click", async () => {
+      try {
+        await API.put("/api/org/integrations/slack", { url: "" });
+        slackInput.value = "";
+        toast("Slack webhook cleared.", "success");
+      } catch (err) {
+        toast(err.message || "Couldn't clear webhook.", "error");
+      }
+    });
+  }
 
   // Peer mentorship toggle (student only, T2-4)
   const peerToggle = view.querySelector("#peerMentorToggle");

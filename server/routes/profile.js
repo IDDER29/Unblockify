@@ -205,6 +205,52 @@ module.exports = function profileRoutes(db) {
     });
   });
 
+  // GET /api/me/ahead — cohort hotspots the student hasn't hit yet (student-facing heatmap).
+  // Returns anonymized, aggregate-only data — no individual student info exposed.
+  router.get("/me/ahead", requireAuth, requireRole("student"), (req, res) => {
+    const { orgId, userId } = req.user;
+
+    // Get the student's cohort
+    const me = db.prepare("SELECT cohort_id FROM users WHERE id = ?").get(userId);
+    if (!me || !me.cohort_id) return res.json({ hotspots: [] });
+
+    // Top blockage topics in the student's cohort (from OTHER students, anonymized)
+    const rows = db.prepare(
+      `SELECT b.ai_topics, b.brief_id, br.name AS brief_name,
+              COUNT(*) AS count,
+              AVG(CASE WHEN b.resolved_at IS NOT NULL THEN
+                (julianday(b.resolved_at) - julianday(b.created_at)) * 24 ELSE NULL END) AS avg_hours
+         FROM blockages b
+         LEFT JOIN briefs br ON br.id = b.brief_id
+        WHERE b.org_id = ? AND b.cohort_id = ? AND b.user_id != ?
+        GROUP BY b.brief_id ORDER BY count DESC LIMIT 10`
+    ).all(orgId, me.cohort_id, userId);
+
+    // Aggregate topic counts (from all blockages in cohort excl. this student)
+    const allBlks = db.prepare(
+      `SELECT ai_topics FROM blockages WHERE org_id = ? AND cohort_id = ? AND user_id != ?`
+    ).all(orgId, me.cohort_id, userId);
+
+    const topicMap = {};
+    for (const b of allBlks) {
+      let topics = [];
+      try { topics = JSON.parse(b.ai_topics) || []; } catch (_) {}
+      for (const t of topics) topicMap[t] = (topicMap[t] || 0) + 1;
+    }
+    const hotTopics = Object.entries(topicMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([topic, count]) => ({ topic, count }));
+
+    const hotspots = rows.map(r => ({
+      brief: r.brief_name || "No brief",
+      count: r.count,
+      avgHours: r.avg_hours ? Math.round(r.avg_hours * 10) / 10 : null,
+    }));
+
+    res.json({ hotspots, hotTopics });
+  });
+
   // GET /api/me/teaching — instructor's personal teaching intelligence (Phase 4.4)
   // Private to the calling instructor/owner. No cross-instructor rankings.
   router.get("/me/teaching", requireRole("instructor", "owner"), (req, res) => {

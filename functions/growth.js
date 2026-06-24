@@ -16,6 +16,9 @@
   view.innerHTML = `<div class="page-head">
     <h1>Your learning fingerprint</h1>
     <p>Your own unblocking data — how you're improving over time.</p>
+    <div style="margin-top:.75rem">
+      <a class="btn btn-ghost btn-sm" href="/api/me/export.json" download="unblockify-portfolio.json">↓ Export portfolio</a>
+    </div>
   </div>
   <div id="growthContent"><div class="thread-empty">Loading…</div></div>`;
 
@@ -103,10 +106,40 @@
       </div>`
     : "";
 
+  // --- What's ahead (cohort heatmap) ---
+  let aheadHtml = "";
+  try {
+    const ahead = await API.get("/api/me/ahead");
+    if (ahead && (ahead.hotspots.length || ahead.hotTopics.length)) {
+      const hotspotsSection = ahead.hotspots.length
+        ? ahead.hotspots.map(h => `
+            <div class="hotspot-row">
+              <div class="hotspot-info">
+                <div class="hotspot-topic">${escapeHtml(h.brief)}</div>
+                <div class="hotspot-meta">${h.count} student${h.count !== 1 ? "s" : ""} stuck${h.avgHours != null ? ` · avg ${h.avgHours}h to unblock` : ""}</div>
+              </div>
+            </div>`).join("")
+        : "";
+      const topicsSection = ahead.hotTopics.length
+        ? `<div style="margin-top:.75rem;font-size:.85rem;color:var(--muted,#666)">
+            Common topics: ${ahead.hotTopics.map(t => `<strong>${escapeHtml(t.topic)}</strong> (${t.count})`).join(", ")}
+           </div>`
+        : "";
+      aheadHtml = `<div class="chart-card" style="margin-bottom:1.5rem">
+        <h3>What's coming up</h3>
+        <p style="color:var(--muted,#666);font-size:.88rem;margin-bottom:.75rem">
+          These are the areas others in your cohort have hit. Knowing the hard zones ahead turns anxiety into preparation.
+        </p>
+        <div class="hotspot-list">${hotspotsSection}${topicsSection}</div>
+      </div>`;
+    }
+  } catch (_) { /* non-fatal */ }
+
   el.innerHTML = `
     <section class="stat-row" style="margin-bottom:1.5rem">${kpiHtml}</section>
     ${insightHtml}
     ${topicHtml}
+    ${aheadHtml}
     ${historyHtml}
   `;
 })();
