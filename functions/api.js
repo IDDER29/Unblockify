@@ -251,6 +251,7 @@ const ICONS = {
   cog: '<svg fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="3"/><path d="M10 1v3M10 16v3M1 10h3M16 10h3" stroke-linecap="round"/></svg>',
   shield: '<svg fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V5l7-3z" stroke-linejoin="round"/><path d="M7 10l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   bell: '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2a5 5 0 00-5 5c0 5-2 6-2 6h14s-2-1-2-6a5 5 0 00-5-5zM8.5 17a1.8 1.8 0 003 0" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  book: '<svg fill="none" stroke="currentColor" stroke-width="2"><path d="M4 2h12a1 1 0 011 1v14a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M8 2v18M4 7h4M4 11h4" stroke-linecap="round"/></svg>',
 };
 
 const NAV = {
@@ -269,6 +270,8 @@ const NAV = {
   ],
   student: [
     { href: "student_dashbord.html", icon: "grid", label: "My blockages" },
+    { href: "growth.html", icon: "chart", label: "My growth" },
+    { href: "knowledge.html", icon: "book", label: "Library" },
     { href: "settings.html", icon: "cog", label: "Settings" },
   ],
 };
