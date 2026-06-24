@@ -253,6 +253,7 @@ const ICONS = {
   shield: '<svg fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V5l7-3z" stroke-linejoin="round"/><path d="M7 10l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   bell: '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2a5 5 0 00-5 5c0 5-2 6-2 6h14s-2-1-2-6a5 5 0 00-5-5zM8.5 17a1.8 1.8 0 003 0" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   book: '<svg fill="none" stroke="currentColor" stroke-width="2"><path d="M4 2h12a1 1 0 011 1v14a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M8 2v18M4 7h4M4 11h4" stroke-linecap="round"/></svg>',
+  card: '<svg fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="16" height="12" rx="2"/><path d="M2 9h16" stroke-linecap="round"/><path d="M6 13h4" stroke-linecap="round"/></svg>',
 };
 
 const NAV = {
@@ -263,6 +264,7 @@ const NAV = {
     { href: "members.html", icon: "people", label: "Members" },
     { href: "check-ins.html", icon: "bell", label: "Check-ins" },
     { href: "ops.html", icon: "shield", label: "Ops & trust" },
+    { href: "billing.html", icon: "card", label: "Plan & billing" },
     { href: "settings.html", icon: "cog", label: "Settings" },
   ],
   instructor: [

@@ -102,5 +102,70 @@
     <div class="chart-card">
       <h3>Recent blockages</h3>
       ${recentHtml}
+    </div>
+
+    <div class="chart-card" style="margin-top:1rem">
+      <h3>Quick actions</h3>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.5rem">
+        <button class="btn btn-sm" id="nudgeBtn">Send nudge</button>
+        <button class="btn btn-ghost btn-sm" id="flagBtn">Flag for check-in</button>
+        <a class="btn btn-ghost btn-sm" href="owner_blockages.html?student=${encodeURIComponent(id)}">View all blockages</a>
+      </div>
+      <div id="flagNoteRow" style="display:none;margin-top:.6rem;display:none">
+        <textarea id="flagNote" rows="2" placeholder="Optional note for check-in…" style="width:100%;margin-bottom:.4rem"></textarea>
+        <button class="btn btn-primary btn-sm" id="flagConfirm">Confirm flag</button>
+        <button class="btn btn-ghost btn-sm" id="flagCancel">Cancel</button>
+      </div>
+    </div>
+
+    <div class="chart-card" style="margin-top:1rem" id="checkInsCard">
+      <h3>Check-in history</h3>
+      <div id="checkInsList"><p class="muted" style="padding:.25rem 0">Loading…</p></div>
     </div>`;
+
+  // Wire nudge
+  document.getElementById("nudgeBtn").addEventListener("click", async () => {
+    try {
+      await API.post(`/api/students/${encodeURIComponent(id)}/nudge`, { message: "Your instructor is checking in on you." });
+      toast("Nudge sent.", "success");
+    } catch (e) { toast(e.message || "Couldn't send nudge.", "error"); }
+  });
+
+  // Wire flag with optional note
+  const flagBtn = document.getElementById("flagBtn");
+  const flagNoteRow = document.getElementById("flagNoteRow");
+  const flagNote = document.getElementById("flagNote");
+  flagBtn.addEventListener("click", () => { flagNoteRow.style.display = "block"; flagBtn.style.display = "none"; });
+  document.getElementById("flagCancel").addEventListener("click", () => { flagNoteRow.style.display = "none"; flagBtn.style.display = ""; });
+  document.getElementById("flagConfirm").addEventListener("click", async () => {
+    try {
+      await API.post(`/api/students/${encodeURIComponent(id)}/flag`, { note: flagNote.value.trim() });
+      toast("Flagged for check-in.", "success");
+      flagNoteRow.style.display = "none";
+      flagBtn.style.display = "";
+      flagNote.value = "";
+      loadCheckIns();
+    } catch (e) { toast(e.message || "Couldn't flag student.", "error"); }
+  });
+
+  // Load check-ins for this student
+  async function loadCheckIns() {
+    const ciList = document.getElementById("checkInsList");
+    try {
+      const { checkIns } = await API.get(`/api/check-ins?status=open`);
+      const mine = (checkIns || []).filter(ci => String(ci.student_id) === String(id));
+      if (!mine.length) {
+        ciList.innerHTML = `<p class="muted" style="padding:.25rem 0">No open check-ins for this student.</p>`;
+        return;
+      }
+      ciList.innerHTML = mine.map(ci => `
+        <div style="padding:.5rem 0;border-bottom:1px solid var(--line,#eee)">
+          <div style="font-size:.85rem">${ci.note ? escapeHtml(ci.note) : '<span style="color:var(--muted,#666)">No note</span>'}</div>
+          <div class="blk-meta">${fmtRelative(ci.created_at)} · flagged by ${escapeHtml(ci.instructor_name)}</div>
+        </div>`).join("");
+    } catch (_) {
+      ciList.innerHTML = `<p class="muted">Couldn't load check-ins.</p>`;
+    }
+  }
+  loadCheckIns();
 })();

@@ -12,6 +12,7 @@
   view.innerHTML = `
     <div class="page-head"><h1>Support queue</h1><p>Blockages from your cohorts and the ones assigned to you.</p></div>
     <section class="stat-row" id="stats"></section>
+    <div id="teachingStats"></div>
     <div class="filters">
       <div class="seg" id="seg">
         <button data-status="" class="active">All</button>
@@ -451,6 +452,38 @@
   renderStats();
   renderGrid();
   loadViews();
+
+  // Personal teaching intelligence (non-blocking)
+  API.get("/api/me/teaching").then((t) => {
+    const el = document.getElementById("teachingStats");
+    if (!el || !t || !t.teaching || !t.teaching.totalResolved) return;
+    const { totalResolved, avgResolveHours, byTopic } = t.teaching;
+    const topTopics = (byTopic || []).slice(0, 4);
+    el.innerHTML = `<div class="panel" style="margin-bottom:.75rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap">
+      <span style="font-size:.85rem;color:var(--muted,#666)">Your stats:</span>
+      <span class="stat" style="margin:0;padding:0;background:none"><span class="k">Resolved</span><span class="v" style="font-size:1rem">${totalResolved}</span></span>
+      ${avgResolveHours != null ? `<span class="stat" style="margin:0;padding:0;background:none"><span class="k">Avg time</span><span class="v" style="font-size:1rem">${avgResolveHours}h</span></span>` : ""}
+      ${topTopics.length ? `<span style="font-size:.85rem;color:var(--muted,#666)">Top topics: ${topTopics.map(t => `<strong>${escapeHtml(t.topic)}</strong>`).join(", ")}</span>` : ""}
+    </div>`;
+  }).catch(() => {});
+
+  // Instructor weekly digest (non-blocking, appears after queue loads)
+  API.get("/api/analytics/digest").then((dg) => {
+    if (!dg || !dg.resolvedCount) return;
+    const bar = document.createElement("div");
+    bar.className = "panel";
+    bar.style.cssText = "margin-bottom:1rem;padding:.75rem 1rem;background:var(--surface-2,#f8f9fb)";
+    const chips = (dg.themes || []).slice(0, 4)
+      .map((t) => `<span class="theme-chip">${escapeHtml(t.theme)}<b>${t.count}</b></span>`).join("");
+    bar.innerHTML = `<div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+      <strong style="font-size:.88rem">This week:</strong>
+      <span style="font-size:.88rem;color:var(--muted,#666)">${dg.resolvedCount} resolved</span>
+      ${chips}
+      ${dg.summary ? `<span style="font-size:.82rem;color:var(--muted,#666);flex-basis:100%">${escapeHtml(dg.summary)}</span>` : ""}
+    </div>`;
+    const grid = document.getElementById("grid");
+    if (grid) grid.parentNode.insertBefore(bar, grid);
+  }).catch(() => {});
 
   // Live updates: a relevant event (new blockage, comment, resolve…) arrived on
   // the shared stream — re-fetch the queue, debounced. Filters/search/cohort

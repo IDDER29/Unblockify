@@ -106,6 +106,32 @@
       </div>`
     : "";
 
+  // --- Weekly digest ---
+  let digestHtml = "";
+  try {
+    const dg = await API.get("/api/me/weekly-digest");
+    if (dg && (dg.reported > 0 || dg.resolved > 0)) {
+      const selfPct = dg.resolved > 0 ? Math.round((dg.selfResolved / dg.resolved) * 100) : 0;
+      const aiPct = dg.resolved > 0 ? Math.round((dg.aiResolved / dg.resolved) * 100) : 0;
+      const cohortLine = dg.cohortReported > 0
+        ? `<div class="blk-meta" style="margin-top:.6rem">Your cohort reported <strong>${dg.cohortReported}</strong> blockage${dg.cohortReported !== 1 ? "s" : ""} this week too — you're not alone.</div>`
+        : "";
+      const topicsLine = dg.weekTopics && dg.weekTopics.length
+        ? `<div class="blk-meta" style="margin-top:.5rem">This week's topics: ${dg.weekTopics.map(t => `<strong>${escapeHtml(t.topic)}</strong>`).join(", ")}</div>`
+        : "";
+      digestHtml = `<div class="chart-card" style="margin-bottom:1.5rem">
+        <h3>This week</h3>
+        <section class="stat-row" style="margin:.5rem 0 .75rem;gap:.75rem">
+          <div class="stat"><div class="k">Reported</div><div class="v">${dg.reported}</div></div>
+          <div class="stat is-resolved"><div class="k">Cleared</div><div class="v">${dg.resolved}</div></div>
+          ${selfPct > 0 ? `<div class="stat"><div class="k">Self-resolved</div><div class="v">${selfPct}%</div></div>` : ""}
+          ${dg.fastestHours != null ? `<div class="stat"><div class="k">Fastest</div><div class="v">${dg.fastestHours}h</div></div>` : ""}
+        </section>
+        ${cohortLine}${topicsLine}
+      </div>`;
+    }
+  } catch (_) { /* non-fatal */ }
+
   // --- What's ahead (cohort heatmap) ---
   let aheadHtml = "";
   try {
@@ -138,6 +164,7 @@
   el.innerHTML = `
     <section class="stat-row" style="margin-bottom:1.5rem">${kpiHtml}</section>
     ${insightHtml}
+    ${digestHtml}
     ${topicHtml}
     ${aheadHtml}
     ${historyHtml}

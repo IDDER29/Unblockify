@@ -290,5 +290,68 @@ module.exports = function profileRoutes(db) {
     });
   });
 
+  // GET /api/me/weekly-digest — student's personal weekly summary.
+  // Covers the past 7 days: blockages reported, resolved, self-resolved, fastest, topics.
+  router.get("/me/weekly-digest", requireAuth, requireRole("student"), (req, res) => {
+    const { orgId, userId } = req.user;
+    const since = "datetime('now','-7 days')";
+
+    const reported = db.prepare(
+      `SELECT COUNT(*) n FROM blockages WHERE org_id = ? AND user_id = ? AND created_at >= ${since}`
+    ).get(orgId, userId).n;
+
+    const resolved = db.prepare(
+      `SELECT COUNT(*) n FROM blockages WHERE org_id = ? AND user_id = ? AND status = 'resolved' AND resolved_at >= ${since}`
+    ).get(orgId, userId).n;
+
+    const selfResolved = db.prepare(
+      `SELECT COUNT(*) n FROM blockages WHERE org_id = ? AND user_id = ? AND resolution_type = 'self' AND resolved_at >= ${since}`
+    ).get(orgId, userId).n;
+
+    const aiResolved = db.prepare(
+      `SELECT COUNT(*) n FROM blockages WHERE org_id = ? AND user_id = ? AND resolution_type = 'ai' AND resolved_at >= ${since}`
+    ).get(orgId, userId).n;
+
+    const fastestRow = db.prepare(
+      `SELECT MIN((julianday(resolved_at) - julianday(created_at)) * 24) AS hrs
+         FROM blockages WHERE org_id = ? AND user_id = ? AND resolved_at >= ${since}`
+    ).get(orgId, userId);
+
+    // Topics from this week
+    const topicBlks = db.prepare(
+      `SELECT ai_topics FROM blockages WHERE org_id = ? AND user_id = ? AND created_at >= ${since}`
+    ).all(orgId, userId);
+    const topicMap = {};
+    for (const b of topicBlks) {
+      let topics = [];
+      try { topics = JSON.parse(b.ai_topics) || []; } catch (_) {}
+      for (const t of topics) topicMap[t] = (topicMap[t] || 0) + 1;
+    }
+    const weekTopics = Object.entries(topicMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([topic, count]) => ({ topic, count }));
+
+    // Cohort context: how many others reported this week (anonymized count only)
+    const me = db.prepare("SELECT cohort_id FROM users WHERE id = ?").get(userId);
+    let cohortReported = 0;
+    if (me && me.cohort_id) {
+      cohortReported = db.prepare(
+        `SELECT COUNT(*) n FROM blockages WHERE org_id = ? AND cohort_id = ? AND user_id != ? AND created_at >= ${since}`
+      ).get(orgId, me.cohort_id, userId).n;
+    }
+
+    res.json({
+      periodDays: 7,
+      reported,
+      resolved,
+      selfResolved,
+      aiResolved,
+      fastestHours: fastestRow && fastestRow.hrs != null ? Math.round(fastestRow.hrs * 10) / 10 : null,
+      weekTopics,
+      cohortReported,
+    });
+  });
+
   return router;
 };

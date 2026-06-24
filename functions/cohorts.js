@@ -439,9 +439,10 @@
         insightsPanel.innerHTML = `<span style="color:var(--muted)">Loading…</span>`;
         const bid = row.dataset.bid;
         try {
-          const [impact, sugg] = await Promise.all([
+          const [impact, sugg, hist] = await Promise.all([
             API.get(`/api/briefs/${encodeURIComponent(bid)}/impact`),
             API.get(`/api/briefs/${encodeURIComponent(bid)}/suggestions?status=pending`),
+            isOwner ? API.get(`/api/briefs/${encodeURIComponent(bid)}/history`).catch(() => ({ versions: [] })) : Promise.resolve({ versions: [] }),
           ]);
           const im = impact || {};
           const pending = (sugg && sugg.suggestions) || [];
@@ -460,7 +461,8 @@
                   <button type="button" class="btn-mini sugg-dismiss" style="color:var(--muted)">Dismiss</button>
                 </div>
               </div>`).join("")}` : `<div style="color:var(--muted);font-size:.8rem;margin-bottom:.5rem">No pending AI suggestions.</div>`}
-            <button type="button" class="btn btn-ghost" style="font-size:.8rem;padding:.3rem .65rem" data-gen-sugg="${escapeHtml(bid)}">Generate AI suggestion</button>`;
+            <button type="button" class="btn btn-ghost" style="font-size:.8rem;padding:.3rem .65rem" data-gen-sugg="${escapeHtml(bid)}">Generate AI suggestion</button>
+            ${hist && hist.versions && hist.versions.length ? `<div style="margin-top:.75rem;font-size:.8rem;color:var(--muted)">Version history (${hist.versions.length}): ${hist.versions.slice(0,3).map(v => `<span title="${escapeHtml(v.authorName || '')} · ${escapeHtml(v.createdAt || '')}">${escapeHtml(v.name || 'v')}</span>`).join(" → ")}</div>` : ""}`;
 
           // Wire accept / dismiss
           insightsPanel.querySelectorAll(".brief-sugg").forEach((sg) => {
