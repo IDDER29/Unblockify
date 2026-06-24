@@ -320,7 +320,8 @@
     const difficulty = form.querySelector("#difficulty").value.trim();
     const briefId = form.querySelector("#briefSelect").value;
 
-    const payload = { title, cohortId: cohort.id, difficulty, details };
+    const anonChk = form.querySelector("#anonToggle");
+    const payload = { title, cohortId: cohort.id, difficulty, details, is_anonymous: anonChk && anonChk.checked ? true : false };
     if (briefId) payload.briefId = Number(briefId);
 
     // Upload any chosen files first, then send their ids with the report.

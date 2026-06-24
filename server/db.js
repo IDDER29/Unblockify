@@ -256,6 +256,7 @@ function migrate(db) {
   addColumnIfMissing(db, "comments", "scaffold_level", "INTEGER");
   addColumnIfMissing(db, "comments", "is_internal", "INTEGER NOT NULL DEFAULT 0");
   addColumnIfMissing(db, "organizations", "slack_webhook_url", "TEXT");
+  addColumnIfMissing(db, "blockages", "is_anonymous", "INTEGER NOT NULL DEFAULT 0");
   addColumnIfMissing(db, "briefs", "max_scaffold", "INTEGER");
   addColumnIfMissing(db, "briefs", "content", "TEXT");
   // brief_versions table (idempotent)

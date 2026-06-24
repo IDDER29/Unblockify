@@ -71,7 +71,8 @@ module.exports = function blockageRoutes(db) {
       cohortId: r.cohort_id,
       cohortName: r.cohort_name,
       briefName: r.brief_name,
-      studentName: r.student_name,
+      studentName: r.is_anonymous ? "Anonymous" : r.student_name,
+      isAnonymous: !!r.is_anonymous,
       assigneeName: r.assignee_name,
       commentCount: r.comment_count,
       tags: tagsFor(r.id),
@@ -221,12 +222,13 @@ module.exports = function blockageRoutes(db) {
     if (!cohortId || me.cohort_id !== cohortId)
       return res.status(400).json({ error: "You can only report blockages in your own cohort." });
 
+    const isAnon = req.body.is_anonymous ? 1 : 0;
     const info = db
       .prepare(
-        `INSERT INTO blockages (org_id, cohort_id, brief_id, user_id, title, difficulty, details)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO blockages (org_id, cohort_id, brief_id, user_id, title, difficulty, details, is_anonymous)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
       )
-      .run(req.user.orgId, cohortId, briefId, req.user.userId, title, difficulty, details);
+      .run(req.user.orgId, cohortId, briefId, req.user.userId, title, difficulty, details, isAnon);
     const id = info.lastInsertRowid;
     addEvent(db, { orgId: req.user.orgId, blockageId: id, type: "created", actorId: req.user.userId });
     // Auto-assignment per the cohort's strategy (round-robin / least-loaded).

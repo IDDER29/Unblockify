@@ -442,3 +442,16 @@ function ensureStream() {
     },
   });
 }
+
+// PWA: register service worker + inject manifest link once per page.
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
+}
+(function () {
+  if (!document.querySelector('link[rel="manifest"]')) {
+    const link = document.createElement("link");
+    link.rel = "manifest";
+    link.href = "/manifest.json";
+    document.head.appendChild(link);
+  }
+})();
