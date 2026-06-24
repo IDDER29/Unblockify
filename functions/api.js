@@ -263,6 +263,7 @@ const NAV = {
     { href: "cohorts.html", icon: "layers", label: "Cohorts" },
     { href: "members.html", icon: "people", label: "Members" },
     { href: "check-ins.html", icon: "bell", label: "Check-ins" },
+    { href: "notifications.html", icon: "bell", label: "Notifications" },
     { href: "ops.html", icon: "shield", label: "Ops & trust" },
     { href: "billing.html", icon: "card", label: "Plan & billing" },
     { href: "settings.html", icon: "cog", label: "Settings" },
@@ -271,12 +272,14 @@ const NAV = {
     { href: "instructor_queue.html", icon: "grid", label: "Queue" },
     { href: "check-ins.html", icon: "bell", label: "Check-ins" },
     { href: "cohorts.html", icon: "layers", label: "Cohorts" },
+    { href: "notifications.html", icon: "bell", label: "Notifications" },
     { href: "settings.html", icon: "cog", label: "Settings" },
   ],
   student: [
     { href: "student_dashbord.html", icon: "grid", label: "My blockages" },
     { href: "growth.html", icon: "chart", label: "My growth" },
     { href: "knowledge.html", icon: "book", label: "Library" },
+    { href: "notifications.html", icon: "bell", label: "Notifications" },
     { href: "settings.html", icon: "cog", label: "Settings" },
   ],
 };
