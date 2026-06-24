@@ -21,6 +21,7 @@ const API = {
   post(p, b) { return this.request(p, { method: "POST", body: b }); },
   put(p, b) { return this.request(p, { method: "PUT", body: b }); },
   del(p) { return this.request(p, { method: "DELETE" }); },
+  patch(p, b) { return this.request(p, { method: "PATCH", body: b }); },
 };
 
 // --- Auth ------------------------------------------------------------

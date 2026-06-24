@@ -339,11 +339,15 @@
     }
 
     try {
-      await API.post("/api/blockages", payload);
+      const created = await API.post("/api/blockages", payload);
       hideModal();
       form.reset();
       await refresh();
       toast("Blockage reported.", "success");
+      // Non-blocking: fire proactive prompt so student gets notified about likely next topics
+      if (created && created.blockage && created.blockage.id) {
+        API.post(`/api/blockages/${created.blockage.id}/proactive-prompt`, {}).catch(() => {});
+      }
     } catch (err) {
       toast(err.message, "error");
     }

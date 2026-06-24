@@ -215,6 +215,11 @@ async function flagStudent(id) {
 
     <div class="chart-card" id="hotspotsCard"><h3>Curriculum hot-spots <span class="eyebrow" style="font-size:.72rem;margin-left:.4rem">last 7 days</span></h3><p class="thread-empty">Loading…</p></div>
 
+    <div class="chart-grid">
+      <div class="chart-card" id="teachingQualityCard"><h3>Teaching quality</h3><p class="thread-empty">Loading…</p></div>
+      <div class="chart-card" id="progressionCard"><h3>Topic progression patterns</h3><p class="thread-empty">Loading…</p></div>
+    </div>
+
     <div class="chart-card"><h3>Nudge a cohort</h3>
       <p class="thread-empty" style="margin:.2rem 0 .8rem">Send an in-app nudge to every student in a cohort.</p>
       <div class="form-row" style="margin-bottom:.7rem">
@@ -289,6 +294,53 @@ async function flagStudent(id) {
       nudgeSend.disabled = false;
     }
   });
+
+  // Teaching quality (non-fatal)
+  const tqCard = document.getElementById("teachingQualityCard");
+  try {
+    const tq = await API.get("/api/analytics/teaching-quality");
+    const factors = (tq.rankedFactors || []).slice(0, 5);
+    const byCohort = (tq.byCohort || []).slice(0, 6);
+    const rate = tq.orgResolveRate != null ? tq.orgResolveRate + "%" : "—";
+    tqCard.innerHTML = `<h3>Teaching quality</h3>
+      <div class="kpi-strip" style="margin-bottom:1rem;gap:.75rem">
+        <div class="kpi is-resolved"><div class="kpi-v">${rate}</div><div class="kpi-k">Org resolve rate</div></div>
+      </div>
+      ${byCohort.length ? `<div style="margin-bottom:.9rem">${byCohort.map((c) =>
+        `<div class="bar-row"><div class="lbl">${escapeHtml(c.cohort)}</div>
+          <div class="track"><div class="fill" style="width:${c.resolveRate || 0}%;background:#12B886"></div></div>
+          <div class="n">${c.resolveRate || 0}%</div></div>`
+      ).join("")}</div>` : ""}
+      ${factors.length ? `<div class="blk-meta" style="margin:.5rem 0 .25rem">Key factors</div>
+        <div style="display:flex;flex-wrap:wrap;gap:.3rem">${factors.map((f) =>
+          `<span class="pill pill-resolved" style="font-size:.75rem">${escapeHtml(f)}</span>`
+        ).join("")}</div>` : ""}`;
+  } catch (_) {
+    tqCard.innerHTML = `<h3>Teaching quality</h3><p class="thread-empty">Couldn't load.</p>`;
+  }
+
+  // Progression patterns (non-fatal)
+  const progCard = document.getElementById("progressionCard");
+  try {
+    const prog = await API.get("/api/analytics/progression");
+    const pairs = (prog.patterns || []).slice(0, 8);
+    if (!pairs.length) {
+      progCard.innerHTML = `<h3>Topic progression patterns</h3><p class="thread-empty">Patterns appear once students have resolved several blockages with AI triage.</p>`;
+    } else {
+      progCard.innerHTML = `<h3>Topic progression patterns</h3>
+        <p class="blk-meta" style="margin:.1rem 0 .75rem">Topics students commonly hit in sequence</p>
+        ${pairs.map((p) =>
+          `<div class="bar-row" style="margin-bottom:.35rem"><div class="lbl" style="flex:none;max-width:none;width:100%;white-space:normal;font-size:.82rem">
+            <span style="color:var(--blocked)">${escapeHtml(p.topicA)}</span>
+            <span style="color:var(--muted);margin:0 .35rem">→</span>
+            <span style="color:var(--ink)">${escapeHtml(p.topicB)}</span>
+            <span style="color:var(--muted);font-size:.75rem;float:right">${p.count}×</span>
+          </div></div>`
+        ).join("")}`;
+    }
+  } catch (_) {
+    progCard.innerHTML = `<h3>Topic progression patterns</h3><p class="thread-empty">Couldn't load.</p>`;
+  }
 
   // Curriculum hot-spots (loads last; failure is non-fatal)
   const hc = document.getElementById("hotspotsCard");
