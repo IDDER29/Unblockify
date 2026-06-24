@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ops Flags — Unblockify Admin</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../stylesheet.main.css" />
+    <style>
+      body { margin:0; background:var(--surface-2,#f8f9fb); font-family:var(--font-body,'Inter'),sans-serif; }
+      .admin-body { padding:2rem; max-width:1100px; margin:0 auto; }
+      table { width:100%; border-collapse:collapse; background:#fff; border-radius:10px; border:1px solid var(--line,#e8e8e8); overflow:hidden; font-size:.9rem; }
+      th, td { padding:.6rem .9rem; text-align:left; border-bottom:1px solid var(--line,#e8e8e8); }
+      th { background:var(--surface-2,#f8f9fb); font-weight:600; font-size:.82rem; color:var(--muted); }
+      tr:last-child td { border:none; }
+    </style>
+  </head>
+  <body>
+    <div id="admin-nav"></div>
+    <div class="admin-body">
+      <h1 style="margin:1.5rem 0 .25rem;font-size:1.5rem">Ops flags</h1>
+      <p style="color:var(--muted);margin:0 0 1.5rem">Platform-level content and abuse reports bubbled up from org ops pages.</p>
+      <div id="content"><p style="color:var(--muted)">Loading…</p></div>
+    </div>
+    <script src="admin.js"></script>
+    <script>
+      (async function () {
+        const el = document.getElementById("content");
+        try {
+          const { flags } = await ADMIN.fetch("/flags");
+          const e = ADMIN.escapeHtml;
+          if (!flags.length) {
+            el.innerHTML = `<p style="color:var(--muted)">No ops flags. Clean slate. 🎉</p>`;
+            return;
+          }
+          el.innerHTML = `<table>
+            <thead><tr>
+              <th>Org</th><th>Type</th><th>Note</th><th>Reporter</th><th>Status</th><th>Created</th>
+            </tr></thead>
+            <tbody>${flags.map(f => `
+              <tr>
+                <td><a href="org.html?id=${e(String(f.org_id))}" style="color:var(--flow)">${e(f.org_name)}</a></td>
+                <td><span style="font-family:var(--font-mono),monospace;font-size:.78rem">${e(f.type)}</span></td>
+                <td style="max-width:280px">${e(f.note || "—")}</td>
+                <td style="color:var(--muted)">${e(f.reporter_name || "System")}</td>
+                <td><span class="pill pill-${f.status==='open'?'blocked':'resolved'}" style="font-size:.75rem">${e(f.status)}</span></td>
+                <td style="color:var(--muted);font-size:.82rem">${ADMIN.fmtRelative(f.created_at)}</td>
+              </tr>`).join("")}
+            </tbody>
+          </table>`;
+        } catch (err) {
+          el.innerHTML = `<p style="color:var(--blocked)">Error: ${ADMIN.escapeHtml(err.message)}</p>`;
+        }
+      })();
+    </script>
+  </body>
+</html>

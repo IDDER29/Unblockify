@@ -12,6 +12,7 @@
   view.innerHTML = `
     <div class="page-head"><h1>Support queue</h1><p>Blockages from your cohorts and the ones assigned to you.</p></div>
     <section class="stat-row" id="stats"></section>
+    <div id="teachingStats"></div>
     <div class="filters">
       <div class="seg" id="seg">
         <button data-status="" class="active">All</button>
@@ -19,11 +20,17 @@
         <button data-status="in_support">In support</button>
         <button data-status="resolved">Resolved</button>
       </div>
+      <button data-backup="1" class="btn-mini backup-chip" id="backupChip">AI needs backup</button>
       <select id="cohort"><option value="">All cohorts</option></select>
       <select id="tag"><option value="">All tags</option></select>
       <input type="search" id="search" placeholder="Search…" autocomplete="off">
       <button type="button" class="btn-mini" id="saveView">Save view</button>
-      <button type="button" class="btn-mini" id="escalateOverdue">Escalate overdue</button>
+      <button type="button" class="btn-mini btn-mini-danger" id="escalateOverdue">Escalate overdue</button>
+    </div>
+    <div class="save-view-row" id="saveViewRow" hidden>
+      <input type="text" id="saveViewName" placeholder="Name this view…" autocomplete="off" maxlength="60" />
+      <button type="button" class="btn btn-primary btn-sm" id="saveViewConfirm">Save</button>
+      <button type="button" class="btn btn-ghost btn-sm" id="saveViewCancel">Cancel</button>
     </div>
     <div class="saved-views" id="savedViews"></div>
     <div id="grid"></div>`;
@@ -37,6 +44,7 @@
   const saveViewBtn = document.getElementById("saveView");
   const savedViews = document.getElementById("savedViews");
   const escalateBtn = document.getElementById("escalateOverdue");
+  const backupChip = document.getElementById("backupChip");
 
   // --- Read persisted filter state from the URL query string. ----------
   const params = new URLSearchParams(window.location.search);
@@ -44,6 +52,7 @@
   let cohortFilter = params.get("cohort") || "";
   let tagFilter = params.get("tag") || "";
   let searchQuery = params.get("q") || "";
+  let backupOnly = params.get("backup") === "1";
 
   let blockages = [];
 
@@ -61,9 +70,36 @@
     if (cohortFilter) p.set("cohort", cohortFilter);
     if (tagFilter) p.set("tag", tagFilter);
     if (searchQuery) p.set("q", searchQuery);
+    if (backupOnly) p.set("backup", "1");
     const qs = p.toString();
     history.replaceState(null, "", qs ? "?" + qs : window.location.pathname);
   }
+
+  function updateBackupChip() {
+    const backupCount = blockages.filter((b) => b.needsBackup).length;
+    backupChip.textContent = `AI needs backup (${backupCount})`;
+    backupChip.classList.toggle("active", backupOnly);
+    backupChip.style.display = backupCount > 0 || backupOnly ? "" : "none";
+  }
+
+  // Show skeleton loaders while data loads.
+  function showSkeletons() {
+    // Stat skeletons.
+    stats.innerHTML = Array.from({ length: 5 }, () =>
+      `<div class="skel-stat"><div class="skel h-sm"></div><div class="skel h-lg"></div></div>`
+    ).join("");
+    // Card skeletons.
+    grid.innerHTML = `<div class="blk-grid">${Array.from({ length: 6 }, () =>
+      `<div class="skel-card">
+        <div class="skel w-40"></div>
+        <div class="skel h-title w-80"></div>
+        <div class="skel w-60"></div>
+        <div class="skel w-40"></div>
+      </div>`
+    ).join("")}</div>`;
+  }
+
+  showSkeletons();
 
   // Populate cohort select.
   try {
@@ -109,13 +145,23 @@
   }
 
   function renderStats() {
-    const totals = { total: blockages.length, open: 0, in_support: 0, resolved: 0 };
-    blockages.forEach((b) => { if (totals[b.status] != null) totals[b.status]++; });
+    const totals = { total: blockages.length, open: 0, in_support: 0, resolved: 0, mine: 0 };
+    blockages.forEach((b) => {
+      if (totals[b.status] != null) totals[b.status]++;
+      if (b.assigneeId && String(b.assigneeId) === String(s.user.id)) totals.mine++;
+    });
     stats.innerHTML = `
       <div class="stat"><div class="k">Total</div><div class="v">${totals.total}</div></div>
       <div class="stat is-blocked"><div class="k">Blocked</div><div class="v">${totals.open}</div></div>
       <div class="stat is-pending"><div class="k">In support</div><div class="v">${totals.in_support}</div></div>
-      <div class="stat is-resolved"><div class="k">Resolved</div><div class="v">${totals.resolved}</div></div>`;
+      <div class="stat is-resolved"><div class="k">Resolved</div><div class="v">${totals.resolved}</div></div>
+      <div class="stat"><div class="k">Mine</div><div class="v">${totals.mine}</div></div>`;
+  }
+
+  function tagPills(tags) {
+    return (tags || [])
+      .map((t) => `<span class="blk-tag">${escapeHtml(t.name)}</span>`)
+      .join("");
   }
 
   function difficultyBadge(d) {
@@ -148,18 +194,41 @@
     const pad = String(b.id).padStart(3, "0");
     const replies = b.commentCount || 0;
     const replyText = replies === 1 ? "1 reply" : replies + " replies";
-    return `<article class="blk-card linkish status-${cls}" data-id="${escapeHtml(b.id)}">
-      <div class="blk-card-top"><span class="blk-id">BLK-${escapeHtml(pad)}</span>${difficultyBadge(b.difficulty)}${slaBadge(b)}<span class="pill pill-${cls}">${escapeHtml(label)}</span></div>
-      <div class="who">${escapeHtml(b.studentName)} · ${escapeHtml(b.cohortName)}</div>
+    const sla = slaBadge(b);
+    return `<article class="blk-card linkish status-${cls}${b.needsBackup ? " needs-backup" : ""}" data-id="${escapeHtml(b.id)}">
+      <div class="blk-card-top">
+        <span class="blk-id">BLK-${escapeHtml(pad)}</span>
+        ${difficultyBadge(b.difficulty)}
+        <span class="pill pill-${cls}">${escapeHtml(label)}</span>
+        ${sla ? `<span class="blk-card-sla">${sla}</span>` : ""}
+        ${b.needsBackup ? `<span class="pill" style="background:var(--pending);color:#fff;font-size:.68rem">AI needs backup</span>` : ""}
+      </div>
       <h3>${escapeHtml(b.title)}</h3>
+      <div class="who">${escapeHtml(b.studentName)} · ${escapeHtml(b.cohortName)}</div>
       ${b.tags && b.tags.length ? `<div class="blk-tags">${tagPills(b.tags)}</div>` : ""}
       <div class="blk-meta">${escapeHtml(fmtDate(b.createdAt))} · ${escapeHtml(replyText)}</div>
     </article>`;
   }
 
+  function emptyStateHtml(hasFilters) {
+    if (hasFilters) {
+      return `<div class="blk-empty">
+        <div class="blk-empty-icon">&#9906;</div>
+        <div class="blk-empty-title">No matches</div>
+        <div class="blk-empty-hint">Try adjusting your filters or search query.</div>
+      </div>`;
+    }
+    return `<div class="blk-empty">
+      <div class="blk-empty-icon">&#10003;</div>
+      <div class="blk-empty-title">Your queue is clear</div>
+      <div class="blk-empty-hint">No blockages right now. Check back soon or ask a student to report a new one.</div>
+    </div>`;
+  }
+
   function renderGrid() {
     const q = searchQuery.trim().toLowerCase();
     const list = blockages.filter((b) => {
+      if (backupOnly && !b.needsBackup) return false;
       if (statusFilter && b.status !== statusFilter) return false;
       if (cohortFilter && String(b.cohortId) !== cohortFilter) return false;
       if (tagFilter && !(b.tags || []).some((t) => String(t.id) === tagFilter)) return false;
@@ -172,11 +241,20 @@
       return true;
     });
     if (!list.length) {
-      grid.innerHTML = `<div class="blk-empty">Nothing in your queue yet.</div>`;
+      const hasFilters = !!(statusFilter || cohortFilter || tagFilter || q);
+      grid.innerHTML = emptyStateHtml(hasFilters);
       return;
     }
     grid.innerHTML = `<div class="blk-grid">${list.map(cardHtml).join("")}</div>`;
+    updateBackupChip();
   }
+
+  backupChip.addEventListener("click", () => {
+    backupOnly = !backupOnly;
+    backupChip.classList.toggle("active", backupOnly);
+    syncUrl();
+    renderGrid();
+  });
 
   seg.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-status]");
@@ -302,9 +380,25 @@
     renderGrid();
   });
 
-  saveViewBtn.addEventListener("click", async () => {
-    const name = (window.prompt("Name this view") || "").trim();
-    if (!name) return;
+  const saveViewRow = document.getElementById("saveViewRow");
+  const saveViewName = document.getElementById("saveViewName");
+  const saveViewConfirm = document.getElementById("saveViewConfirm");
+  const saveViewCancel = document.getElementById("saveViewCancel");
+
+  saveViewBtn.addEventListener("click", () => {
+    saveViewRow.hidden = false;
+    saveViewName.value = "";
+    saveViewName.focus();
+  });
+
+  saveViewCancel.addEventListener("click", () => {
+    saveViewRow.hidden = true;
+  });
+
+  async function doSaveView() {
+    const name = saveViewName.value.trim();
+    if (!name) { saveViewName.focus(); return; }
+    saveViewConfirm.disabled = true;
     try {
       const res = await API.post("/api/views", {
         name,
@@ -320,12 +414,26 @@
       }
     } catch (_) {
       toast("Couldn't save that view.");
+    } finally {
+      saveViewConfirm.disabled = false;
+      saveViewRow.hidden = true;
     }
+  }
+
+  saveViewConfirm.addEventListener("click", doSaveView);
+  saveViewName.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); doSaveView(); }
+    if (e.key === "Escape") { saveViewRow.hidden = true; }
   });
 
   // SLA: escalate overdue blockages, then refresh the queue.
   if (escalateBtn) {
     escalateBtn.addEventListener("click", async () => {
+      const confirmed = await confirmModal(
+        "Escalate all overdue blockages? This will flag them as high-priority.",
+        { confirmLabel: "Escalate", danger: true }
+      );
+      if (!confirmed) return;
       escalateBtn.disabled = true;
       try {
         const res = await API.post("/api/sla/escalate");
@@ -344,6 +452,38 @@
   renderStats();
   renderGrid();
   loadViews();
+
+  // Personal teaching intelligence (non-blocking)
+  API.get("/api/me/teaching").then((t) => {
+    const el = document.getElementById("teachingStats");
+    if (!el || !t || !t.teaching || !t.teaching.totalResolved) return;
+    const { totalResolved, avgResolveHours, byTopic } = t.teaching;
+    const topTopics = (byTopic || []).slice(0, 4);
+    el.innerHTML = `<div class="panel" style="margin-bottom:.75rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap">
+      <span style="font-size:.85rem;color:var(--muted,#666)">Your stats:</span>
+      <span class="stat" style="margin:0;padding:0;background:none"><span class="k">Resolved</span><span class="v" style="font-size:1rem">${totalResolved}</span></span>
+      ${avgResolveHours != null ? `<span class="stat" style="margin:0;padding:0;background:none"><span class="k">Avg time</span><span class="v" style="font-size:1rem">${avgResolveHours}h</span></span>` : ""}
+      ${topTopics.length ? `<span style="font-size:.85rem;color:var(--muted,#666)">Top topics: ${topTopics.map(t => `<strong>${escapeHtml(t.topic)}</strong>`).join(", ")}</span>` : ""}
+    </div>`;
+  }).catch(() => {});
+
+  // Instructor weekly digest (non-blocking, appears after queue loads)
+  API.get("/api/analytics/digest").then((dg) => {
+    if (!dg || !dg.resolvedCount) return;
+    const bar = document.createElement("div");
+    bar.className = "panel";
+    bar.style.cssText = "margin-bottom:1rem;padding:.75rem 1rem;background:var(--surface-2,#f8f9fb)";
+    const chips = (dg.themes || []).slice(0, 4)
+      .map((t) => `<span class="theme-chip">${escapeHtml(t.theme)}<b>${t.count}</b></span>`).join("");
+    bar.innerHTML = `<div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap">
+      <strong style="font-size:.88rem">This week:</strong>
+      <span style="font-size:.88rem;color:var(--muted,#666)">${dg.resolvedCount} resolved</span>
+      ${chips}
+      ${dg.summary ? `<span style="font-size:.82rem;color:var(--muted,#666);flex-basis:100%">${escapeHtml(dg.summary)}</span>` : ""}
+    </div>`;
+    const grid = document.getElementById("grid");
+    if (grid) grid.parentNode.insertBefore(bar, grid);
+  }).catch(() => {});
 
   // Live updates: a relevant event (new blockage, comment, resolve…) arrived on
   // the shared stream — re-fetch the queue, debounced. Filters/search/cohort

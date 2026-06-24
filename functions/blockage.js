@@ -43,10 +43,16 @@
       data = await API.get("/api/blockages/" + encodeURIComponent(id));
     } catch (e) {
       if (e.status === 404) {
-        view.innerHTML = `<div class="blk-empty">Blockage not found.</div>`;
+        view.innerHTML = `<div class="blk-empty">
+          <p>Blockage not found — it may have been deleted or you may not have access.</p>
+          <a class="btn btn-ghost" href="${dashboardFor(role)}">Back to dashboard</a>
+        </div>`;
         return false;
       }
-      view.innerHTML = `<div class="blk-empty">Couldn't load this blockage.</div>`;
+      view.innerHTML = `<div class="blk-empty">
+        <p>Couldn't load this blockage. Check your connection and try again.</p>
+        <button class="btn btn-ghost" onclick="location.reload()">Retry</button>
+      </div>`;
       return false;
     }
     blk = data.blockage;
@@ -116,11 +122,12 @@
               <button type="button" class="btn btn-ghost cmt-del" data-cid="${c.id}">Delete</button>
             </div>`
           : "";
-        return `<div class="comment role-${escapeHtml(c.author_role)}">
+        const internalBadge = c.is_internal ? ' <span class="ai-badge" style="background:var(--pending);color:#fff">Internal</span>' : "";
+        return `<div class="comment role-${escapeHtml(c.author_role)}${c.is_internal ? " comment-internal" : ""}">
           <div class="av">${isAi ? "✦" : avatarChar(c.author)}</div>
           <div class="bubble">
             <div class="head">
-              <span class="who">${escapeHtml(c.author)}${isAi ? ' <span class="ai-badge">AI</span>' : ""}</span>
+              <span class="who">${escapeHtml(c.author)}${isAi ? ' <span class="ai-badge">AI</span>' : ""}${internalBadge}</span>
               <span class="when">${fmtRelative(c.created_at)}</span>
             </div>
             <div class="body md" data-cid="${c.id}" data-raw="${escapeHtml(c.body)}">${renderMarkdown(c.body)}</div>
@@ -263,6 +270,28 @@
     </div>`;
   }
 
+  // ---- Featured AI response (student view — first AI comment, promoted) ----
+  function aiFeaturedHtml() {
+    if (role !== "student") return "";
+    const aiComment = (blk.comments || []).find((c) => c.is_ai || c.author_role === "ai");
+    if (!aiComment) return "";
+    const canUnblock = blk.status !== "resolved";
+    return `<div class="ai-featured">
+      <div class="ai-featured-head">
+        <div class="ai-featured-av">✦</div>
+        <div>
+          <div class="ai-featured-who">${escapeHtml(blk.aiName || "AI Teaching Assistant")}</div>
+          <div class="ai-featured-sub">Responded ${fmtRelative(aiComment.created_at)}</div>
+        </div>
+      </div>
+      <div class="ai-featured-body md">${renderMarkdown(aiComment.body)}</div>
+      ${canUnblock ? `<div class="ai-cta-row">
+        <button type="button" class="btn btn-flow ai-unblock" data-cid="${aiComment.id}">✓ This unblocked me</button>
+        <button type="button" class="btn btn-ghost" id="aiStillStuck">Still stuck — add context</button>
+      </div>` : ""}
+    </div>`;
+  }
+
   // ---- Main render ------------------------------------------------------
   function render() {
     const meta = statusMeta(blk.status);
@@ -280,6 +309,15 @@
         }
       </div>`;
     }
+
+    // For students: filter the first AI comment out of the thread — it renders
+    // as the featured card above, so don't show it again in the flat thread.
+    const featuredAiId = role === "student"
+      ? ((blk.comments || []).find((c) => c.is_ai || c.author_role === "ai") || {}).id
+      : null;
+    const threadComments = featuredAiId
+      ? (blk.comments || []).filter((c) => c.id !== featuredAiId)
+      : (blk.comments || []);
 
     view.innerHTML = `
       ${actionsHtml()}
@@ -301,11 +339,13 @@
             ${csatBlock()}
           </div>
 
+          ${aiFeaturedHtml()}
+
           <div class="panel">
             <h2>Conversation</h2>
             ${role !== "student" ? '<button type="button" class="btn btn-ghost" id="summarizeBtn" style="margin-bottom:.6rem">✦ Summarize thread</button>' : ""}
             <div id="summaryCard"></div>
-            <div class="thread" id="thread">${threadHtml(blk.comments)}</div>
+            <div class="thread" id="thread">${threadHtml(threadComments)}</div>
             <form class="composer" id="composer">
               <textarea id="commentBody" placeholder="Write a reply…" rows="1"></textarea>
               <label class="btn btn-ghost attach-btn" title="Attach a file">📎
@@ -316,10 +356,19 @@
               ${isStaff ? '<button type="button" class="btn btn-ghost" id="cannedBtn" title="Insert a canned response">Canned ▾</button>' : ""}
               <button type="submit" class="btn btn-primary">Send</button>
             </form>
+            ${isStaff ? `<label class="internal-toggle" style="display:flex;align-items:center;gap:.4rem;margin-top:.4rem;font-size:.8rem;color:var(--pending);cursor:pointer">
+              <input type="checkbox" id="internalToggle"> Internal note (only staff can see)
+            </label>` : ""}
             ${isStaff ? '<div class="canned-menu" id="cannedMenu" hidden></div>' : ""}
             <div class="attach-pending" id="attachPending"></div>
-            ${role === "student" && blk.status !== "resolved" && (blk.comments || []).some((c) => c.is_ai || c.author_role === "ai")
-              ? '<button type="button" class="btn btn-ghost" id="askAgainBtn" style="margin-top:.5rem">✦ Ask AI again</button>'
+            ${role === "student" && blk.status !== "resolved"
+              ? `<div style="display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap;align-items:center">
+                  ${(blk.comments || []).some((c) => c.is_ai || c.author_role === "ai")
+                    ? `<button type="button" class="btn btn-ghost" id="askAgainBtn">✦ Show me more</button>
+                       <button type="button" class="btn btn-ghost" id="stuckBtn" style="color:var(--pending)">Still stuck — get an instructor</button>`
+                    : ""}
+                  <button type="button" class="btn btn-primary" id="selfResolveBtn" style="margin-left:auto">🎉 I figured it out</button>
+                </div>`
               : ""}
           </div>
         </div>
@@ -356,12 +405,32 @@
           </div>
 
           ${similarHtml(blk.similar)}
+          <div id="peerMentorPanel"></div>
         </div>
       </div>`;
 
     wireActions();
     wireComposer();
     wireSuccessLayer();
+
+    // Load peer mentors for student on open/in_support blockages (non-blocking, T2-4)
+    if (role === "student" && blk.status !== "resolved") {
+      API.get("/api/blockages/" + encodeURIComponent(id) + "/peer-mentors").then(({ mentors }) => {
+        const panel = document.getElementById("peerMentorPanel");
+        if (!panel || !mentors || !mentors.length) return;
+        panel.innerHTML = `<div class="panel">
+          <h2>Peer who got through this</h2>
+          <p class="kb-sub">They hit a similar wall and unblocked themselves — opt-in to chat.</p>
+          ${mentors.slice(0, 3).map((m) => `
+            <div class="peer-mentor-row">
+              <strong>${escapeHtml(m.name)}</strong> got through
+              <em>${escapeHtml(m.resolvedTitle || "a similar wall")}</em>
+              ${m.resolutionSummary ? `<div class="sp-summary">${escapeHtml(m.resolutionSummary)}</div>` : ""}
+            </div>`).join("")}
+          <p style="font-size:.8rem;color:var(--muted,#666);margin-top:.5rem">Enable peer mentorship in <a href="settings.html">Settings</a> to appear here for others.</p>
+        </div>`;
+      }).catch(() => {});
+    }
   }
 
   // ---- Tags / CSAT / Canned wiring --------------------------------------
@@ -405,23 +474,39 @@
     // Owner: create a brand-new tag inline, then attach it.
     const tagNewBtn = document.getElementById("tagNewBtn");
     if (tagNewBtn) {
-      tagNewBtn.addEventListener("click", async () => {
-        const name = (prompt("New tag name") || "").trim();
-        if (!name) return;
-        try {
-          const { tag } = await API.post("/api/tags", { name });
-          await API.post("/api/blockages/" + encodeURIComponent(id) + "/tags", {
-            tagId: tag.id,
-          });
-          toast("Tag created and added.", "success");
-          await load();
-        } catch (err) {
-          if (err.status === 403) {
-            toast("Only owners can create tags.", "warning");
-          } else {
-            toast(err.message || "Couldn't create that tag.", "error");
+      tagNewBtn.addEventListener("click", () => {
+        // Replace the button with an inline input row (idempotent — only one at a time).
+        if (document.getElementById("tagNewForm")) return;
+        const form = document.createElement("form");
+        form.id = "tagNewForm";
+        form.style.cssText = "display:flex;align-items:center;gap:.4rem;margin-top:.4rem";
+        form.innerHTML =
+          `<input id="tagNewInput" type="text" placeholder="Tag name" autocomplete="off" style="flex:1;padding:.35rem .6rem;border:1px solid var(--line-2);border-radius:var(--r-sm);font-size:.88rem" />` +
+          `<button type="submit" class="btn btn-ghost" style="flex:0 0 auto">Create</button>` +
+          `<button type="button" class="btn btn-ghost" id="tagNewCancel" style="flex:0 0 auto">✕</button>`;
+        tagNewBtn.insertAdjacentElement("afterend", form);
+        document.getElementById("tagNewInput").focus();
+        document.getElementById("tagNewCancel").addEventListener("click", () => form.remove());
+        form.addEventListener("submit", async (ev) => {
+          ev.preventDefault();
+          const name = (document.getElementById("tagNewInput").value || "").trim();
+          if (!name) return;
+          try {
+            const { tag } = await API.post("/api/tags", { name });
+            await API.post("/api/blockages/" + encodeURIComponent(id) + "/tags", {
+              tagId: tag.id,
+            });
+            toast("Tag created and added.", "success");
+            form.remove();
+            await load();
+          } catch (err) {
+            if (err.status === 403) {
+              toast("Only owners can create tags.", "warning");
+            } else {
+              toast(err.message || "Couldn't create that tag.", "error");
+            }
           }
-        }
+        });
       });
     }
 
@@ -509,20 +594,37 @@
       });
 
       cannedMenu.addEventListener("click", async (e) => {
-        // Create a new canned response.
+        // Create a new canned response — inline form inside the menu.
         const newBtn = e.target.closest(".canned-new");
         if (newBtn) {
-          const title = (prompt("Canned response title") || "").trim();
-          if (!title) return;
-          const body = (prompt("Canned response body") || "").trim();
-          if (!body) return;
-          try {
-            await API.post("/api/canned", { title, body });
-            toast("Canned response saved.", "success");
-            await renderCannedMenu();
-          } catch (err) {
-            toast(err.message || "Couldn't save that canned response.", "error");
-          }
+          if (cannedMenu.querySelector(".canned-create-form")) return;
+          const formEl = document.createElement("form");
+          formEl.className = "canned-create-form";
+          formEl.style.cssText = "display:flex;flex-direction:column;gap:.4rem;padding:.5rem .6rem;border-top:1px solid var(--line)";
+          formEl.innerHTML =
+            `<input class="canned-title-input" type="text" placeholder="Title" autocomplete="off" required style="padding:.35rem .6rem;border:1px solid var(--line-2);border-radius:var(--r-sm);font-size:.88rem" />` +
+            `<textarea class="canned-body-input" rows="3" placeholder="Response body" required style="padding:.35rem .6rem;border:1px solid var(--line-2);border-radius:var(--r-sm);font-size:.88rem;font-family:inherit;resize:vertical"></textarea>` +
+            `<div style="display:flex;gap:.4rem">` +
+            `<button type="submit" class="btn btn-primary" style="flex:1">Save</button>` +
+            `<button type="button" class="canned-create-cancel btn btn-ghost">Cancel</button>` +
+            `</div>`;
+          newBtn.insertAdjacentElement("beforebegin", formEl);
+          formEl.querySelector(".canned-title-input").focus();
+          formEl.querySelector(".canned-create-cancel").addEventListener("click", () => formEl.remove());
+          formEl.addEventListener("submit", async (ev) => {
+            ev.preventDefault();
+            const title = (formEl.querySelector(".canned-title-input").value || "").trim();
+            const body = (formEl.querySelector(".canned-body-input").value || "").trim();
+            if (!title || !body) return;
+            try {
+              await API.post("/api/canned", { title, body });
+              toast("Canned response saved.", "success");
+              formEl.remove();
+              await renderCannedMenu();
+            } catch (err) {
+              toast(err.message || "Couldn't save that canned response.", "error");
+            }
+          });
           return;
         }
 
@@ -530,7 +632,7 @@
         const delBtn = e.target.closest(".canned-del");
         if (delBtn) {
           const cid = delBtn.getAttribute("data-canned-id");
-          if (!confirm("Delete this canned response?")) return;
+          if (!await confirmModal("Delete this canned response?", { confirmLabel: "Delete", danger: true })) return;
           try {
             await API.del("/api/canned/" + encodeURIComponent(cid));
             toast("Canned response deleted.", "success");
@@ -585,6 +687,22 @@
       });
     }
 
+    // Ctrl+Enter / Cmd+Enter submits the composer.
+    const composerTa = form.querySelector("#commentBody");
+    if (composerTa) {
+      composerTa.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+          e.preventDefault();
+          form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+        }
+      });
+      // Auto-grow textarea.
+      composerTa.addEventListener("input", () => {
+        composerTa.style.height = "auto";
+        composerTa.style.height = Math.min(composerTa.scrollHeight, 200) + "px";
+      });
+    }
+
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const ta = form.querySelector("#commentBody");
@@ -594,9 +712,11 @@
         return;
       }
       try {
+        const internalChk = document.getElementById("internalToggle");
         await API.post("/api/blockages/" + encodeURIComponent(id) + "/comments", {
           body: body || "(attachment)",
           attachmentIds: pending.map((p) => p.id),
+          is_internal: internalChk && internalChk.checked ? true : false,
         });
         ta.value = "";
         pending = [];
@@ -620,6 +740,42 @@
         } catch (err) {
           toast(err.message || "Couldn't ask the AI.", "error");
           askAgainBtn.disabled = false;
+        }
+      });
+    }
+
+    // Student: "I'm still stuck" — escalate to instructor (adds a comment signaling need)
+    const stuckBtn = document.getElementById("stuckBtn");
+    if (stuckBtn) {
+      stuckBtn.addEventListener("click", async () => {
+        stuckBtn.disabled = true;
+        try {
+          await API.post("/api/blockages/" + encodeURIComponent(id) + "/comments", { body: "I've tried the AI suggestions but I'm still stuck — I need an instructor's help." });
+          toast("Flagged for instructor attention.", "info");
+          await load();
+        } catch (err) {
+          toast(err.message || "Couldn't flag.", "error");
+          stuckBtn.disabled = false;
+        }
+      });
+    }
+
+    // Student: "I figured it out" — self-resolve with a note (F2)
+    const selfResolveBtn = document.getElementById("selfResolveBtn");
+    if (selfResolveBtn) {
+      selfResolveBtn.addEventListener("click", async () => {
+        const note = prompt("What finally worked? (One sentence — it'll help the next student who hits this wall.)", "");
+        if (!note || !note.trim()) return;
+        selfResolveBtn.disabled = true;
+        selfResolveBtn.textContent = "Saving…";
+        try {
+          await API.post("/api/blockages/" + encodeURIComponent(id) + "/self-resolve", { note: note.trim() });
+          toast("🎉 Nice work! Your note was saved to the knowledge base.", "success");
+          await load();
+        } catch (err) {
+          toast(err.message || "Couldn't save.", "error");
+          selfResolveBtn.disabled = false;
+          selfResolveBtn.textContent = "🎉 I figured it out";
         }
       });
     }
@@ -690,7 +846,7 @@
         const delBtn = e.target.closest(".cmt-del");
         if (delBtn) {
           const cid = delBtn.getAttribute("data-cid");
-          if (!confirm("Delete this message? This can't be undone.")) return;
+          if (!await confirmModal("Delete this message? This can't be undone.", { confirmLabel: "Delete message", danger: true })) return;
           try {
             await API.del(
               "/api/blockages/" + encodeURIComponent(id) + "/comments/" + encodeURIComponent(cid)
@@ -796,6 +952,30 @@
           toast(err.message || "Couldn't reopen this blockage.", "error");
         }
       });
+
+    // Featured AI card: "This unblocked me" and "Still stuck" buttons
+    const aiFeatured = document.querySelector(".ai-featured");
+    if (aiFeatured) {
+      const aiUnblockBtn = aiFeatured.querySelector(".ai-unblock");
+      if (aiUnblockBtn) {
+        aiUnblockBtn.addEventListener("click", async () => {
+          try {
+            await API.post("/api/blockages/" + encodeURIComponent(id) + "/ai-resolve");
+            toast("Nice — marked as unblocked by AI.", "success");
+            await load();
+          } catch (err) {
+            toast(err.message || "Couldn't update.", "error");
+          }
+        });
+      }
+      const stillStuckBtn = document.getElementById("aiStillStuck");
+      if (stillStuckBtn) {
+        stillStuckBtn.addEventListener("click", () => {
+          const ta = document.getElementById("commentBody");
+          if (ta) { ta.focus(); ta.scrollIntoView({ behavior: "smooth", block: "center" }); }
+        });
+      }
+    }
   }
 
   // Staff: inline reassign control — fetch eligible instructors then POST on confirm.
@@ -852,7 +1032,7 @@
   }
 
   async function doDelete() {
-    if (!confirm("Delete this blockage? This can't be undone.")) return;
+    if (!await confirmModal("Delete this blockage? This can't be undone.", { confirmLabel: "Delete blockage", danger: true })) return;
     try {
       await API.del("/api/blockages/" + encodeURIComponent(id));
       toast("Blockage deleted.", "success");

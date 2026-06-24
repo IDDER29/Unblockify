@@ -6,6 +6,9 @@
 The product name is a promise: **you will not stay stuck.** Everything below measures the gap
 between that promise and what we ship.
 
+> This roadmap is the *feature* plan. For the strategic layer above it — why students will *pull*
+> the product, the data moat, and the value ladder — see [`NORTH-STAR.md`](./NORTH-STAR.md).
+
 > **Progress:** ✅ **Phase 1 (content fidelity)**, ✅ **Phase 2 (reach & recovery)**, and
 > ✅ **Phase 3 (AI depth)** are shipped and verified — markdown/code + attachments; transactional
 > email, password reset, email verification, invite emails, notification digest; real-time SSE

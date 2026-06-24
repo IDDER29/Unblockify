@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 — Page not found · Unblockify</title>
+    <meta name="description" content="This page doesn't exist. Let's get you unblocked." />
+    <meta name="robots" content="noindex" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./stylesheet.main.css" />
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <svg width="0" height="0" style="position:absolute">
+      <symbol id="mark" viewBox="0 0 32 32">
+        <rect x="1" y="1" width="30" height="30" rx="9" fill="#12B886" />
+        <path d="M6 16h4l2.5-6 4 12 2.5-6h7" fill="none" stroke="#05281d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+    </svg>
+    <div id="site-nav"></div>
+
+    <main id="main-content" style="min-height:70vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:4rem 1.5rem">
+      <div style="max-width:480px">
+        <div style="font-size:5rem;font-weight:800;font-family:var(--font-display,'Space Grotesk'),sans-serif;color:var(--flow,#12B886);line-height:1;margin-bottom:1rem">
+          404
+        </div>
+        <svg style="display:block;margin:0 auto 1.5rem" width="48" height="48" viewBox="0 0 32 32">
+          <use href="#mark" />
+        </svg>
+        <h1 style="font-size:1.75rem;margin-bottom:.75rem">You're blocked — but not for long.</h1>
+        <p style="color:var(--muted,#666);margin-bottom:2rem;font-size:1.05rem">This page doesn't exist. Let's get you somewhere useful.</p>
+        <div style="display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap">
+          <a href="index.html" class="btn btn-primary">Home</a>
+          <a href="javascript:history.back()" class="btn btn-ghost">Go back</a>
+          <a href="login.html" class="btn btn-ghost">Log in</a>
+        </div>
+        <div style="margin-top:3rem;font-size:.85rem;color:var(--muted,#666)">
+          Looking for something specific? <a href="contact.html" style="color:var(--flow,#12B886)">Contact us</a>
+        </div>
+      </div>
+    </main>
+
+    <div id="site-footer"></div>
+    <script src="./functions/site.js"></script>
+  </body>
+</html>

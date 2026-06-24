@@ -157,32 +157,54 @@ function extractText(msg) {
   return (msg.content || []).filter((b) => b.type === "text").map((b) => b.text).join("\n").trim();
 }
 
-// --- Multi-turn follow-up ---------------------------------------------
-function fallbackFollowup({ title, turn }) {
-  if ((turn || 1) <= 1) {
-    return `Still stuck on "${title}"? Let's narrow it: what's the smallest input that triggers it, and can you paste the exact failing line plus the error text? Share the smallest reproducing snippet.\n\nIf this doesn't unblock you, an instructor will pick it up.`;
+// --- Multi-turn follow-up with progressive scaffold levels (Phase 3.1) ---
+// scaffoldLevel: 1=hint, 2=question+hint, 3=example, 4=worked solution
+function fallbackFollowup({ title, turn, scaffoldLevel }) {
+  const level = scaffoldLevel || (turn || 1);
+  if (level <= 1) {
+    return `Still stuck on "${title}"? What's the smallest input that triggers the problem? Try isolating one variable at a time.\n\nIf this doesn't unblock you, click "I'm still stuck" to get an instructor.`;
   }
-  return `Let's try another angle on "${title}": re-read the docs for the one function involved, add a log right before it breaks, and check how a teammate solved a similar issue. Tell me the value you see at that point.\n\nIf this doesn't unblock you, an instructor will pick it up.`;
+  if (level === 2) {
+    return `Let's go deeper on "${title}". Can you paste the exact error and the two lines of code around where it fails? What value do you expect vs what do you get?\n\nIf this doesn't unblock you, click "I'm still stuck" to get an instructor.`;
+  }
+  if (level === 3) {
+    return `Here's an example that might help with "${title}": think about a simpler version of the same problem. Break it into: (1) what input do you have, (2) what transformation is needed, (3) what output do you want. Write each step out before coding it.\n\nIf this still doesn't click, click "I'm still stuck" to get an instructor.`;
+  }
+  return `For "${title}", here's the full approach: read the error message top to bottom, find the line number, add a console.log before that line to see the actual value. Compare to what the docs say it should be. That gap is your bug.\n\nAn instructor can pair on the next step — click "I'm still stuck" to bring one in.`;
 }
-async function followup({ title, details, thread, similar, turn }) {
+
+async function followup({ title, details, thread, similar, turn, scaffoldLevel }) {
   const c = getClient();
-  if (!c) return fallbackFollowup({ title, turn });
+  if (!c) return fallbackFollowup({ title, turn, scaffoldLevel });
+  const level = scaffoldLevel || (turn || 1);
   const convo = (thread || []).map((m) => `${m.author} (${m.author_role}): ${m.body}`).join("\n");
-  const user = `The student is still stuck after earlier help. Ask one or two sharper diagnostic
-questions and suggest the next concrete thing to try. Don't hand over a full solution.
+
+  // Scaffold level controls how much the AI reveals
+  const levelInstruction = {
+    1: "Give only a short hint — one leading question or one direction, no solution.",
+    2: "Give a diagnostic question and one concrete debugging step. Still no solution.",
+    3: "Give a worked example (analogous, not identical) and walk through the reasoning.",
+    4: "Give the full worked solution with explanation. This is the final scaffold level.",
+  }[Math.min(level, 4)] || "Ask one or two sharper diagnostic questions and suggest the next concrete thing to try. Don't hand over a full solution.";
+
+  const user = `${levelInstruction}
 
 Title: ${title}
 Details: ${details || "—"}
+Scaffold level: ${level}/4
 Conversation so far:
 ${convo || "(none)"}
 
 Knowledge base:
-${knowledgeText(similar)}`;
+${knowledgeText(similar)}
+
+End your response with: "If this doesn't unblock you, ${level >= 4 ? "an instructor will take over" : "click Show me more for the next hint"}."`
+
   try {
     const msg = await c.messages.create({ model: MODEL, max_tokens: 500, system: SYSTEM, messages: [{ role: "user", content: user }] });
-    return extractText(msg) || fallbackFollowup({ title, turn });
+    return extractText(msg) || fallbackFollowup({ title, turn, scaffoldLevel });
   } catch (_) {
-    return fallbackFollowup({ title, turn });
+    return fallbackFollowup({ title, turn, scaffoldLevel });
   }
 }
 
@@ -276,7 +298,70 @@ Themes:\n${themes || "(none)"}`;
   }
 }
 
+// --- Resolution summary (Phase 2.1) ----------------------------------
+// Called on blockage resolve. Returns 1-2 sentence "what finally worked" summary.
+async function resolutionSummary({ title, thread, resolutionNote }) {
+  const c = getClient();
+  if (!c) return fallbackResolutionSummary({ title, thread, resolutionNote });
+  const convo = (thread || []).map((m) => `${m.author} (${m.author_role}): ${m.body}`).join("\n");
+  const user = `Write 1–2 sentences summarizing what finally unblocked the student. Be concrete and actionable — focus on the fix, not the problem.
+Title: ${title}
+Resolution note: ${resolutionNote || "—"}
+Thread:
+${convo || "(no thread)"}`;
+  try {
+    const msg = await c.messages.create({
+      model: MODEL, max_tokens: 120,
+      system: "You write concise resolution summaries for a student knowledge base.",
+      messages: [{ role: "user", content: user }],
+    });
+    return extractText(msg) || fallbackResolutionSummary({ title, thread, resolutionNote });
+  } catch (_) {
+    return fallbackResolutionSummary({ title, thread, resolutionNote });
+  }
+}
+
+function fallbackResolutionSummary({ title, thread, resolutionNote }) {
+  if (resolutionNote && resolutionNote.trim().length > 10) {
+    return resolutionNote.trim().slice(0, 300);
+  }
+  const lastInstructor = [...(thread || [])].reverse().find((m) => m.author_role === "instructor" || m.author_role === "owner");
+  if (lastInstructor) return lastInstructor.body.slice(0, 300);
+  return `Resolved: ${title}`.slice(0, 300);
+}
+
+// --- Brief suggestion (Phase 4.2) ------------------------------------
+async function suggestBriefAddition({ briefName, briefContent, topic, rationale, sampleTitles }) {
+  const c = getClient();
+  if (!c) return fallbackSuggestBrief({ briefName, topic, rationale });
+  const user = `A coding bootcamp brief needs improvement. Students are frequently blocked on "${topic}".
+Brief name: ${briefName}
+Current brief content:
+${briefContent || "(no content yet)"}
+
+Reason for suggestion: ${rationale || "(none provided)"}
+Sample blockage titles on this topic: ${(sampleTitles || []).join("; ") || "—"}
+
+Write a SHORT addition (50–120 words) to add to this brief that would proactively address "${topic}".
+Format as markdown. Be concrete and actionable. Start with a heading like "## ${topic}".`;
+  try {
+    const msg = await c.messages.create({
+      model: MODEL, max_tokens: 300,
+      system: "You write concise, actionable additions to coding bootcamp project briefs.",
+      messages: [{ role: "user", content: user }],
+    });
+    return extractText(msg) || fallbackSuggestBrief({ briefName, topic, rationale });
+  } catch (_) {
+    return fallbackSuggestBrief({ briefName, topic, rationale });
+  }
+}
+
+function fallbackSuggestBrief({ briefName, topic }) {
+  return `## ${topic}\n\nStudents often get blocked on **${topic}**. Before you start:\n\n- Review the relevant documentation for ${topic}.\n- Try a minimal working example in isolation before integrating.\n- Log intermediate values to confirm your assumptions.\n\nIf you're still stuck after 30 minutes, raise a blockage with what you've tried.`;
+}
+
 module.exports = {
-  unblock, draftReply, followup, triage, summarize, digestSummary,
+  unblock, draftReply, followup, triage, summarize, digestSummary, resolutionSummary,
+  suggestBriefAddition,
   aiConfigured, AI_NAME, MODEL, AI_FOLLOWUP_MAX,
 };

@@ -27,6 +27,9 @@ function donut(totals) {
 }
 
 function lineChart(points) {
+  if (!points || !points.length || points.every((p) => !p.count)) {
+    return `<p class="thread-empty" style="padding:1.5rem 0">No activity in this period yet.</p>`;
+  }
   const W = 520, H = 150, P = 8;
   const max = Math.max(1, ...points.map((p) => p.count));
   const step = points.length > 1 ? (W - P * 2) / (points.length - 1) : 0;
@@ -94,7 +97,7 @@ function welcomeHtml(orgName) {
     <div style="display:flex;gap:.6rem;flex-wrap:wrap">
       <a class="btn btn-primary" href="cohorts.html">Create your first cohort</a>
       <a class="btn" href="members.html">Invite instructors &amp; students</a>
-      <a class="btn btn-ghost" href="cohorts.html">Set up a brief</a>
+      <a class="btn btn-ghost" href="cohorts.html#briefs">Set up a brief</a>
     </div>
   </section>`;
 }
@@ -103,16 +106,41 @@ function atRiskHtml(rows) {
   if (!rows || !rows.length) return `<p class="atrisk-empty">No students at risk right now. 🎉</p>`;
   return `<div class="atrisk-list">${rows
     .map(
-      (r) => `<div class="atrisk-item">
+      (s) => `<div class="atrisk-item">
         <span class="nm">${
-          r.id != null
-            ? `<a href="student_profile.html?id=${encodeURIComponent(r.id)}" style="color:inherit">${escapeHtml(r.name)}</a>`
-            : escapeHtml(r.name)
+          s.id != null
+            ? `<a href="student_profile.html?id=${encodeURIComponent(s.id)}" style="color:inherit">${escapeHtml(s.name)}</a>`
+            : escapeHtml(s.name)
         }</span>
-        <span class="rs">${(r.reasons || []).map((t) => `<span class="atrisk-tag">${escapeHtml(t)}</span>`).join("")}</span>
+        <span class="rs">${(s.reasons || []).map((t) => `<span class="atrisk-tag">${escapeHtml(t)}</span>`).join("")}</span>
+        <div class="atrisk-actions">
+          <button class="btn btn-sm" onclick="nudgeStudent(${s.id})">Send nudge</button>
+          <a class="btn btn-sm btn-ghost" href="owner_blockages.html?student=${encodeURIComponent(s.id)}">View blockages</a>
+          <button class="btn btn-sm btn-ghost" onclick="flagStudent(${s.id})">Flag for check-in</button>
+          ${s.lastInterventionAt ? `<span class="atrisk-last">Last action: ${escapeHtml(fmtRelative(s.lastInterventionAt))}</span>` : ""}
+          ${s.recovered ? `<span class="pill pill-resolved">Recovered</span>` : ""}
+        </div>
       </div>`
     )
     .join("")}</div>`;
+}
+
+async function nudgeStudent(id) {
+  try {
+    await API.post(`/api/students/${id}/nudge`, { message: "Your instructor is checking in on you." });
+    toast("Nudge sent", "success");
+  } catch (e) {
+    toast(e.message || "Couldn't send nudge.", "error");
+  }
+}
+
+async function flagStudent(id) {
+  try {
+    await API.post(`/api/students/${id}/flag`, {});
+    toast("Flagged for check-in", "success");
+  } catch (e) {
+    toast(e.message || "Couldn't flag student.", "error");
+  }
 }
 
 (async function () {
@@ -133,20 +161,40 @@ function atRiskHtml(rows) {
   const insRows = a.byInstructor.map((i) => ({ label: i.name, resolved: i.resolved }));
 
   const welcome = a.total === 0 ? welcomeHtml(s.org.name) : "";
+  const checklistDismissed = localStorage.getItem("unblockify_checklist_dismissed") === "1";
+  const hasCohorts = a.byCohort && a.byCohort.length > 0;
+  const hasInstructors = a.byInstructor && a.byInstructor.length > 0;
+  const hasBlockages = a.total > 0;
+  const allDone = hasCohorts && hasInstructors && hasBlockages;
+  const showChecklist = !checklistDismissed && !allDone;
+  const checklistHtml = showChecklist ? `<div class="panel" style="margin-bottom:1rem;border-left:3px solid var(--flow,#12B886)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+      <strong>Getting started</strong>
+      <button type="button" class="btn-mini" id="dismissChecklist">Dismiss</button>
+    </div>
+    <ul style="margin:0;padding-left:1.25rem;list-style:none">
+      <li style="margin:.25rem 0">${hasCohorts ? "✅" : "⬜"} <a href="cohorts.html">Create a cohort</a></li>
+      <li style="margin:.25rem 0">${hasInstructors ? "✅" : "⬜"} <a href="members.html">Invite an instructor</a></li>
+      <li style="margin:.25rem 0">${hasBlockages ? "✅" : "⬜"} <span style="color:var(--muted,#666)">Wait for a student's first blockage</span></li>
+    </ul>
+  </div>` : "";
 
   el.innerHTML = `
+    ${checklistHtml}
     ${welcome}
-    <section class="stat-row">
-      <div class="stat is-blocked"><div class="k">Blocked</div><div class="v">${a.totals.open || 0}</div></div>
-      <div class="stat is-pending"><div class="k">In support</div><div class="v">${a.totals.in_support || 0}</div></div>
-      <div class="stat is-resolved"><div class="k">Resolved</div><div class="v">${a.totals.resolved || 0}</div></div>
-      <div class="stat"><div class="k">Median time to unblock</div><div class="v">${a.medianHoursToUnblock || 0}h</div></div>
-      <div class="stat"><div class="k">Avg satisfaction</div><div class="v">${
-        a.csatCount
-          ? `<span class="csat-inline">${csatStars(a.avgCsat)}</span> <span class="csat-n">${a.avgCsat}</span>`
-          : "—"
-      }</div></div>
+    <section class="kpi-strip">
+      <div class="kpi is-blocked"><div class="kpi-v">${a.totals.open || 0}</div><div class="kpi-k">Blocked</div></div>
+      <div class="kpi is-pending"><div class="kpi-v">${a.totals.in_support || 0}</div><div class="kpi-k">In support</div></div>
+      <div class="kpi is-resolved"><div class="kpi-v">${a.totals.resolved || 0}</div><div class="kpi-k">Resolved</div></div>
+      <div class="kpi"><div class="kpi-v">${a.resolveRate || 0}%</div><div class="kpi-k">Resolve rate</div></div>
+      <div class="kpi"><div class="kpi-v">${a.medianHoursToUnblock || 0}h</div><div class="kpi-k">Median to unblock</div></div>
+      <div class="kpi"><div class="kpi-v">${a.deflectionRate || 0}%</div><div class="kpi-k">AI deflection</div></div>
     </section>
+
+    ${(a.atRisk && a.atRisk.length) ? `<div class="chart-card atrisk-card" style="border-left:3px solid var(--pending);margin-bottom:1.25rem">
+      <h3 style="display:flex;align-items:center;gap:.5rem">Students who need attention <span style="background:var(--pending);color:#fff;border-radius:99px;font-size:.7rem;padding:.1rem .45rem;font-family:var(--font-mono)">${a.atRisk.length}</span></h3>
+      ${atRiskHtml(a.atRisk)}
+    </div>` : ""}
 
     <div class="chart-grid">
       <div class="chart-card"><h3>Volume · last 14 days</h3>${lineChart(a.volumeByDay)}</div>
@@ -157,18 +205,18 @@ function atRiskHtml(rows) {
             <div class="row"><span class="sw" style="background:var(--blocked)"></span>Blocked · ${a.totals.open || 0}</div>
             <div class="row"><span class="sw" style="background:var(--pending)"></span>In support · ${a.totals.in_support || 0}</div>
             <div class="row"><span class="sw" style="background:var(--flow)"></span>Resolved · ${a.totals.resolved || 0}</div>
-            <div class="row" style="margin-top:.4rem;color:var(--muted)"><span class="sw" style="background:transparent"></span>${a.resolveRate}% resolve rate</div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="chart-grid">
-      <div class="chart-card"><h3>AI deflection</h3>
-        <div class="deflect-big">${a.deflectionRate || 0}%</div>
-        <div class="deflect-sub">${a.aiResolved || 0} blockage${(a.aiResolved || 0) === 1 ? "" : "s"} cleared by the AI TA · ~${a.hoursSaved || 0}h of instructor time saved</div>
+    <div class="chart-card">
+      <h3>AI Teaching Assistant</h3>
+      <div class="ai-stats-row">
+        <div class="ai-stat"><div class="ai-stat-v">${a.deflectionRate || 0}%</div><div class="ai-stat-k">Deflection rate</div></div>
+        <div class="ai-stat"><div class="ai-stat-v">${a.aiResolved || 0}</div><div class="ai-stat-k">Cleared by AI</div></div>
+        <div class="ai-stat"><div class="ai-stat-v">~${a.hoursSaved || 0}h</div><div class="ai-stat-k">Instructor time saved</div></div>
       </div>
-      <div class="chart-card"><h3>Students who need a human</h3>${atRiskHtml(a.atRisk)}</div>
     </div>
 
     <div class="chart-grid">
@@ -183,6 +231,13 @@ function atRiskHtml(rows) {
 
     <div class="chart-card"><h3>Recent activity</h3><div id="activityFeed"><p class="thread-empty">Loading…</p></div></div>
 
+    <div class="chart-card" id="hotspotsCard"><h3>Curriculum hot-spots <span class="eyebrow" style="font-size:.72rem;margin-left:.4rem">last 7 days</span></h3><p class="thread-empty">Loading…</p></div>
+
+    <div class="chart-grid">
+      <div class="chart-card" id="teachingQualityCard"><h3>Teaching quality</h3><p class="thread-empty">Loading…</p></div>
+      <div class="chart-card" id="progressionCard"><h3>Topic progression patterns</h3><p class="thread-empty">Loading…</p></div>
+    </div>
+
     <div class="chart-card"><h3>Nudge a cohort</h3>
       <p class="thread-empty" style="margin:.2rem 0 .8rem">Send an in-app nudge to every student in a cohort.</p>
       <div class="form-row" style="margin-bottom:.7rem">
@@ -191,10 +246,20 @@ function atRiskHtml(rows) {
       </div>
       <div class="form-row" style="margin-bottom:.7rem">
         <label for="nudgeMessage">Message</label>
-        <textarea id="nudgeMessage" rows="3" placeholder="e.g. Office hours at 3pm — bring your blockers!"></textarea>
+        <textarea id="nudgeMessage" rows="3" maxlength="500" placeholder="e.g. Office hours at 3pm — bring your blockers!"></textarea>
+        <div class="char-count" id="nudgeCount" style="text-align:right;font-size:.78rem;font-family:var(--font-mono);color:var(--muted);margin-top:.25rem">0 / 500</div>
       </div>
       <button class="btn btn-primary" id="nudgeSend" type="button">Send nudge</button>
     </div>`;
+
+  // Dismiss checklist.
+  const dismissBtn = document.getElementById("dismissChecklist");
+  if (dismissBtn) {
+    dismissBtn.addEventListener("click", () => {
+      localStorage.setItem("unblockify_checklist_dismissed", "1");
+      dismissBtn.closest(".panel").remove();
+    });
+  }
 
   // Weekly AI digest (loads after the charts).
   const dp = document.getElementById("digestPanel");
@@ -223,6 +288,12 @@ function atRiskHtml(rows) {
   const nudgeCohort = document.getElementById("nudgeCohort");
   const nudgeMessage = document.getElementById("nudgeMessage");
   const nudgeSend = document.getElementById("nudgeSend");
+  const nudgeCount = document.getElementById("nudgeCount");
+  nudgeMessage.addEventListener("input", () => {
+    const len = nudgeMessage.value.length;
+    nudgeCount.textContent = `${len} / 500`;
+    nudgeCount.style.color = len > 450 ? "var(--blocked)" : "var(--muted)";
+  });
   try {
     const { cohorts } = await API.get("/api/cohorts");
     nudgeCohort.innerHTML = (cohorts && cohorts.length)
@@ -242,10 +313,82 @@ function atRiskHtml(rows) {
       const n = r.sent || 0;
       toast(`Sent to ${n} student${n === 1 ? "" : "s"}.`, "success");
       nudgeMessage.value = "";
+      nudgeCount.textContent = "0 / 500";
+      nudgeCount.style.color = "var(--muted)";
     } catch (err) {
       toast(err.message || "Couldn't send the nudge.", "error");
     } finally {
       nudgeSend.disabled = false;
     }
   });
+
+  // Teaching quality (non-fatal)
+  const tqCard = document.getElementById("teachingQualityCard");
+  try {
+    const tq = await API.get("/api/analytics/teaching-quality");
+    const factors = (tq.rankedFactors || []).slice(0, 5);
+    const byCohort = (tq.byCohort || []).slice(0, 6);
+    const rate = tq.orgResolveRate != null ? tq.orgResolveRate + "%" : "—";
+    tqCard.innerHTML = `<h3>Teaching quality</h3>
+      <div class="kpi-strip" style="margin-bottom:1rem;gap:.75rem">
+        <div class="kpi is-resolved"><div class="kpi-v">${rate}</div><div class="kpi-k">Org resolve rate</div></div>
+      </div>
+      ${byCohort.length ? `<div style="margin-bottom:.9rem">${byCohort.map((c) =>
+        `<div class="bar-row"><div class="lbl">${escapeHtml(c.cohort)}</div>
+          <div class="track"><div class="fill" style="width:${c.resolveRate || 0}%;background:#12B886"></div></div>
+          <div class="n">${c.resolveRate || 0}%</div></div>`
+      ).join("")}</div>` : ""}
+      ${factors.length ? `<div class="blk-meta" style="margin:.5rem 0 .25rem">Key factors</div>
+        <div style="display:flex;flex-wrap:wrap;gap:.3rem">${factors.map((f) =>
+          `<span class="pill pill-resolved" style="font-size:.75rem">${escapeHtml(f)}</span>`
+        ).join("")}</div>` : ""}`;
+  } catch (_) {
+    tqCard.innerHTML = `<h3>Teaching quality</h3><p class="thread-empty">Couldn't load.</p>`;
+  }
+
+  // Progression patterns (non-fatal)
+  const progCard = document.getElementById("progressionCard");
+  try {
+    const prog = await API.get("/api/analytics/progression");
+    const pairs = (prog.patterns || []).slice(0, 8);
+    if (!pairs.length) {
+      progCard.innerHTML = `<h3>Topic progression patterns</h3><p class="thread-empty">Patterns appear once students have resolved several blockages with AI triage.</p>`;
+    } else {
+      progCard.innerHTML = `<h3>Topic progression patterns</h3>
+        <p class="blk-meta" style="margin:.1rem 0 .75rem">Topics students commonly hit in sequence</p>
+        ${pairs.map((p) =>
+          `<div class="bar-row" style="margin-bottom:.35rem"><div class="lbl" style="flex:none;max-width:none;width:100%;white-space:normal;font-size:.82rem">
+            <span style="color:var(--blocked)">${escapeHtml(p.topicA)}</span>
+            <span style="color:var(--muted);margin:0 .35rem">→</span>
+            <span style="color:var(--ink)">${escapeHtml(p.topicB)}</span>
+            <span style="color:var(--muted);font-size:.75rem;float:right">${p.count}×</span>
+          </div></div>`
+        ).join("")}`;
+    }
+  } catch (_) {
+    progCard.innerHTML = `<h3>Topic progression patterns</h3><p class="thread-empty">Couldn't load.</p>`;
+  }
+
+  // Curriculum hot-spots (loads last; failure is non-fatal)
+  const hc = document.getElementById("hotspotsCard");
+  try {
+    const { hotspots } = await API.get("/api/analytics/hotspots?windowDays=7");
+    if (!hotspots || !hotspots.length) {
+      hc.querySelector("p").textContent = "No topic clusters yet — hot-spots appear once AI has triaged a few blockages.";
+    } else {
+      hc.innerHTML = `<h3>Curriculum hot-spots <span class="eyebrow" style="font-size:.72rem;margin-left:.4rem">last 7 days</span></h3>
+        <div class="hotspot-list">
+          ${hotspots.map((h) => `
+            <div class="hotspot-row">
+              <div class="hotspot-info">
+                <span class="hotspot-topic">${escapeHtml(h.topic)}</span>
+                <span class="hotspot-meta">${h.count} student${h.count !== 1 ? "s" : ""} stuck${h.medianResolveHours != null ? ` · median ${h.medianResolveHours}h to resolve` : ""}</span>
+              </div>
+              <span class="pill ${h.count >= 5 ? "pill-blocked" : h.count >= 3 ? "pill-pending" : "pill-resolved"}" style="min-width:2rem;text-align:center">${h.count}</span>
+            </div>`).join("")}
+        </div>`;
+    }
+  } catch (_) {
+    hc.querySelector("p").textContent = "Couldn't load hot-spots.";
+  }
 })();

@@ -1,7 +1,7 @@
 "use strict";
 
 const express = require("express");
-const { requireAuth, requireStaff } = require("../auth");
+const { requireAuth, requireStaff, requireRole } = require("../auth");
 
 function median(nums) {
   if (!nums.length) return 0;
@@ -91,6 +91,296 @@ module.exports = function profileRoutes(db) {
         createdAt: b.created_at, resolvedAt: b.resolved_at,
       })),
       trend,
+    });
+  });
+
+  // POST /api/me/peer-mentor-opt-in — student opts in to be a peer mentor (T2-4)
+  router.post("/me/peer-mentor-opt-in", requireAuth, requireRole("student"), (req, res) => {
+    const { orgId, userId } = req.user;
+    db.prepare("INSERT OR REPLACE INTO peer_mentor_opt_ins (org_id, user_id) VALUES (?, ?)").run(orgId, userId);
+    res.json({ ok: true, optedIn: true });
+  });
+
+  // DELETE /api/me/peer-mentor-opt-in — student opts out
+  router.delete("/me/peer-mentor-opt-in", requireAuth, requireRole("student"), (req, res) => {
+    const { userId } = req.user;
+    db.prepare("DELETE FROM peer_mentor_opt_ins WHERE user_id = ?").run(userId);
+    res.json({ ok: true, optedIn: false });
+  });
+
+  // GET /api/me/peer-mentor-opt-in — check own opt-in status
+  router.get("/me/peer-mentor-opt-in", requireAuth, requireRole("student"), (req, res) => {
+    const { userId } = req.user;
+    const row = db.prepare("SELECT 1 FROM peer_mentor_opt_ins WHERE user_id = ?").get(userId);
+    res.json({ optedIn: !!row });
+  });
+
+  // GET /api/blockages/:id/peer-mentors — find students who resolved a similar blockage (T2-4)
+  // Returns opt-in students who hit same AI topics — student can initiate a connection.
+  router.get("/blockages/:id/peer-mentors", requireAuth, requireRole("student"), (req, res) => {
+    const { orgId, userId } = req.user;
+    const blk = db.prepare("SELECT * FROM blockages WHERE id = ? AND org_id = ? AND user_id = ?").get(Number(req.params.id), orgId, userId);
+    if (!blk) return res.status(404).json({ error: "Blockage not found." });
+
+    let topics = [];
+    try { topics = JSON.parse(blk.ai_topics) || []; } catch (_) {}
+    if (!topics.length) return res.json({ mentors: [] });
+
+    // Find opted-in students (not yourself) in same cohort who resolved a blockage on these topics
+    const placeholders = topics.map(() => "?").join(",");
+    const mentors = db.prepare(
+      `SELECT DISTINCT u.id, u.name, b.title AS resolved_title, b.resolution_type,
+              b.resolution_summary, b.resolved_at
+         FROM blockages b
+         JOIN users u ON u.id = b.user_id
+         JOIN peer_mentor_opt_ins p ON p.user_id = u.id
+        WHERE b.org_id = ? AND b.cohort_id = ? AND b.status = 'resolved'
+          AND b.user_id != ?
+          AND b.ai_topics IS NOT NULL
+          AND (${topics.map(() => "b.ai_topics LIKE ?").join(" OR ")})
+        ORDER BY b.resolved_at DESC LIMIT 5`
+    ).all(orgId, blk.cohort_id, userId, ...topics.map((t) => `%${t}%`));
+
+    res.json({
+      mentors: mentors.map((m) => ({
+        id: m.id,
+        name: m.name,
+        resolvedTitle: m.resolved_title,
+        resolutionType: m.resolution_type,
+        resolutionSummary: m.resolution_summary,
+        resolvedAt: m.resolved_at,
+      })),
+    });
+  });
+
+  // GET /api/me/peers — own opt-in status + list of opted-in cohort peers (students only)
+  router.get("/me/peers", requireAuth, requireRole("student"), (req, res) => {
+    const { orgId, userId } = req.user;
+    const optRow = db.prepare("SELECT 1 FROM peer_mentor_opt_ins WHERE user_id = ?").get(userId);
+    const me = db.prepare("SELECT cohort_id FROM users WHERE id = ?").get(userId);
+    let peers = [];
+    if (me && me.cohort_id) {
+      peers = db.prepare(
+        `SELECT u.id, u.name FROM peer_mentor_opt_ins p
+           JOIN users u ON u.id = p.user_id
+          WHERE p.org_id = ? AND u.cohort_id = ? AND u.id != ?
+          ORDER BY u.name`
+      ).all(orgId, me.cohort_id, userId);
+    }
+    res.json({ optedIn: !!optRow, peers });
+  });
+
+  // POST /api/me/peers/opt-in — opt in
+  router.post("/me/peers/opt-in", requireAuth, requireRole("student"), (req, res) => {
+    const { orgId, userId } = req.user;
+    db.prepare("INSERT OR REPLACE INTO peer_mentor_opt_ins (org_id, user_id) VALUES (?, ?)").run(orgId, userId);
+    res.json({ ok: true, optedIn: true });
+  });
+
+  // POST /api/me/peers/opt-out — opt out
+  router.post("/me/peers/opt-out", requireAuth, requireRole("student"), (req, res) => {
+    const { userId } = req.user;
+    db.prepare("DELETE FROM peer_mentor_opt_ins WHERE user_id = ?").run(userId);
+    res.json({ ok: true, optedIn: false });
+  });
+
+  // GET /api/me/momentum — student's own unblocking trajectory (Phase 2.4)
+  // Personal only — no cross-student data, no rankings.
+  router.get("/me/momentum", requireAuth, (req, res) => {
+    const { orgId, userId } = req.user;
+
+    const blks = db.prepare(
+      `SELECT id, title, status, resolution_type, ai_topics, created_at, resolved_at,
+              (julianday(resolved_at) - julianday(created_at)) * 24 AS hours
+         FROM blockages WHERE org_id = ? AND user_id = ? ORDER BY created_at DESC`
+    ).all(orgId, userId);
+
+    const resolved = blks.filter((b) => b.resolved_at);
+    const resolvedHours = resolved.map((b) => b.hours).filter((h) => h != null);
+    const fastestHours = resolvedHours.length ? Math.min(...resolvedHours) : null;
+
+    // Active days: days with at least one resolve in the last 30 days
+    const activeDays = new Set(
+      resolved
+        .filter((b) => {
+          const d = new Date(b.resolved_at);
+          return (Date.now() - d.getTime()) < 30 * 86400000;
+        })
+        .map((b) => b.resolved_at.slice(0, 10))
+    ).size;
+
+    // Top stuck topics from AI triage
+    const topicMap = {};
+    blks.forEach((b) => {
+      let topics = [];
+      try { topics = JSON.parse(b.ai_topics) || []; } catch (_) {}
+      topics.forEach((t) => { topicMap[t] = (topicMap[t] || 0) + 1; });
+    });
+    const topTopics = Object.entries(topicMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([topic, count]) => ({ topic, count }));
+
+    // Recent history (last 10)
+    const history = blks.slice(0, 10).map((b) => ({
+      id: b.id, title: b.title, status: b.status,
+      createdAt: b.created_at, resolvedAt: b.resolved_at,
+    }));
+
+    res.json({
+      totalCleared: resolved.length,
+      fastestResolveHours: fastestHours != null ? Math.round(fastestHours * 10) / 10 : null,
+      activeDaysLast30: activeDays,
+      topStuckTopics: topTopics,
+      history,
+    });
+  });
+
+  // GET /api/me/ahead — cohort hotspots the student hasn't hit yet (student-facing heatmap).
+  // Returns anonymized, aggregate-only data — no individual student info exposed.
+  router.get("/me/ahead", requireAuth, requireRole("student"), (req, res) => {
+    const { orgId, userId } = req.user;
+
+    // Get the student's cohort
+    const me = db.prepare("SELECT cohort_id FROM users WHERE id = ?").get(userId);
+    if (!me || !me.cohort_id) return res.json({ hotspots: [] });
+
+    // Top blockage topics in the student's cohort (from OTHER students, anonymized)
+    const rows = db.prepare(
+      `SELECT b.ai_topics, b.brief_id, br.name AS brief_name,
+              COUNT(*) AS count,
+              AVG(CASE WHEN b.resolved_at IS NOT NULL THEN
+                (julianday(b.resolved_at) - julianday(b.created_at)) * 24 ELSE NULL END) AS avg_hours
+         FROM blockages b
+         LEFT JOIN briefs br ON br.id = b.brief_id
+        WHERE b.org_id = ? AND b.cohort_id = ? AND b.user_id != ?
+        GROUP BY b.brief_id ORDER BY count DESC LIMIT 10`
+    ).all(orgId, me.cohort_id, userId);
+
+    // Aggregate topic counts (from all blockages in cohort excl. this student)
+    const allBlks = db.prepare(
+      `SELECT ai_topics FROM blockages WHERE org_id = ? AND cohort_id = ? AND user_id != ?`
+    ).all(orgId, me.cohort_id, userId);
+
+    const topicMap = {};
+    for (const b of allBlks) {
+      let topics = [];
+      try { topics = JSON.parse(b.ai_topics) || []; } catch (_) {}
+      for (const t of topics) topicMap[t] = (topicMap[t] || 0) + 1;
+    }
+    const hotTopics = Object.entries(topicMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([topic, count]) => ({ topic, count }));
+
+    const hotspots = rows.map(r => ({
+      brief: r.brief_name || "No brief",
+      count: r.count,
+      avgHours: r.avg_hours ? Math.round(r.avg_hours * 10) / 10 : null,
+    }));
+
+    res.json({ hotspots, hotTopics });
+  });
+
+  // GET /api/me/teaching — instructor's personal teaching intelligence (Phase 4.4)
+  // Private to the calling instructor/owner. No cross-instructor rankings.
+  router.get("/me/teaching", requireRole("instructor", "owner"), (req, res) => {
+    const { orgId, userId } = req.user;
+
+    const blks = db.prepare(
+      `SELECT b.id, b.title, b.status, b.ai_topics, b.created_at, b.resolved_at, b.resolution_type,
+              (julianday(b.resolved_at) - julianday(b.created_at)) * 24 AS hours
+         FROM blockages b
+        WHERE b.org_id = ? AND b.assignee_id = ? AND b.status = 'resolved'
+        ORDER BY b.resolved_at DESC`
+    ).all(orgId, userId);
+
+    const resolveHours = blks.map((b) => b.hours).filter((h) => h != null);
+    const avgHours = resolveHours.length
+      ? Math.round((resolveHours.reduce((a, h) => a + h, 0) / resolveHours.length) * 10) / 10
+      : null;
+
+    // Per-topic breakdown from AI triage
+    const topicMap = {};
+    blks.forEach((b) => {
+      let topics = [];
+      try { topics = JSON.parse(b.ai_topics) || []; } catch (_) {}
+      topics.forEach((t) => { topicMap[t] = (topicMap[t] || 0) + 1; });
+    });
+    const byTopic = Object.entries(topicMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([topic, count]) => ({ topic, count }));
+
+    res.json({
+      teaching: {
+        totalResolved: blks.length,
+        avgResolveHours: avgHours,
+        byTopic,
+      },
+    });
+  });
+
+  // GET /api/me/weekly-digest — student's personal weekly summary.
+  // Covers the past 7 days: blockages reported, resolved, self-resolved, fastest, topics.
+  router.get("/me/weekly-digest", requireAuth, requireRole("student"), (req, res) => {
+    const { orgId, userId } = req.user;
+    const since = "datetime('now','-7 days')";
+
+    const reported = db.prepare(
+      `SELECT COUNT(*) n FROM blockages WHERE org_id = ? AND user_id = ? AND created_at >= ${since}`
+    ).get(orgId, userId).n;
+
+    const resolved = db.prepare(
+      `SELECT COUNT(*) n FROM blockages WHERE org_id = ? AND user_id = ? AND status = 'resolved' AND resolved_at >= ${since}`
+    ).get(orgId, userId).n;
+
+    const selfResolved = db.prepare(
+      `SELECT COUNT(*) n FROM blockages WHERE org_id = ? AND user_id = ? AND resolution_type = 'self' AND resolved_at >= ${since}`
+    ).get(orgId, userId).n;
+
+    const aiResolved = db.prepare(
+      `SELECT COUNT(*) n FROM blockages WHERE org_id = ? AND user_id = ? AND resolution_type = 'ai' AND resolved_at >= ${since}`
+    ).get(orgId, userId).n;
+
+    const fastestRow = db.prepare(
+      `SELECT MIN((julianday(resolved_at) - julianday(created_at)) * 24) AS hrs
+         FROM blockages WHERE org_id = ? AND user_id = ? AND resolved_at >= ${since}`
+    ).get(orgId, userId);
+
+    // Topics from this week
+    const topicBlks = db.prepare(
+      `SELECT ai_topics FROM blockages WHERE org_id = ? AND user_id = ? AND created_at >= ${since}`
+    ).all(orgId, userId);
+    const topicMap = {};
+    for (const b of topicBlks) {
+      let topics = [];
+      try { topics = JSON.parse(b.ai_topics) || []; } catch (_) {}
+      for (const t of topics) topicMap[t] = (topicMap[t] || 0) + 1;
+    }
+    const weekTopics = Object.entries(topicMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([topic, count]) => ({ topic, count }));
+
+    // Cohort context: how many others reported this week (anonymized count only)
+    const me = db.prepare("SELECT cohort_id FROM users WHERE id = ?").get(userId);
+    let cohortReported = 0;
+    if (me && me.cohort_id) {
+      cohortReported = db.prepare(
+        `SELECT COUNT(*) n FROM blockages WHERE org_id = ? AND cohort_id = ? AND user_id != ? AND created_at >= ${since}`
+      ).get(orgId, me.cohort_id, userId).n;
+    }
+
+    res.json({
+      periodDays: 7,
+      reported,
+      resolved,
+      selfResolved,
+      aiResolved,
+      fastestHours: fastestRow && fastestRow.hrs != null ? Math.round(fastestRow.hrs * 10) / 10 : null,
+      weekTopics,
+      cohortReported,
     });
   });
 

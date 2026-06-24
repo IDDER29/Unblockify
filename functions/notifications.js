@@ -36,12 +36,18 @@
     </div>`;
   }
 
-  async function render() {
+  async function render(showSkeleton = false) {
+    if (showSkeleton) {
+      const skelItems = Array.from({length: 4}, () =>
+        `<div class="notif-item"><span class="dot"></span><div class="b"><div class="skel w-80" style="height:.85rem;margin-bottom:.4rem"></div><div class="skel w-40" style="height:.7rem"></div></div></div>`
+      ).join("");
+      view.innerHTML = `<div class="page-head"><h1>Notifications</h1><p>Updates on your blockages and activity.</p></div>${segHtml()}<div class="notif-list">${skelItems}</div>`;
+    }
     let data;
     try {
       data = await API.get("/api/notifications" + (filter === "unread" ? "?unread=1" : ""));
     } catch (e) {
-      view.innerHTML = `<div class="page-head"><h1>Notifications</h1></div><div class="blk-empty">Couldn't load notifications.</div>`;
+      view.innerHTML = `<div class="page-head"><h1>Notifications</h1></div><div class="blk-empty">Couldn't load notifications. Try refreshing.</div>`;
       return;
     }
     const list = data.notifications || [];
@@ -124,6 +130,11 @@
   });
 
   document.getElementById("clearAll").addEventListener("click", async () => {
+    const ok = await confirmModal("Clear all notifications? This can't be undone.", {
+      confirmLabel: "Clear all",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       await API.del("/api/notifications");
     } catch (e) {
@@ -134,7 +145,7 @@
     refreshNotifDot();
   });
 
-  await render();
+  await render(true);
 
   // Live updates: a new notification arrived on the shared stream — re-render
   // (debounced) so the list reflects it without a manual refresh.

@@ -118,8 +118,16 @@
 
   async function openCohort(id) {
     currentId = id;
-    cohortModalContent.innerHTML = `<div class="modal-header"><h2 id="cohortModalTitle">Loading…</h2>
-      <button class="close" type="button" data-close="cohortModal" aria-label="Close">&times;</button></div>`;
+    cohortModalContent.innerHTML = `
+      <div class="modal-header">
+        <h2 id="cohortModalTitle"><span class="skel-line" style="width:140px;display:inline-block"></span></h2>
+        <button class="close" type="button" data-close="cohortModal" aria-label="Close">&times;</button>
+      </div>
+      <div style="padding:1.6rem;display:flex;flex-direction:column;gap:1rem">
+        <span class="skel-line" style="width:60%;height:1rem"></span>
+        <span class="skel-line" style="width:40%;height:1rem"></span>
+        <span class="skel-line" style="width:80%;height:1rem"></span>
+      </div>`;
     openModal(cohortModal, { labelledby: "cohortModalTitle" });
     await renderCohortDetail();
   }
@@ -155,20 +163,24 @@
           .join("")
       : `<p class="thread-empty">No instructors assigned.</p>`;
 
-    // Briefs list — each owner row has an inline rename (Edit → input + Save) + delete.
+    // Briefs list — each owner row has an inline rename (Edit → input + Save) + delete + Insights.
     const briefRows = briefs.length
       ? briefs
           .map(
-            (b) => `<div style="${ROW}" data-bid="${escapeHtml(b.id)}">
-              <span class="brief-name" style="flex:1">${escapeHtml(b.name)}</span>
-              ${
-                isOwner
-                  ? `<input type="text" class="brief-rename-input" value="${escapeHtml(b.name)}" autocomplete="off" style="${FIELD};display:none" />
-              <button type="button" class="btn-mini brief-edit" title="Rename" style="flex:0 0 auto">Edit</button>
-              <button type="button" class="btn-mini brief-save" title="Save" style="flex:0 0 auto;display:none">Save</button>
-              <button type="button" class="btn-mini brief-delete" title="Delete" style="flex:0 0 auto">Delete</button>`
-                  : ""
-              }
+            (b) => `<div data-bid="${escapeHtml(b.id)}">
+              <div style="${ROW}">
+                <span class="brief-name" style="flex:1">${escapeHtml(b.name)}</span>
+                ${
+                  isOwner
+                    ? `<input type="text" class="brief-rename-input" value="${escapeHtml(b.name)}" autocomplete="off" style="${FIELD};display:none" />
+                <button type="button" class="btn-mini brief-insights" title="AI Insights" style="flex:0 0 auto">✦ Insights</button>
+                <button type="button" class="btn-mini brief-edit" title="Rename" style="flex:0 0 auto">Edit</button>
+                <button type="button" class="btn-mini brief-save" title="Save" style="flex:0 0 auto;display:none">Save</button>
+                <button type="button" class="btn-mini brief-delete" title="Delete" style="flex:0 0 auto">Delete</button>`
+                    : ""
+                }
+              </div>
+              <div class="brief-insights-panel" style="display:none;margin:.5rem 0 .75rem;padding:.75rem;background:var(--surface-2,#F8F9FA);border-radius:var(--r-sm);font-size:.875rem"></div>
             </div>`
           )
           .join("")
@@ -410,6 +422,89 @@
       });
     });
 
+    // Brief Insights panel — lazy loads impact + suggestions + version history.
+    cohortModalContent.querySelectorAll("[data-bid]").forEach((row) => {
+      const insightsBtn = row.querySelector(".brief-insights");
+      const insightsPanel = row.querySelector(".brief-insights-panel");
+      if (!insightsBtn || !insightsPanel) return;
+      let loaded = false;
+
+      insightsBtn.addEventListener("click", async () => {
+        const isOpen = insightsPanel.style.display !== "none";
+        if (isOpen) { insightsPanel.style.display = "none"; insightsBtn.textContent = "✦ Insights"; return; }
+        insightsPanel.style.display = "";
+        insightsBtn.textContent = "✦ Hide";
+        if (loaded) return;
+        loaded = true;
+        insightsPanel.innerHTML = `<span style="color:var(--muted)">Loading…</span>`;
+        const bid = row.dataset.bid;
+        try {
+          const [impact, sugg, hist] = await Promise.all([
+            API.get(`/api/briefs/${encodeURIComponent(bid)}/impact`),
+            API.get(`/api/briefs/${encodeURIComponent(bid)}/suggestions?status=pending`),
+            isOwner ? API.get(`/api/briefs/${encodeURIComponent(bid)}/history`).catch(() => ({ versions: [] })) : Promise.resolve({ versions: [] }),
+          ]);
+          const im = impact || {};
+          const pending = (sugg && sugg.suggestions) || [];
+          insightsPanel.innerHTML = `
+            <div style="display:flex;gap:1.25rem;margin-bottom:.65rem;flex-wrap:wrap">
+              <div><span style="font-family:var(--font-mono);font-size:1.1rem;font-weight:700;color:var(--flow)">${im.resolveRate != null ? im.resolveRate + "%" : "—"}</span><div style="color:var(--muted);font-size:.75rem">Resolve rate</div></div>
+              <div><span style="font-family:var(--font-mono);font-size:1.1rem;font-weight:700">${im.totalBlockages != null ? im.totalBlockages : "—"}</span><div style="color:var(--muted);font-size:.75rem">Total blockages</div></div>
+              <div><span style="font-family:var(--font-mono);font-size:1.1rem;font-weight:700">${im.avgResolveHours != null ? im.avgResolveHours + "h" : "—"}</span><div style="color:var(--muted);font-size:.75rem">Avg resolve time</div></div>
+            </div>
+            ${pending.length ? `<div style="margin-bottom:.5rem;font-weight:600;font-size:.8rem">AI suggestions for this brief</div>
+              ${pending.map((sg) => `<div class="brief-sugg" data-sid="${escapeHtml(sg.id)}" style="background:#fff;border:1px solid var(--line);border-radius:var(--r-sm);padding:.6rem .8rem;margin-bottom:.45rem">
+                <div style="font-weight:600;margin-bottom:.25rem">${escapeHtml(sg.topic)}</div>
+                <div style="color:var(--muted);font-size:.8rem;margin-bottom:.4rem">${escapeHtml(sg.rationale || "")}</div>
+                <div style="display:flex;gap:.5rem">
+                  <button type="button" class="btn-mini sugg-accept">Accept</button>
+                  <button type="button" class="btn-mini sugg-dismiss" style="color:var(--muted)">Dismiss</button>
+                </div>
+              </div>`).join("")}` : `<div style="color:var(--muted);font-size:.8rem;margin-bottom:.5rem">No pending AI suggestions.</div>`}
+            <button type="button" class="btn btn-ghost" style="font-size:.8rem;padding:.3rem .65rem" data-gen-sugg="${escapeHtml(bid)}">Generate AI suggestion</button>
+            ${hist && hist.versions && hist.versions.length ? `<div style="margin-top:.75rem;font-size:.8rem;color:var(--muted)">Version history (${hist.versions.length}): ${hist.versions.slice(0,3).map(v => `<span title="${escapeHtml(v.authorName || '')} · ${escapeHtml(v.createdAt || '')}">${escapeHtml(v.name || 'v')}</span>`).join(" → ")}</div>` : ""}`;
+
+          // Wire accept / dismiss
+          insightsPanel.querySelectorAll(".brief-sugg").forEach((sg) => {
+            const sid = sg.dataset.sid;
+            sg.querySelector(".sugg-accept").addEventListener("click", async () => {
+              try {
+                await API.patch(`/api/briefs/${encodeURIComponent(bid)}/suggestions/${encodeURIComponent(sid)}`, { status: "accepted" });
+                sg.remove();
+                toast("Suggestion accepted.", "success");
+              } catch (err) { toast(err.message || "Couldn't accept.", "error"); }
+            });
+            sg.querySelector(".sugg-dismiss").addEventListener("click", async () => {
+              try {
+                await API.patch(`/api/briefs/${encodeURIComponent(bid)}/suggestions/${encodeURIComponent(sid)}`, { status: "dismissed" });
+                sg.remove();
+                toast("Suggestion dismissed.", "info");
+              } catch (err) { toast(err.message || "Couldn't dismiss.", "error"); }
+            });
+          });
+
+          // Wire generate suggestion
+          const genBtn = insightsPanel.querySelector("[data-gen-sugg]");
+          if (genBtn) {
+            genBtn.addEventListener("click", async () => {
+              genBtn.disabled = true; genBtn.textContent = "Generating…";
+              try {
+                await API.post(`/api/briefs/${encodeURIComponent(bid)}/suggestions`, {});
+                toast("AI suggestion generated — refresh Insights to see it.", "success");
+                loaded = false;
+              } catch (err) {
+                toast(err.message || "Couldn't generate suggestion.", "error");
+              } finally {
+                genBtn.disabled = false; genBtn.textContent = "Generate AI suggestion";
+              }
+            });
+          }
+        } catch (err) {
+          insightsPanel.innerHTML = `<span style="color:var(--blocked)">Couldn't load insights.</span>`;
+        }
+      });
+    });
+
     // Rename brief — Edit swaps the label for an input, Save persists.
     cohortModalContent.querySelectorAll("[data-bid]").forEach((row) => {
       const nameEl = row.querySelector(".brief-name");
@@ -433,11 +528,15 @@
         const bid = row.dataset.bid;
         const name = input.value.trim();
         if (!name) return;
+        saveBtn.textContent = "Saving…";
+        saveBtn.disabled = true;
         try {
           await API.put(`/api/briefs/${encodeURIComponent(bid)}`, { name });
           toast("Brief renamed.", "success");
           await renderCohortDetail();
         } catch (err) {
+          saveBtn.textContent = "Save";
+          saveBtn.disabled = false;
           toast(err.message || "Couldn't rename brief.", "error");
         }
       });

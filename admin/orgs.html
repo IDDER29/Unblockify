@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Organizations — Unblockify Admin</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../stylesheet.main.css" />
+    <style>
+      body { margin:0; background:var(--surface-2,#f8f9fb); font-family:var(--font-body,'Inter'),sans-serif; }
+      .admin-body { padding:2rem; max-width:1100px; margin:0 auto; }
+      table { width:100%; border-collapse:collapse; background:#fff; border-radius:10px; border:1px solid var(--line,#e8e8e8); overflow:hidden; font-size:.9rem; }
+      th, td { padding:.6rem .9rem; text-align:left; border-bottom:1px solid var(--line,#e8e8e8); }
+      th { background:var(--surface-2,#f8f9fb); font-weight:600; font-size:.82rem; }
+      tr:last-child td { border:none; }
+    </style>
+  </head>
+  <body>
+    <div id="admin-nav"></div>
+    <div class="admin-body">
+      <h1 style="margin:1.5rem 0 .25rem;font-size:1.5rem">Organizations</h1>
+      <p style="color:var(--muted);margin:0 0 1.5rem">Every workspace on the platform.</p>
+      <input type="search" id="searchInput" placeholder="Search by org name…" class="input" style="max-width:300px;margin-bottom:1rem" />
+      <div id="content"><p style="color:var(--muted)">Loading…</p></div>
+    </div>
+    <script src="admin.js"></script>
+    <script>
+      (async function () {
+        const el = document.getElementById("content");
+        try {
+          const { orgs } = await ADMIN.fetch("/orgs");
+          const e = ADMIN.escapeHtml;
+          let filtered = orgs;
+
+          function render() {
+            if (!filtered.length) { el.innerHTML = `<p style="color:var(--muted)">No results.</p>`; return; }
+            el.innerHTML = `<table>
+              <thead><tr>
+                <th>Name</th><th>Members</th><th>Cohorts</th><th>Blockages</th><th>Last active</th><th>Joined</th><th></th>
+              </tr></thead>
+              <tbody>${filtered.map(o => `
+                <tr>
+                  <td><div style="font-weight:500">${e(o.name)}</div><div style="font-size:.75rem;color:var(--muted)">${e(o.slug)}</div></td>
+                  <td>${o.members}</td>
+                  <td>${o.cohorts}</td>
+                  <td>${o.blockages}</td>
+                  <td>${ADMIN.fmtRelative(o.last_blockage_at)}</td>
+                  <td>${ADMIN.fmtRelative(o.created_at)}</td>
+                  <td><a href="org.html?id=${e(String(o.id))}" class="btn btn-ghost btn-sm">View</a></td>
+                </tr>`).join("")}
+              </tbody>
+            </table>`;
+          }
+
+          render();
+          document.getElementById("searchInput").addEventListener("input", function () {
+            const q = this.value.toLowerCase();
+            filtered = orgs.filter(o => (o.name||"").toLowerCase().includes(q) || (o.slug||"").toLowerCase().includes(q));
+            render();
+          });
+        } catch (err) {
+          el.innerHTML = `<p style="color:var(--blocked)">Error: ${ADMIN.escapeHtml(err.message)}</p>`;
+        }
+      })();
+    </script>
+  </body>
+</html>

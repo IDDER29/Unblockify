@@ -226,8 +226,62 @@ function migrate(db) {
     CREATE INDEX IF NOT EXISTS idx_views_user ON saved_views(user_id);
     CREATE INDEX IF NOT EXISTS idx_csat_org ON csat(org_id);
     CREATE INDEX IF NOT EXISTS idx_canned_org ON canned_responses(org_id);
+
+    CREATE TABLE IF NOT EXISTS hotspot_alerts (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      org_id     INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      cohort_id  INTEGER REFERENCES cohorts(id) ON DELETE CASCADE,
+      topic      TEXT NOT NULL,
+      week       TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(org_id, cohort_id, topic, week)
+    );
+
+    CREATE TABLE IF NOT EXISTS check_ins (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      org_id        INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      student_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      instructor_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      note          TEXT,
+      status        TEXT NOT NULL DEFAULT 'open',
+      created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+      resolved_at   TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_checkins_org ON check_ins(org_id);
+    CREATE INDEX IF NOT EXISTS idx_checkins_student ON check_ins(student_id);
   `);
   // Additive columns (safe on an existing data.db).
+  addColumnIfMissing(db, "comments", "ai_confidence", "REAL");
+  addColumnIfMissing(db, "comments", "scaffold_level", "INTEGER");
+  addColumnIfMissing(db, "comments", "is_internal", "INTEGER NOT NULL DEFAULT 0");
+  addColumnIfMissing(db, "organizations", "slack_webhook_url", "TEXT");
+  addColumnIfMissing(db, "blockages", "is_anonymous", "INTEGER NOT NULL DEFAULT 0");
+  addColumnIfMissing(db, "briefs", "max_scaffold", "INTEGER");
+  addColumnIfMissing(db, "briefs", "content", "TEXT");
+  // brief_versions table (idempotent)
+  db.exec(`CREATE TABLE IF NOT EXISTS brief_versions (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    brief_id   INTEGER NOT NULL REFERENCES briefs(id) ON DELETE CASCADE,
+    org_id     INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    content    TEXT,
+    name       TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_bv_brief ON brief_versions(brief_id);`);
+  // brief_suggestions table (Phase 4.2)
+  db.exec(`CREATE TABLE IF NOT EXISTS brief_suggestions (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    brief_id   INTEGER NOT NULL REFERENCES briefs(id) ON DELETE CASCADE,
+    org_id     INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    topic      TEXT NOT NULL,
+    content    TEXT NOT NULL,
+    rationale  TEXT,
+    status     TEXT NOT NULL DEFAULT 'pending',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );`);
+  addColumnIfMissing(db, "blockages", "resolution_summary", "TEXT");
   addColumnIfMissing(db, "users", "email_verified", "INTEGER NOT NULL DEFAULT 0");
   addColumnIfMissing(db, "users", "verify_token", "TEXT");
   addColumnIfMissing(db, "blockages", "ai_followup_count", "INTEGER NOT NULL DEFAULT 0");
@@ -236,6 +290,38 @@ function migrate(db) {
   addColumnIfMissing(db, "blockages", "ai_urgency", "TEXT");
   addColumnIfMissing(db, "cohorts", "assign_strategy", "TEXT NOT NULL DEFAULT 'none'");
   addColumnIfMissing(db, "cohorts", "rr_cursor", "INTEGER NOT NULL DEFAULT 0");
+  // T2-4: peer mentorship opt-in
+  db.exec(`CREATE TABLE IF NOT EXISTS peer_mentor_opt_ins (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    org_id     INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    user_id    INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );`);
+  // Admin: suspended flag on organizations
+  addColumnIfMissing(db, "organizations", "suspended", "INTEGER NOT NULL DEFAULT 0");
+  // Admin: platform-level ops flags
+  db.exec(`CREATE TABLE IF NOT EXISTS ops_flags (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    org_id      INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    reporter_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    type        TEXT NOT NULL DEFAULT 'manual',
+    note        TEXT,
+    status      TEXT NOT NULL DEFAULT 'open',
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_ops_flags_org ON ops_flags(org_id);`);
+  // Phase 5.1: cohort progression patterns (topic co-occurrence)
+  db.exec(`CREATE TABLE IF NOT EXISTS progression_patterns (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    org_id      INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    cohort_id   INTEGER REFERENCES cohorts(id) ON DELETE CASCADE,
+    topic_a     TEXT NOT NULL,
+    topic_b     TEXT NOT NULL,
+    count       INTEGER NOT NULL DEFAULT 1,
+    updated_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(org_id, cohort_id, topic_a, topic_b)
+  );
+  CREATE INDEX IF NOT EXISTS idx_prog_org ON progression_patterns(org_id);`);
 }
 
 function addColumnIfMissing(db, table, col, decl) {

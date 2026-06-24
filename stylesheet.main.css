@@ -774,3 +774,155 @@ img {
 .price-card ul { list-style: none; padding: 0; margin: 1.2rem 0; flex: 1; }
 .price-card li { padding: 0.4rem 0; color: var(--muted, #5d6675); display: flex; gap: 0.5rem; }
 .price-card li::before { content: "✓"; color: var(--flow, #12B886); font-weight: 700; }
+/* =====================================================================
+   REDESIGN 2026 — Auth + Landing improvements
+   ===================================================================== */
+
+/* Auth: hide aside on mobile, go full-width card */
+@media (max-width: 680px) {
+  .auth { grid-template-columns: 1fr; }
+  .auth-aside { display: none; }
+  .auth-main { padding: 2rem 1.25rem; align-items: flex-start; }
+  .auth-card { width: 100%; padding: 0; box-shadow: none; border: none; background: transparent; }
+  .auth-card h1 { font-size: 1.75rem; }
+}
+
+/* Auth card full-width on mobile */
+.auth-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: var(--shadow);
+}
+
+/* Landing: hero responsive */
+@media (max-width: 820px) {
+  .hero-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+  .hero { padding: 3.5rem 0 4rem; }
+  .signal-card { max-width: 480px; }
+  .steps { grid-template-columns: 1fr; }
+  .step-arrow { display: none; }
+  .features { grid-template-columns: 1fr 1fr; }
+  .band { grid-template-columns: 1fr; padding: 2.5rem 1.75rem; }
+}
+@media (max-width: 560px) {
+  .features { grid-template-columns: 1fr; }
+  .hero-stats { gap: 1.5rem; }
+  .metric-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* Landing: nav mobile */
+@media (max-width: 680px) {
+  .nav-links { display: none; }
+  .site-nav .container { height: 60px; }
+}
+
+/* Skip link (focus-visible only) */
+.skip-link {
+  position: absolute;
+  left: -100%;
+  top: 0;
+  z-index: 9999;
+  background: var(--flow);
+  color: #05281d;
+  padding: 0.5rem 1rem;
+  font-weight: 700;
+  border-radius: 0 0 8px 0;
+}
+.skip-link:focus { left: 0; }
+
+/* ── Phase 5: Full-sweep additions ───────────────────────── */
+
+/* ---- Inline auth form error ---------------------------------------- */
+.form-error {
+  color: var(--blocked-deep);
+  background: var(--blocked-soft);
+  border: 1px solid #f9cbc8;
+  border-radius: var(--r-sm);
+  padding: 0.6rem 0.85rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  display: none;
+  margin-bottom: 0.75rem;
+}
+.form-error.show { display: block; }
+
+/* Mobile nav hamburger toggle button */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 0;
+}
+.nav-toggle span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: #fff;
+  border-radius: 2px;
+  transition: transform 0.2s, opacity 0.2s;
+}
+.nav-toggle[aria-expanded="true"] span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.nav-toggle[aria-expanded="true"] span:nth-child(2) {
+  opacity: 0;
+}
+.nav-toggle[aria-expanded="true"] span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+@media (max-width: 680px) {
+  .nav-toggle { display: flex; }
+  .nav-cta { display: none; }
+
+  .nav-links {
+    display: none;
+    position: absolute;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background: rgba(12, 17, 27, 0.97);
+    backdrop-filter: blur(12px);
+    flex-direction: column;
+    gap: 0;
+    padding: 0.5rem 0 1rem;
+    border-bottom: 1px solid var(--ink-line);
+    z-index: 49;
+  }
+  .nav-links.nav-open {
+    display: flex;
+  }
+  .nav-links li {
+    width: 100%;
+  }
+  .nav-links a {
+    display: block;
+    padding: 0.85rem 1.5rem;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    color: var(--on-ink-muted);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .nav-links a:hover,
+  .nav-links a.active {
+    color: #fff;
+    background: rgba(255,255,255,0.04);
+  }
+  .nav-links::after {
+    content: '';
+    display: block;
+    padding: 0.6rem 1.5rem 0;
+  }
+}

@@ -3,6 +3,7 @@
 const express = require("express");
 const { requireAuth, requireRole } = require("../auth");
 const { tooLong } = require("../lib/validate");
+const ai = require("../lib/ai");
 
 module.exports = function cohortRoutes(db) {
   const router = express.Router();
@@ -181,18 +182,118 @@ module.exports = function cohortRoutes(db) {
     res.status(201).json({ brief: { id: info.lastInsertRowid, name } });
   });
 
-  // PUT /api/briefs/:id { name } — owner renames a brief
+  // GET /api/briefs/:id — brief detail with content
+  router.get("/briefs/:id", (req, res) => {
+    const b = db
+      .prepare("SELECT * FROM briefs WHERE id = ? AND org_id = ?")
+      .get(Number(req.params.id), req.user.orgId);
+    if (!b) return res.status(404).json({ error: "Brief not found." });
+    res.json({ brief: { id: b.id, name: b.name, content: b.content || null, maxScaffold: b.max_scaffold || null, cohortId: b.cohort_id, createdAt: b.created_at } });
+  });
+
+  // GET /api/briefs/:id/history — version snapshots newest-first
+  router.get("/briefs/:id/history", requireRole("owner"), (req, res) => {
+    const b = db
+      .prepare("SELECT * FROM briefs WHERE id = ? AND org_id = ?")
+      .get(Number(req.params.id), req.user.orgId);
+    if (!b) return res.status(404).json({ error: "Brief not found." });
+    const versions = db
+      .prepare(
+        `SELECT bv.id, bv.name, bv.content, bv.created_at, u.name as author_name
+           FROM brief_versions bv
+           LEFT JOIN users u ON u.id = bv.created_by
+          WHERE bv.brief_id = ? AND bv.org_id = ?
+          ORDER BY bv.created_at DESC`
+      )
+      .all(b.id, req.user.orgId)
+      .map((v) => ({ id: v.id, name: v.name, content: v.content, authorName: v.author_name, createdAt: v.created_at }));
+    res.json({ versions });
+  });
+
+  // PUT /api/briefs/:id { name, content } — owner updates brief, snapshots prior version
   router.put("/briefs/:id", requireRole("owner"), (req, res) => {
     const b = db
       .prepare("SELECT * FROM briefs WHERE id = ? AND org_id = ?")
       .get(Number(req.params.id), req.user.orgId);
     if (!b) return res.status(404).json({ error: "Brief not found." });
-    const name = (req.body.name || "").trim();
+    const name = req.body.name !== undefined ? (req.body.name || "").trim() : b.name;
     if (!name) return res.status(400).json({ error: "Brief name is required." });
     const lenErr = tooLong(name, 100, "Brief name");
     if (lenErr) return res.status(400).json({ error: lenErr });
-    db.prepare("UPDATE briefs SET name = ? WHERE id = ?").run(name, b.id);
-    res.json({ brief: { id: b.id, name } });
+    const content = req.body.content !== undefined ? req.body.content : b.content;
+    // Snapshot prior version if name or content actually changed
+    if (name !== b.name || content !== b.content) {
+      db.prepare(
+        "INSERT INTO brief_versions (brief_id, org_id, name, content, created_by) VALUES (?, ?, ?, ?, ?)"
+      ).run(b.id, req.user.orgId, b.name, b.content || null, req.user.userId);
+    }
+    db.prepare("UPDATE briefs SET name = ?, content = ? WHERE id = ?").run(name, content || null, b.id);
+    res.json({ brief: { id: b.id, name, content: content || null } });
+  });
+
+  // GET /api/briefs/:id/impact — blockage volume and resolve rate for this brief
+  router.get("/briefs/:id/impact", requireRole("owner", "instructor"), (req, res) => {
+    const b = db
+      .prepare("SELECT * FROM briefs WHERE id = ? AND org_id = ?")
+      .get(Number(req.params.id), req.user.orgId);
+    if (!b) return res.status(404).json({ error: "Brief not found." });
+    const total = db.prepare("SELECT COUNT(*) n FROM blockages WHERE brief_id = ? AND org_id = ?").get(b.id, req.user.orgId).n;
+    const resolved = db.prepare("SELECT COUNT(*) n FROM blockages WHERE brief_id = ? AND org_id = ? AND status = 'resolved'").get(b.id, req.user.orgId).n;
+    const medianRow = db.prepare(
+      `SELECT AVG(julianday(resolved_at) - julianday(created_at)) * 24 as avg_hours
+         FROM blockages WHERE brief_id = ? AND org_id = ? AND status = 'resolved' AND resolved_at IS NOT NULL`
+    ).get(b.id, req.user.orgId);
+    const resolveRate = total > 0 ? Math.round((resolved / total) * 100) / 100 : 0;
+    const avgResolveHours = medianRow && medianRow.avg_hours != null ? Math.round(medianRow.avg_hours * 10) / 10 : null;
+    res.json({ impact: { totalBlockages: total, resolvedBlockages: resolved, resolveRate, avgResolveHours } });
+  });
+
+  // POST /api/briefs/:id/suggestions { topic, rationale } — generate AI suggestion
+  router.post("/briefs/:id/suggestions", requireRole("owner"), async (req, res) => {
+    const b = db
+      .prepare("SELECT * FROM briefs WHERE id = ? AND org_id = ?")
+      .get(Number(req.params.id), req.user.orgId);
+    if (!b) return res.status(404).json({ error: "Brief not found." });
+    const topic = (req.body.topic || "").trim();
+    if (!topic) return res.status(400).json({ error: "Topic is required." });
+    const rationale = (req.body.rationale || "").trim();
+    const sampleTitles = req.body.sampleTitles || [];
+    const content = await ai.suggestBriefAddition({
+      briefName: b.name, briefContent: b.content, topic, rationale, sampleTitles,
+    });
+    const info = db.prepare(
+      "INSERT INTO brief_suggestions (brief_id, org_id, topic, content, rationale) VALUES (?, ?, ?, ?, ?)"
+    ).run(b.id, req.user.orgId, topic, content, rationale || null);
+    const suggestion = db.prepare("SELECT * FROM brief_suggestions WHERE id = ?").get(info.lastInsertRowid);
+    res.status(201).json({ suggestion: { id: suggestion.id, topic: suggestion.topic, content: suggestion.content, rationale: suggestion.rationale, status: suggestion.status, createdAt: suggestion.created_at } });
+  });
+
+  // GET /api/briefs/:id/suggestions — list suggestions for a brief
+  router.get("/briefs/:id/suggestions", requireRole("owner"), (req, res) => {
+    const b = db
+      .prepare("SELECT * FROM briefs WHERE id = ? AND org_id = ?")
+      .get(Number(req.params.id), req.user.orgId);
+    if (!b) return res.status(404).json({ error: "Brief not found." });
+    const status = req.query.status || null;
+    const rows = status
+      ? db.prepare("SELECT * FROM brief_suggestions WHERE brief_id = ? AND org_id = ? AND status = ? ORDER BY created_at DESC").all(b.id, req.user.orgId, status)
+      : db.prepare("SELECT * FROM brief_suggestions WHERE brief_id = ? AND org_id = ? ORDER BY created_at DESC").all(b.id, req.user.orgId);
+    res.json({ suggestions: rows.map((s) => ({ id: s.id, topic: s.topic, content: s.content, rationale: s.rationale, status: s.status, createdAt: s.created_at })) });
+  });
+
+  // PATCH /api/briefs/:id/suggestions/:sid { status } — accept or dismiss
+  router.patch("/briefs/:id/suggestions/:sid", requireRole("owner"), (req, res) => {
+    const b = db
+      .prepare("SELECT * FROM briefs WHERE id = ? AND org_id = ?")
+      .get(Number(req.params.id), req.user.orgId);
+    if (!b) return res.status(404).json({ error: "Brief not found." });
+    const status = req.body.status;
+    if (!["accepted", "dismissed"].includes(status))
+      return res.status(400).json({ error: "status must be accepted or dismissed" });
+    const s = db.prepare("SELECT * FROM brief_suggestions WHERE id = ? AND brief_id = ? AND org_id = ?").get(Number(req.params.sid), b.id, req.user.orgId);
+    if (!s) return res.status(404).json({ error: "Suggestion not found." });
+    db.prepare("UPDATE brief_suggestions SET status = ? WHERE id = ?").run(status, s.id);
+    res.json({ suggestion: { id: s.id, topic: s.topic, content: s.content, status } });
   });
 
   // DELETE /api/briefs/:id — owner

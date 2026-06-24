@@ -32,6 +32,7 @@
         <div class="form-row">
           <label>Role</label>
           <input type="text" value="${escapeHtml(ROLE_LABEL[s.user.role] || s.user.role)}" disabled />
+          <div class="hint">Your role is set by your organization admin.</div>
         </div>
         <button type="submit" class="btn btn-primary" id="saveProfileBtn">Save</button>
       </form>
@@ -70,7 +71,29 @@
         <div class="hint">Your workspace slug.</div>
       </div>
       <button class="btn btn-ghost" id="logoutBtn2">Log out</button>
-    </div>`;
+    </div>
+    ${s.user.role === "student" ? `
+    <div class="panel settings-card" id="peerMentorCard">
+      <h2>Peer mentorship</h2>
+      <p style="color:var(--muted,#666);font-size:.9rem;margin-bottom:.75rem">When you enable this, students who are stuck on something you've already unblocked can see your name and what worked for you. Fully opt-in — you can turn it off any time.</p>
+      <label class="form-row" style="align-items:center;gap:.75rem;cursor:pointer">
+        <input type="checkbox" id="peerMentorToggle" style="width:18px;height:18px" />
+        <span>I'm open to being a peer mentor</span>
+      </label>
+    </div>` : ""}
+    ${s.user.role === "owner" ? `
+    <div class="panel settings-card" id="slackCard">
+      <h2>Slack integration</h2>
+      <p style="color:var(--muted,#666);font-size:.9rem;margin-bottom:.75rem">Post a message to a Slack channel when a new blockage is reported. Paste an <a href="https://api.slack.com/messaging/webhooks" target="_blank" rel="noreferrer">incoming webhook URL</a> below.</p>
+      <div class="form-row">
+        <label for="slackUrl">Webhook URL</label>
+        <input type="url" id="slackUrl" placeholder="https://hooks.slack.com/services/…" style="font-family:var(--font-mono);font-size:.82rem" />
+      </div>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.5rem">
+        <button class="btn btn-primary btn-sm" id="saveSlackBtn" type="button">Save</button>
+        <button class="btn btn-ghost btn-sm" id="clearSlackBtn" type="button">Clear</button>
+      </div>
+    </div>` : ""}`;
 
   const profileForm = view.querySelector("#profileForm");
   const passwordForm = view.querySelector("#passwordForm");
@@ -80,7 +103,8 @@
     const name = profileForm.querySelector("#profileName").value.trim();
     if (!name) { toast("Name can't be empty.", "error"); return; }
     const btn = profileForm.querySelector("#saveProfileBtn");
-    btn.disabled = true;
+    const origText = btn.textContent;
+    btn.disabled = true; btn.textContent = "Saving…";
     try {
       const r = await API.put("/api/auth/me", { name });
       toast("Profile updated.", "success");
@@ -93,7 +117,7 @@
     } catch (err) {
       toast(err.message || "Couldn't update profile.", "error");
     } finally {
-      btn.disabled = false;
+      btn.disabled = false; btn.textContent = origText;
     }
   });
 
@@ -105,7 +129,8 @@
     if (newPassword.length < 6) { toast("Password must be at least 6 characters.", "error"); return; }
     if (newPassword !== confirmPassword) { toast("New passwords don't match.", "error"); return; }
     const btn = passwordForm.querySelector("#changePwdBtn");
-    btn.disabled = true;
+    const origText = btn.textContent;
+    btn.disabled = true; btn.textContent = "Saving…";
     try {
       await API.put("/api/auth/me", { currentPassword, newPassword });
       toast("Password changed.", "success");
@@ -113,7 +138,7 @@
     } catch (err) {
       toast(err.message || "Couldn't change password.", "error");
     } finally {
-      btn.disabled = false;
+      btn.disabled = false; btn.textContent = origText;
     }
   });
 
@@ -123,7 +148,8 @@
       const input = view.querySelector("#orgName");
       const name = input.value.trim();
       if (!name) { toast("Organization name can't be empty.", "error"); return; }
-      saveOrgBtn.disabled = true;
+      const origText = saveOrgBtn.textContent;
+      saveOrgBtn.disabled = true; saveOrgBtn.textContent = "Saving…";
       try {
         const r = await API.put("/api/org", { name });
         toast("Organization renamed.", "success");
@@ -134,7 +160,7 @@
       } catch (err) {
         toast(err.message || "Couldn't rename organization.", "error");
       } finally {
-        saveOrgBtn.disabled = false;
+        saveOrgBtn.disabled = false; saveOrgBtn.textContent = origText;
       }
     });
   }
@@ -155,4 +181,54 @@
   }
 
   document.getElementById("logoutBtn2").addEventListener("click", logout);
+
+  // Slack webhook (owner only)
+  const slackInput = view.querySelector("#slackUrl");
+  if (slackInput) {
+    API.get("/api/org/integrations").then(({ slackWebhookUrl }) => {
+      slackInput.value = slackWebhookUrl || "";
+    }).catch(() => {});
+
+    view.querySelector("#saveSlackBtn").addEventListener("click", async () => {
+      try {
+        await API.put("/api/org/integrations/slack", { url: slackInput.value.trim() });
+        toast("Slack webhook saved.", "success");
+      } catch (err) {
+        toast(err.message || "Couldn't save webhook.", "error");
+      }
+    });
+    view.querySelector("#clearSlackBtn").addEventListener("click", async () => {
+      try {
+        await API.put("/api/org/integrations/slack", { url: "" });
+        slackInput.value = "";
+        toast("Slack webhook cleared.", "success");
+      } catch (err) {
+        toast(err.message || "Couldn't clear webhook.", "error");
+      }
+    });
+  }
+
+  // Peer mentorship toggle (student only, T2-4)
+  const peerToggle = view.querySelector("#peerMentorToggle");
+  if (peerToggle) {
+    // Load current state
+    API.get("/api/me/peer-mentor-opt-in").then(({ optedIn }) => {
+      peerToggle.checked = optedIn;
+    }).catch(() => {});
+
+    peerToggle.addEventListener("change", async () => {
+      try {
+        if (peerToggle.checked) {
+          await API.post("/api/me/peer-mentor-opt-in", {});
+          toast("You're now open to peer mentorship. 🎉", "success");
+        } else {
+          await API.del("/api/me/peer-mentor-opt-in");
+          toast("Peer mentorship turned off.", "info");
+        }
+      } catch (err) {
+        peerToggle.checked = !peerToggle.checked; // revert on error
+        toast(err.message || "Couldn't update.", "error");
+      }
+    });
+  }
 })();

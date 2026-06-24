@@ -1,5 +1,9 @@
 # Unblockify — Product Vision
 
+> This describes what Unblockify **is** today. For the strategic north star — the data moat,
+> student-pull mechanics, and the value ladder beyond the current product — see
+> [`NORTH-STAR.md`](./NORTH-STAR.md).
+
 ## One line
 Unblockify is the system of record for "I'm stuck." Any learning organization can run it
 to turn student blockages into resolved, measured, momentum — instead of questions lost in a

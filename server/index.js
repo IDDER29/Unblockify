@@ -18,10 +18,14 @@ const tagRoutes = require("./routes/tags");
 const viewRoutes = require("./routes/views");
 const csatRoutes = require("./routes/csat");
 const nudgeRoutes = require("./routes/nudges");
+const studentsRoutes = require("./routes/students");
 const cannedRoutes = require("./routes/canned");
 const auditRoutes = require("./routes/audit");
 const gdprRoutes = require("./routes/gdpr");
 const slaRoutes = require("./routes/sla");
+const studentRoutes = require("./routes/students");
+const knowledgeRoutes = require("./routes/knowledge");
+const adminRoutes = require("./routes/admin");
 const { requestLogger, errorHandler, healthz } = require("./lib/logger");
 
 const ROOT = path.join(__dirname, "..");
@@ -57,12 +61,16 @@ function createApp(db) {
   app.use("/api", viewRoutes(db));
   app.use("/api", csatRoutes(db));
   app.use("/api", nudgeRoutes(db));
+  app.use("/api", studentsRoutes(db));
   app.use("/api", cannedRoutes(db));
   app.use("/api", auditRoutes(db));
   app.use("/api", gdprRoutes(db));
   app.use("/api", slaRoutes(db));
+  app.use("/api", studentRoutes(db));
+  app.use("/api", knowledgeRoutes(db));
   app.use("/api", notificationRoutes(db));
   app.use("/api", analyticsRoutes(db));
+  app.use("/admin/api", adminRoutes(db));
 
   app.use("/api", (req, res) => res.status(404).json({ error: "Not found" }));
   app.use(express.static(ROOT, { index: "index.html", extensions: ["html"] }));

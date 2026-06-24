@@ -223,7 +223,7 @@
     const input = document.getElementById("eraseUserId");
     const id = input.value.trim();
     if (!id) { toast("Enter a user id to erase.", "error"); return; }
-    if (!confirm("Permanently erase this user's data? This can't be undone.")) return;
+    if (!await confirmModal("Permanently erase this user's data? This can't be undone.", { confirmLabel: "Erase data", danger: true })) return;
     const btn = document.getElementById("eraseBtn");
     btn.disabled = true;
     try {

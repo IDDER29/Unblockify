@@ -211,6 +211,22 @@ module.exports = function memberRoutes(db) {
     res.json({ org });
   });
 
+  // GET /api/org/integrations — return org integration settings (owner only).
+  router.get("/org/integrations", requireRole("owner"), (req, res) => {
+    const org = db.prepare("SELECT slack_webhook_url FROM organizations WHERE id = ?").get(req.user.orgId);
+    res.json({ slackWebhookUrl: org ? org.slack_webhook_url || "" : "" });
+  });
+
+  // PUT /api/org/integrations/slack — save/clear Slack webhook URL (owner only).
+  router.put("/org/integrations/slack", requireRole("owner"), (req, res) => {
+    const url = (req.body.url || "").trim();
+    if (url && !url.startsWith("https://hooks.slack.com/")) {
+      return res.status(400).json({ error: "Must be a valid Slack incoming webhook URL (https://hooks.slack.com/…)." });
+    }
+    db.prepare("UPDATE organizations SET slack_webhook_url = ? WHERE id = ?").run(url || null, req.user.orgId);
+    res.json({ ok: true });
+  });
+
   // POST /api/members/:id/transfer-ownership — owner hands ownership to another member
   router.post("/members/:id/transfer-ownership", requireRole("owner"), (req, res) => {
     const target = db

@@ -73,12 +73,17 @@
     }
   } catch (_) {}
 
+  // Show skeleton while loading.
+  grid.innerHTML = `<div class="blk-grid">${Array.from({length: 6}, () =>
+    `<article class="blk-card"><div class="skel w-30" style="height:1rem;margin-bottom:.5rem"></div><div class="skel w-70" style="height:1.2rem;margin-bottom:.4rem"></div><div class="skel w-50" style="height:.85rem"></div></article>`
+  ).join("")}</div>`;
+
   // Fetch every blockage (owner sees all).
   try {
     const res = await API.get("/api/blockages");
     blockages = res.blockages || [];
   } catch (e) {
-    grid.innerHTML = `<div class="blk-empty">Couldn't load blockages.</div>`;
+    grid.innerHTML = `<div class="blk-empty">Couldn't load blockages. Try refreshing the page.</div>`;
     return;
   }
 
@@ -105,8 +110,8 @@
     const assignee = b.assigneeName ? "&rarr; " + escapeHtml(b.assigneeName) + " &middot; " : "";
     return `<article class="blk-card linkish status-${cls}" data-id="${escapeHtml(b.id)}">
       <div class="blk-card-top"><span class="blk-id">BLK-${escapeHtml(pad)}</span>${difficultyBadge(b.difficulty)}<span class="pill pill-${cls}">${escapeHtml(label)}</span></div>
-      <div class="who">${escapeHtml(b.studentName)} &middot; ${escapeHtml(b.cohortName)}</div>
       <h3>${escapeHtml(b.title)}</h3>
+      <div class="who">${escapeHtml(b.studentName || "Unknown")} &middot; ${escapeHtml(b.cohortName || "No cohort")}</div>
       <div class="blk-meta">${assignee}${escapeHtml(fmtDate(b.createdAt))}</div>
     </article>`;
   }
@@ -128,7 +133,10 @@
       grid.innerHTML = `<div class="blk-empty">No blockages match these filters.</div>`;
       return;
     }
-    grid.innerHTML = `<div class="blk-grid">${list.map(cardHtml).join("")}</div>`;
+    const countLabel = list.length < blockages.length
+      ? `<div class="result-count">Showing ${list.length} of ${blockages.length} blockages</div>`
+      : `<div class="result-count">${blockages.length} blockage${blockages.length === 1 ? "" : "s"}</div>`;
+    grid.innerHTML = countLabel + `<div class="blk-grid">${list.map(cardHtml).join("")}</div>`;
   }
 
   seg.addEventListener("click", (e) => {

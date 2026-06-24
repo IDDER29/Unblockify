@@ -21,6 +21,7 @@ const API = {
   post(p, b) { return this.request(p, { method: "POST", body: b }); },
   put(p, b) { return this.request(p, { method: "PUT", body: b }); },
   del(p) { return this.request(p, { method: "DELETE" }); },
+  patch(p, b) { return this.request(p, { method: "PATCH", body: b }); },
 };
 
 // --- Auth ------------------------------------------------------------
@@ -178,6 +179,30 @@ function toast(message, type = "info") {
   setTimeout(() => { el.classList.remove("show"); setTimeout(() => el.remove(), 250); }, 3500);
 }
 
+// --- Styled confirm dialog (replaces window.confirm) -----------------
+function confirmModal(message, { confirmLabel = "Confirm", danger = false } = {}) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "modal confirm-modal";
+    overlay.style.display = "flex";
+    overlay.innerHTML = `<div class="modal-panel confirm-panel" role="dialog" aria-modal="true">
+      <p class="confirm-msg">${escapeHtml(message)}</p>
+      <div class="confirm-actions">
+        <button class="btn btn-ghost" id="_cmCancel">Cancel</button>
+        <button class="btn ${danger ? "btn-danger" : "btn-primary"}" id="_cmConfirm">${escapeHtml(confirmLabel)}</button>
+      </div>
+    </div>`;
+    document.body.appendChild(overlay);
+    const cleanup = (result) => { overlay.remove(); resolve(result); };
+    overlay.querySelector("#_cmConfirm").addEventListener("click", () => cleanup(true));
+    overlay.querySelector("#_cmCancel").addEventListener("click", () => cleanup(false));
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) cleanup(false); });
+    const onKey = (e) => { if (e.key === "Escape") { document.removeEventListener("keydown", onKey); cleanup(false); } };
+    document.addEventListener("keydown", onKey);
+    overlay.querySelector("#_cmConfirm").focus();
+  });
+}
+
 // --- Accessible modal helpers (used by app pages with modals) --------
 let _modalLastFocus = null;
 function trapFocus(container) {
@@ -227,6 +252,8 @@ const ICONS = {
   cog: '<svg fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="3"/><path d="M10 1v3M10 16v3M1 10h3M16 10h3" stroke-linecap="round"/></svg>',
   shield: '<svg fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2l7 3v5c0 4-3 7-7 8-4-1-7-4-7-8V5l7-3z" stroke-linejoin="round"/><path d="M7 10l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   bell: '<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 2a5 5 0 00-5 5c0 5-2 6-2 6h14s-2-1-2-6a5 5 0 00-5-5zM8.5 17a1.8 1.8 0 003 0" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  book: '<svg fill="none" stroke="currentColor" stroke-width="2"><path d="M4 2h12a1 1 0 011 1v14a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z"/><path d="M8 2v18M4 7h4M4 11h4" stroke-linecap="round"/></svg>',
+  card: '<svg fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="16" height="12" rx="2"/><path d="M2 9h16" stroke-linecap="round"/><path d="M6 13h4" stroke-linecap="round"/></svg>',
 };
 
 const NAV = {
@@ -234,17 +261,38 @@ const NAV = {
     { href: "owner_dashboard.html", icon: "chart", label: "Dashboard" },
     { href: "owner_blockages.html", icon: "grid", label: "Blockages" },
     { href: "cohorts.html", icon: "layers", label: "Cohorts" },
+    { href: "briefs.html", icon: "book", label: "Briefs" },
     { href: "members.html", icon: "people", label: "Members" },
+    { href: "invites.html", icon: "people", label: "Invites" },
+    { href: "check-ins.html", icon: "bell", label: "Check-ins" },
+    { href: "reports.html", icon: "chart", label: "Reports" },
+    { href: "integrations.html", icon: "cog", label: "Integrations" },
+    { href: "notifications.html", icon: "bell", label: "Notifications" },
     { href: "ops.html", icon: "shield", label: "Ops & trust" },
+    { href: "billing.html", icon: "card", label: "Plan & billing" },
     { href: "settings.html", icon: "cog", label: "Settings" },
   ],
   instructor: [
+    { href: "instructor_dashboard.html", icon: "chart", label: "Dashboard" },
     { href: "instructor_queue.html", icon: "grid", label: "Queue" },
+    { href: "instructor_students.html", icon: "people", label: "My students" },
+    { href: "instructor_blockages.html", icon: "grid", label: "All blockages" },
+    { href: "check-ins.html", icon: "bell", label: "Check-ins" },
     { href: "cohorts.html", icon: "layers", label: "Cohorts" },
+    { href: "notifications.html", icon: "bell", label: "Notifications" },
     { href: "settings.html", icon: "cog", label: "Settings" },
+    { href: "help.html", icon: "book", label: "Help" },
   ],
   student: [
     { href: "student_dashbord.html", icon: "grid", label: "My blockages" },
+    { href: "growth.html", icon: "chart", label: "My growth" },
+    { href: "history.html", icon: "grid", label: "History" },
+    { href: "portfolio.html", icon: "book", label: "Portfolio" },
+    { href: "knowledge.html", icon: "book", label: "Library" },
+    { href: "peers.html", icon: "people", label: "Peer support" },
+    { href: "notifications.html", icon: "bell", label: "Notifications" },
+    { href: "profile.html", icon: "people", label: "My profile" },
+    { href: "help.html", icon: "book", label: "Help" },
     { href: "settings.html", icon: "cog", label: "Settings" },
   ],
 };
@@ -270,7 +318,8 @@ function renderShell({ user, org, active, title, crumb, actions = "" }) {
   app.className = "app";
   app.innerHTML = `
     <a class="skip-link" href="#view">Skip to content</a>
-    <aside class="sidebar" aria-label="Sidebar">
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+    <aside class="sidebar" id="sidebar" aria-label="Sidebar">
       <a href="${dashboardFor(user.role)}" class="brand"><svg class="brand-mark" aria-hidden="true"><use href="#mark"/></svg><span>Unblockify</span></a>
       <div class="side-section">${escapeHtml(org.name)}</div>
       <nav aria-label="Main"><ul class="side-nav">${items}</ul></nav>
@@ -282,15 +331,38 @@ function renderShell({ user, org, active, title, crumb, actions = "" }) {
     </aside>
     <div class="app-main">
       <header class="topbar">
-        <div><div class="crumb">${escapeHtml(crumb || ROLE_LABEL[user.role])}</div><div class="page-title">${escapeHtml(title || "")}</div></div>
+        <div style="display:flex;align-items:center;gap:0.5rem;min-width:0">
+          <button class="hamburger" id="hamburger" aria-label="Open navigation" aria-expanded="false" aria-controls="sidebar">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 5h14M3 10h14M3 15h14" stroke-linecap="round"/></svg>
+          </button>
+          <div style="min-width:0"><div class="crumb">${escapeHtml(crumb || ROLE_LABEL[user.role])}</div><div class="page-title">${escapeHtml(title || "")}</div></div>
+        </div>
         <div class="topbar-actions">
           ${actions}
-          <a class="icon-btn notif-bell" href="notifications.html" title="Notifications" style="position:relative">${ICONS.bell}<span class="notif-dot" hidden></span></a>
+          <a class="icon-btn notif-bell" href="notifications.html" title="Notifications" style="position:relative">${ICONS.bell}<span class="notif-count" id="notifCount" hidden>0</span></a>
         </div>
       </header>
       <main class="content" id="view" tabindex="-1"></main>
     </div>`;
   document.getElementById("logoutBtn").addEventListener("click", logout);
+  // Mobile sidebar drawer
+  const _ham = document.getElementById("hamburger");
+  const _ov = document.getElementById("sidebarOverlay");
+  if (_ham && _ov) {
+    function _closeSidebar() {
+      document.body.classList.remove("sidebar-open");
+      _ham.setAttribute("aria-expanded", "false");
+    }
+    _ham.addEventListener("click", () => {
+      const open = document.body.classList.toggle("sidebar-open");
+      _ham.setAttribute("aria-expanded", String(open));
+    });
+    _ov.addEventListener("click", _closeSidebar);
+    // Close drawer when a nav link is clicked (SPA navigation)
+    document.getElementById("sidebar").querySelectorAll("a").forEach((a) => {
+      a.addEventListener("click", _closeSidebar);
+    });
+  }
   refreshNotifDot();
   ensureStream();
   return document.getElementById("view");
@@ -298,9 +370,16 @@ function renderShell({ user, org, active, title, crumb, actions = "" }) {
 
 async function refreshNotifDot() {
   try {
-    const { unread } = await API.get("/api/notifications");
+    const res = await API.get("/api/notifications");
+    const count = res.unread || 0;
+    const badge = document.getElementById("notifCount");
+    if (badge) {
+      badge.hidden = count === 0;
+      badge.textContent = count > 9 ? "9+" : String(count);
+    }
+    // Legacy dot support
     const dot = document.querySelector(".notif-dot");
-    if (dot) dot.hidden = !unread;
+    if (dot) dot.hidden = count === 0;
   } catch (_) {}
 }
 
@@ -381,3 +460,16 @@ function ensureStream() {
     },
   });
 }
+
+// PWA: register service worker + inject manifest link once per page.
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js").catch(() => {});
+}
+(function () {
+  if (!document.querySelector('link[rel="manifest"]')) {
+    const link = document.createElement("link");
+    link.rel = "manifest";
+    link.href = "/manifest.json";
+    document.head.appendChild(link);
+  }
+})();

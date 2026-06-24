@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Changelog — Unblockify</title>
+    <meta name="description" content="What's new in Unblockify — every release, every improvement, every fix. We ship often and tell you exactly what changed." />
+    <meta property="og:title" content="Changelog — Unblockify" />
+    <meta property="og:description" content="What's new in Unblockify — shipped features, improvements, and fixes." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://unblockify.app/changelog.html" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./stylesheet.main.css" />
+    <style>
+      .cl-entry { display:grid; grid-template-columns:140px 1fr; gap:2rem; padding:2.5rem 0; border-bottom:1px solid var(--line,#e8e8e8); }
+      .cl-entry:last-child { border:none; }
+      .cl-date { font-family:var(--font-mono,'JetBrains Mono'),monospace; font-size:.8rem; color:var(--muted,#666); padding-top:.25rem; }
+      .cl-version { font-size:.72rem; background:var(--ink,#0C111B); color:#fff; border-radius:4px; padding:.15rem .45rem; font-family:var(--font-mono),monospace; display:inline-block; margin-top:.35rem; }
+      .cl-body h3 { font-size:1.15rem; margin:0 0 .75rem; }
+      .cl-body ul { padding-left:1.25rem; margin:0; }
+      .cl-body li { margin-bottom:.4rem; font-size:.93rem; line-height:1.5; }
+      .cl-tag { display:inline-block; font-size:.7rem; padding:.15rem .5rem; border-radius:4px; font-weight:600; margin-right:.3rem; }
+      .cl-tag-new { background:#e8f8f2; color:#0d7a50; }
+      .cl-tag-fix { background:#fff3f3; color:#c0392b; }
+      .cl-tag-imp { background:#fff8e6; color:#856404; }
+      @media(max-width:600px) { .cl-entry { grid-template-columns:1fr; gap:.5rem; } }
+    </style>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <svg width="0" height="0" style="position:absolute">
+      <symbol id="mark" viewBox="0 0 32 32">
+        <rect x="1" y="1" width="30" height="30" rx="9" fill="#12B886" />
+        <path d="M6 16h4l2.5-6 4 12 2.5-6h7" fill="none" stroke="#05281d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+    </svg>
+    <div id="site-nav"></div>
+
+    <header class="hero hero-sm" id="main-content" style="padding:4rem 0 3rem">
+      <div class="container">
+        <span class="eyebrow">What's new</span>
+        <h1>Changelog</h1>
+        <p class="lead">We ship often. Here's every release, in reverse chronological order — features, fixes, and the thinking behind them.</p>
+      </div>
+    </header>
+
+    <section class="section" style="padding-top:0">
+      <div class="container" style="max-width:800px">
+
+        <div class="cl-entry">
+          <div>
+            <div class="cl-date">24 Jun 2026</div>
+            <div class="cl-version">v1.8.0</div>
+          </div>
+          <div class="cl-body">
+            <h3>Check-ins, anonymous reporting, and PWA support</h3>
+            <ul>
+              <li><span class="cl-tag cl-tag-new">New</span>Instructors and owners can flag students for check-in with an optional note. Check-in history appears on every student profile.</li>
+              <li><span class="cl-tag cl-tag-new">New</span>Students can report blockages anonymously — name is masked for all staff in list and detail views.</li>
+              <li><span class="cl-tag cl-tag-new">New</span>Internal comments: staff can leave private notes on blockages that students never see.</li>
+              <li><span class="cl-tag cl-tag-new">New</span>Slack integration: owners can configure a webhook URL so every new blockage posts to a Slack channel.</li>
+              <li><span class="cl-tag cl-tag-new">New</span>Student portfolio export: download your full blockage history as a JSON file from the Growth page.</li>
+              <li><span class="cl-tag cl-tag-new">New</span>PWA support: Unblockify can now be installed as an app on mobile and desktop (manifest + service worker).</li>
+              <li><span class="cl-tag cl-tag-new">New</span>Plan &amp; Billing page with Free/Pro/Enterprise plan comparison.</li>
+              <li><span class="cl-tag cl-tag-imp">Improved</span>Onboarding checklist on the owner dashboard — dismissable once all setup steps are done.</li>
+              <li><span class="cl-tag cl-tag-imp">Improved</span>Brief versioning: cohort briefs now maintain a full edit history with timestamps.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="cl-entry">
+          <div>
+            <div class="cl-date">10 Jun 2026</div>
+            <div class="cl-version">v1.7.0</div>
+          </div>
+          <div class="cl-body">
+            <h3>Multi-turn AI follow-ups and instructor copilot</h3>
+            <ul>
+              <li><span class="cl-tag cl-tag-new">New</span>Students can ask the AI Teaching Assistant up to 2 follow-up questions on any blockage, keeping the Socratic dialogue alive without instructor involvement.</li>
+              <li><span class="cl-tag cl-tag-new">New</span>Instructor copilot: "Draft a reply" button generates an AI-suggested response that instructors can edit before sending.</li>
+              <li><span class="cl-tag cl-tag-new">New</span>Student growth fingerprint on the Growth page: shows blockage patterns, resolution time trend, and top topics over time.</li>
+              <li><span class="cl-tag cl-tag-new">New</span>Knowledge library: students can browse resolved blockages in their cohort as searchable Q&amp;A.</li>
+              <li><span class="cl-tag cl-tag-imp">Improved</span>At-risk radar now includes students without a cohort assignment.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="cl-entry">
+          <div>
+            <div class="cl-date">22 May 2026</div>
+            <div class="cl-version">v1.6.0</div>
+          </div>
+          <div class="cl-body">
+            <h3>Analytics, CSAT, and blockage export</h3>
+            <ul>
+              <li><span class="cl-tag cl-tag-new">New</span>Student satisfaction scores (CSAT): students rate resolved blockages 1–5 stars. Averages visible per instructor and org-wide.</li>
+              <li><span class="cl-tag cl-tag-new">New</span>CSV export: owners can download all blockages for a date range.</li>
+              <li><span class="cl-tag cl-tag-new">New</span>AI deflection rate analytics: see what percentage of blockages the AI resolved without human intervention and estimated instructor hours saved.</li>
+              <li><span class="cl-tag cl-tag-new">New</span>Activity feed: recent status events across the whole org, for owners.</li>
+              <li><span class="cl-tag cl-tag-imp">Improved</span>By-cohort analytics now shows open, in-support, and resolved counts per cohort side by side.</li>
+              <li><span class="cl-tag cl-tag-fix">Fix</span>Blockage list pagination now preserves filters when navigating between pages.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="cl-entry">
+          <div>
+            <div class="cl-date">5 May 2026</div>
+            <div class="cl-version">v1.5.0</div>
+          </div>
+          <div class="cl-body">
+            <h3>Cohort briefs and AI grounding</h3>
+            <ul>
+              <li><span class="cl-tag cl-tag-new">New</span>Cohort briefs: owners and instructors can write a brief that grounds the AI's responses in the specific curriculum, stack, and week of the cohort.</li>
+              <li><span class="cl-tag cl-tag-new">New</span>The AI Teaching Assistant now retrieves the most relevant past resolved blockages and uses them to inform its Socratic response.</li>
+              <li><span class="cl-tag cl-tag-new">New</span>Instructor assignment to cohorts: instructors only see the queue for cohorts they're assigned to.</li>
+              <li><span class="cl-tag cl-tag-imp">Improved</span>Blockage report form now shows "X students in your cohort have been stuck this term" — social proof that normalizes asking for help.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="cl-entry">
+          <div>
+            <div class="cl-date">15 Apr 2026</div>
+            <div class="cl-version">v1.0.0</div>
+          </div>
+          <div class="cl-body">
+            <h3>Initial launch</h3>
+            <ul>
+              <li><span class="cl-tag cl-tag-new">New</span>Multi-tenant sign-up: any organization creates an isolated workspace in under a minute.</li>
+              <li><span class="cl-tag cl-tag-new">New</span>Blockage lifecycle: report → claim → resolve → reopen, with a full comment thread and status timeline.</li>
+              <li><span class="cl-tag cl-tag-new">New</span>AI Teaching Assistant: immediate Socratic response to every new blockage.</li>
+              <li><span class="cl-tag cl-tag-new">New</span>Three roles: owner, instructor, student — each with a role-appropriate view.</li>
+              <li><span class="cl-tag cl-tag-new">New</span>Invite system: generate invite links/codes; students and instructors join via <code>join.html?code=…</code>.</li>
+              <li><span class="cl-tag cl-tag-new">New</span>Notification system: in-app notifications for all role-relevant events.</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="cta-band">
+      <div class="container">
+        <h2>Want to know when we ship next?</h2>
+        <p>We announce releases in the platform and here. Start your free workspace to stay in the loop.</p>
+        <a href="signup.html" class="btn btn-primary btn-lg">Get started — free</a>
+      </div>
+    </section>
+
+    <div id="site-footer"></div>
+    <script src="./functions/site.js"></script>
+  </body>
+</html>
