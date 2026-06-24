@@ -41,7 +41,7 @@
     return (
       '<footer class="site-footer-xl"><div class="container">' +
       '<div class="footer-brand"><a href="index.html" class="brand" style="color:#fff"><svg class="brand-mark" aria-hidden="true"><use href="#mark"/></svg>Unblockify</a>' +
-      "<p>Turn “I’m stuck” into shipped. The support platform that keeps your students moving — with an AI Teaching Assistant at its core.</p></div>" +
+      "<p>Turn &ldquo;I’m stuck&rdquo; into shipped. The support platform that keeps your students moving — with an AI Teaching Assistant at its core.</p></div>" +
       col("Product", [
         { href: "features.html", label: "Features" },
         { href: "pricing.html", label: "Pricing" },

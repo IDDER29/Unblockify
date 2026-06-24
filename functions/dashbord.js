@@ -102,17 +102,17 @@
 
     const total = blockages.length;
     const stats = { total, open: allCounts.open, in_support: allCounts.in_support, resolved: allCounts.resolved };
-    document.querySelectorAll(“[data-stat]”).forEach((el) => {
+    document.querySelectorAll("[data-stat]").forEach((el) => {
       el.textContent = stats[el.dataset.stat] != null ? stats[el.dataset.stat] : 0;
     });
 
     const q = searchQuery.trim().toLowerCase();
     const filtered = q
-      ? blockages.filter((b) => String(b.title == null ? “” : b.title).toLowerCase().includes(q))
+      ? blockages.filter((b) => String(b.title == null ? "" : b.title).toLowerCase().includes(q))
       : blockages;
 
     if (q && !filtered.length) {
-      board.innerHTML = `<div class=”blk-empty”>No matches for “${escapeHtml(searchQuery.trim())}”. <button class=”btn btn-ghost” onclick=”document.getElementById('search').value='';document.getElementById('search').dispatchEvent(new Event('input'))”>Clear search</button></div>`;
+      board.innerHTML = `<div class="blk-empty">No matches for "${escapeHtml(searchQuery.trim())}". <button class="btn btn-ghost" onclick="document.getElementById('search').value='';document.getElementById('search').dispatchEvent(new Event('input'))">Clear search</button></div>`;
       return;
     }
 
