@@ -153,6 +153,37 @@ module.exports = function profileRoutes(db) {
     });
   });
 
+  // GET /api/me/peers — own opt-in status + list of opted-in cohort peers (students only)
+  router.get("/me/peers", requireAuth, requireRole("student"), (req, res) => {
+    const { orgId, userId } = req.user;
+    const optRow = db.prepare("SELECT 1 FROM peer_mentor_opt_ins WHERE user_id = ?").get(userId);
+    const me = db.prepare("SELECT cohort_id FROM users WHERE id = ?").get(userId);
+    let peers = [];
+    if (me && me.cohort_id) {
+      peers = db.prepare(
+        `SELECT u.id, u.name FROM peer_mentor_opt_ins p
+           JOIN users u ON u.id = p.user_id
+          WHERE p.org_id = ? AND u.cohort_id = ? AND u.id != ?
+          ORDER BY u.name`
+      ).all(orgId, me.cohort_id, userId);
+    }
+    res.json({ optedIn: !!optRow, peers });
+  });
+
+  // POST /api/me/peers/opt-in — opt in
+  router.post("/me/peers/opt-in", requireAuth, requireRole("student"), (req, res) => {
+    const { orgId, userId } = req.user;
+    db.prepare("INSERT OR REPLACE INTO peer_mentor_opt_ins (org_id, user_id) VALUES (?, ?)").run(orgId, userId);
+    res.json({ ok: true, optedIn: true });
+  });
+
+  // POST /api/me/peers/opt-out — opt out
+  router.post("/me/peers/opt-out", requireAuth, requireRole("student"), (req, res) => {
+    const { userId } = req.user;
+    db.prepare("DELETE FROM peer_mentor_opt_ins WHERE user_id = ?").run(userId);
+    res.json({ ok: true, optedIn: false });
+  });
+
   // GET /api/me/momentum — student's own unblocking trajectory (Phase 2.4)
   // Personal only — no cross-student data, no rankings.
   router.get("/me/momentum", requireAuth, (req, res) => {

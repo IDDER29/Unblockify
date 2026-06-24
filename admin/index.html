@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unblockify Admin</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../stylesheet.main.css" />
+    <style>
+      body { background:var(--ink,#0C111B); min-height:100vh; display:flex; align-items:center; justify-content:center; }
+      .admin-login { background:#fff; border-radius:14px; padding:2.5rem; width:100%; max-width:380px; }
+      .admin-login h1 { font-size:1.4rem; margin:0 0 .25rem; }
+      .admin-login p { color:var(--muted);font-size:.88rem;margin:0 0 1.5rem; }
+      .form-row { margin-bottom:1rem; }
+      .form-row label { display:block;font-size:.85rem;font-weight:500;margin-bottom:.35rem; }
+      .form-row input { width:100%;padding:.55rem .75rem;border:1px solid var(--line,#e8e8e8);border-radius:6px;font-size:.95rem;box-sizing:border-box; }
+    </style>
+  </head>
+  <body>
+    <div class="admin-login">
+      <svg style="display:block;margin:0 0 1.25rem" width="36" height="36" viewBox="0 0 32 32">
+        <rect x="1" y="1" width="30" height="30" rx="9" fill="#12B886" />
+        <path d="M6 16h4l2.5-6 4 12 2.5-6h7" fill="none" stroke="#05281d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      <h1>Unblockify Admin</h1>
+      <p>Super-admin access only. Enter the ADMIN_SECRET to continue.</p>
+      <div class="form-row">
+        <label for="secretInput">Admin secret</label>
+        <input type="password" id="secretInput" placeholder="Enter ADMIN_SECRET…" autocomplete="current-password" />
+      </div>
+      <button class="btn btn-primary" id="loginBtn" style="width:100%">Enter</button>
+      <div id="loginErr" style="margin-top:.75rem;font-size:.85rem;color:var(--blocked,#FF5A4D)"></div>
+    </div>
+    <script>
+      // Store secret in sessionStorage — never sent except in Authorization header
+      const stored = sessionStorage.getItem("admin_secret");
+      if (stored) { verifyAndRedirect(stored); }
+
+      async function verifyAndRedirect(secret) {
+        try {
+          const r = await fetch("/admin/api/metrics", {
+            headers: { Authorization: "Bearer " + secret }
+          });
+          if (r.ok) {
+            sessionStorage.setItem("admin_secret", secret);
+            location.href = "/admin/metrics.html";
+          } else {
+            document.getElementById("loginErr").textContent = "Invalid secret.";
+            sessionStorage.removeItem("admin_secret");
+          }
+        } catch (e) {
+          document.getElementById("loginErr").textContent = "Could not reach server.";
+        }
+      }
+
+      document.getElementById("loginBtn").addEventListener("click", () => {
+        const s = document.getElementById("secretInput").value.trim();
+        if (!s) return;
+        verifyAndRedirect(s);
+      });
+      document.getElementById("secretInput").addEventListener("keydown", e => {
+        if (e.key === "Enter") document.getElementById("loginBtn").click();
+      });
+    </script>
+  </body>
+</html>

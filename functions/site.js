@@ -7,9 +7,9 @@
 
   var NAV = [
     { href: "features.html", label: "Product" },
+    { href: "demo.html", label: "Demo" },
     { href: "solutions.html", label: "Solutions" },
     { href: "pricing.html", label: "Pricing" },
-    { href: "security.html", label: "Security" },
     { href: "about.html", label: "About" },
   ];
   var active = location.pathname.split("/").pop() || "index.html";
@@ -50,16 +50,24 @@
       ]) +
       col("Company", [
         { href: "about.html", label: "About" },
+        { href: "customers.html", label: "Customers" },
+        { href: "changelog.html", label: "Changelog" },
         { href: "contact.html", label: "Contact" },
-        { href: "signup.html", label: "Get started" },
       ]) +
       col("Get started", [
         { href: "signup.html", label: "Create a workspace" },
+        { href: "demo.html", label: "See a demo" },
         { href: "login.html", label: "Log in" },
-        { href: "contact.html", label: "Request a demo" },
+        { href: "status.html", label: "System status" },
+      ]) +
+      col("Legal", [
+        { href: "terms.html", label: "Terms of Service" },
+        { href: "privacy.html", label: "Privacy Policy" },
+        { href: "cookies.html", label: "Cookie Policy" },
+        { href: "security.html", label: "Security" },
       ]) +
       "</div>" +
-      '<div class="container footer-bottom"><span>© Unblockify · built for momentum</span><span>Made for organizations that refuse to let people stay stuck.</span></div>' +
+      '<div class="container footer-bottom"><span>© 2026 Unblockify · <a href="terms.html" style="color:inherit;opacity:.6">Terms</a> · <a href="privacy.html" style="color:inherit;opacity:.6">Privacy</a></span><span>Made for organizations that refuse to let people stay stuck.</span></div>' +
       "</footer>"
     );
   }

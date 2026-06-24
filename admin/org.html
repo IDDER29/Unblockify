@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Org detail — Unblockify Admin</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../stylesheet.main.css" />
+    <style>
+      body { margin:0; background:var(--surface-2,#f8f9fb); font-family:var(--font-body,'Inter'),sans-serif; }
+      .admin-body { padding:2rem; max-width:1100px; margin:0 auto; }
+      .panel { background:#fff; border-radius:10px; padding:1.25rem; border:1px solid var(--line,#e8e8e8); margin-bottom:1rem; }
+      table { width:100%; border-collapse:collapse; font-size:.88rem; }
+      th, td { padding:.5rem .75rem; text-align:left; border-bottom:1px solid var(--line,#e8e8e8); }
+      th { font-weight:600; font-size:.8rem; color:var(--muted); }
+      tr:last-child td { border:none; }
+    </style>
+  </head>
+  <body>
+    <div id="admin-nav"></div>
+    <div class="admin-body">
+      <a href="orgs.html" style="font-size:.85rem;color:var(--muted);text-decoration:none">← All orgs</a>
+      <div id="content"><p style="color:var(--muted);margin-top:1.5rem">Loading…</p></div>
+    </div>
+    <script src="admin.js"></script>
+    <script>
+      (async function () {
+        const id = new URLSearchParams(location.search).get("id");
+        const el = document.getElementById("content");
+        if (!id) { el.innerHTML = `<p style="color:var(--blocked)">No org ID provided.</p>`; return; }
+        try {
+          const { org, members, cohorts, stats } = await ADMIN.fetch("/orgs/" + id);
+          const e = ADMIN.escapeHtml;
+          el.innerHTML = `
+            <h1 style="margin:1rem 0 .25rem;font-size:1.5rem">${e(org.name)}</h1>
+            <p style="font-family:var(--font-mono),monospace;font-size:.8rem;color:var(--muted);margin:0 0 1.5rem">/${e(org.slug)} · joined ${ADMIN.fmtRelative(org.created_at)}
+            ${org.suspended ? ' · <span style="color:var(--blocked,#FF5A4D);font-weight:600">SUSPENDED</span>' : ''}</p>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem;margin-bottom:1.25rem">
+              <div class="panel" style="text-align:center"><div style="font-size:1.8rem;font-weight:800">${stats.total||0}</div><div style="font-size:.78rem;color:var(--muted)">Blockages</div></div>
+              <div class="panel" style="text-align:center"><div style="font-size:1.8rem;font-weight:800;color:var(--blocked)">${stats.open||0}</div><div style="font-size:.78rem;color:var(--muted)">Open</div></div>
+              <div class="panel" style="text-align:center"><div style="font-size:1.8rem;font-weight:800;color:var(--flow,#12B886)">${stats.resolved||0}</div><div style="font-size:.78rem;color:var(--muted)">Resolved</div></div>
+              <div class="panel" style="text-align:center"><div style="font-size:1.8rem;font-weight:800">${stats.ai_resolved||0}</div><div style="font-size:.78rem;color:var(--muted)">AI-resolved</div></div>
+              <div class="panel" style="text-align:center"><div style="font-size:1.8rem;font-weight:800">${members.length}</div><div style="font-size:.78rem;color:var(--muted)">Members</div></div>
+              <div class="panel" style="text-align:center"><div style="font-size:1.8rem;font-weight:800">${cohorts.length}</div><div style="font-size:.78rem;color:var(--muted)">Cohorts</div></div>
+            </div>
+
+            <div class="panel" style="margin-bottom:1rem">
+              <h3 style="margin:0 0 .75rem">Danger zone</h3>
+              ${org.suspended
+                ? `<button class="btn btn-primary btn-sm" id="unsuspendBtn">Unsuspend org</button>`
+                : `<button class="btn btn-ghost btn-sm" id="suspendBtn" style="color:var(--blocked);border-color:var(--blocked)">Suspend org</button>`}
+              <div id="actionMsg" style="margin-top:.5rem;font-size:.85rem"></div>
+            </div>
+
+            <div class="panel">
+              <h3 style="margin:0 0 .75rem">Members (${members.length})</h3>
+              <table>
+                <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
+                <tbody>
+                  ${members.map(m => `<tr>
+                    <td>${e(m.name)}</td>
+                    <td style="font-size:.82rem;color:var(--muted)">${e(m.email)}</td>
+                    <td><span style="font-size:.75rem;font-weight:600;color:var(--${m.role==='owner'?'flow':'ink'})">${e(m.role)}</span></td>
+                    <td style="font-size:.8rem;color:var(--muted)">${ADMIN.fmtRelative(m.created_at)}</td>
+                  </tr>`).join("")}
+                </tbody>
+              </table>
+            </div>
+
+            ${cohorts.length ? `<div class="panel">
+              <h3 style="margin:0 0 .75rem">Cohorts (${cohorts.length})</h3>
+              <table>
+                <thead><tr><th>Name</th><th>Created</th></tr></thead>
+                <tbody>${cohorts.map(c => `<tr><td>${e(c.name)}</td><td style="color:var(--muted);font-size:.82rem">${ADMIN.fmtRelative(c.created_at)}</td></tr>`).join("")}</tbody>
+              </table>
+            </div>` : ""}`;
+
+          const suspendBtn = document.getElementById("suspendBtn");
+          const unsuspendBtn = document.getElementById("unsuspendBtn");
+          const msg = document.getElementById("actionMsg");
+
+          if (suspendBtn) {
+            suspendBtn.addEventListener("click", async () => {
+              if (!confirm(`Suspend ${org.name}? Their users won't be able to log in.`)) return;
+              try {
+                await ADMIN.fetch("/orgs/" + id + "/suspend");
+                msg.textContent = "Org suspended.";
+                msg.style.color = "var(--blocked)";
+                setTimeout(() => location.reload(), 800);
+              } catch (err) { msg.textContent = err.message; msg.style.color = "var(--blocked)"; }
+            });
+          }
+          if (unsuspendBtn) {
+            unsuspendBtn.addEventListener("click", async () => {
+              try {
+                await ADMIN.fetch("/orgs/" + id + "/unsuspend");
+                msg.textContent = "Org unsuspended.";
+                msg.style.color = "var(--flow,#12B886)";
+                setTimeout(() => location.reload(), 800);
+              } catch (err) { msg.textContent = err.message; msg.style.color = "var(--blocked)"; }
+            });
+          }
+        } catch (err) {
+          el.innerHTML = `<p style="color:var(--blocked)">Error: ${ADMIN.escapeHtml(err.message)}</p>`;
+        }
+      })();
+    </script>
+  </body>
+</html>

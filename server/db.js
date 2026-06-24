@@ -297,6 +297,19 @@ function migrate(db) {
     user_id    INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );`);
+  // Admin: suspended flag on organizations
+  addColumnIfMissing(db, "organizations", "suspended", "INTEGER NOT NULL DEFAULT 0");
+  // Admin: platform-level ops flags
+  db.exec(`CREATE TABLE IF NOT EXISTS ops_flags (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    org_id      INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    reporter_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    type        TEXT NOT NULL DEFAULT 'manual',
+    note        TEXT,
+    status      TEXT NOT NULL DEFAULT 'open',
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_ops_flags_org ON ops_flags(org_id);`);
   // Phase 5.1: cohort progression patterns (topic co-occurrence)
   db.exec(`CREATE TABLE IF NOT EXISTS progression_patterns (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,

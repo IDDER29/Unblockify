@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Platform Metrics — Unblockify Admin</title>
+    <meta name="robots" content="noindex,nofollow" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../stylesheet.main.css" />
+    <style>
+      body { margin:0; background:var(--surface-2,#f8f9fb); font-family:var(--font-body,'Inter'),sans-serif; }
+      .admin-body { padding:2rem; max-width:1100px; margin:0 auto; }
+      .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:1rem; margin:1.5rem 0; }
+      .stat-card { background:#fff; border-radius:10px; padding:1.25rem; border:1px solid var(--line,#e8e8e8); }
+      .stat-card .v { font-size:2rem; font-weight:800; color:var(--ink,#0C111B); }
+      .stat-card .k { font-size:.78rem; color:var(--muted,#666); margin-top:.2rem; }
+      .panel { background:#fff; border-radius:10px; padding:1.25rem; border:1px solid var(--line,#e8e8e8); margin-bottom:1rem; }
+    </style>
+  </head>
+  <body>
+    <div id="admin-nav"></div>
+    <div class="admin-body">
+      <h1 style="margin:1.5rem 0 0;font-size:1.5rem">Platform metrics</h1>
+      <p style="color:var(--muted);margin:.25rem 0 0">All organizations · all time</p>
+      <div id="content"><p style="color:var(--muted);margin-top:2rem">Loading…</p></div>
+    </div>
+    <script src="admin.js"></script>
+    <script>
+      (async function () {
+        const el = document.getElementById("content");
+        try {
+          const m = await ADMIN.fetch("/metrics");
+          const e = ADMIN.escapeHtml;
+          el.innerHTML = `
+            <div class="stat-grid">
+              <div class="stat-card"><div class="v">${m.orgs}</div><div class="k">Organizations</div></div>
+              <div class="stat-card"><div class="v">${m.users}</div><div class="k">Total users</div></div>
+              <div class="stat-card"><div class="v">${m.blockages}</div><div class="k">Total blockages</div></div>
+              <div class="stat-card"><div class="v">${m.resolveRate}%</div><div class="k">Resolve rate</div></div>
+              <div class="stat-card"><div class="v">${m.aiDeflectionRate}%</div><div class="k">AI deflection</div></div>
+              <div class="stat-card"><div class="v">${m.last24h}</div><div class="k">Blockages (24h)</div></div>
+              <div class="stat-card"><div class="v">${m.last7d}</div><div class="k">Blockages (7d)</div></div>
+            </div>
+            <div class="panel">
+              <h3 style="margin:0 0 1rem">Org signups — last 30 days</h3>
+              ${m.orgGrowth.length
+                ? `<div style="display:flex;gap:2px;align-items:flex-end;height:80px">
+                    ${(() => {
+                      const max = Math.max(...m.orgGrowth.map(r => r.n), 1);
+                      return m.orgGrowth.map(r =>
+                        `<div title="${e(r.day)}: ${r.n} org${r.n!==1?'s':''}" style="flex:1;background:var(--flow,#12B886);height:${Math.round(r.n/max*100)}%;min-height:2px;border-radius:3px 3px 0 0"></div>`
+                      ).join("");
+                    })()}
+                  </div>
+                  <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-top:.35rem">
+                    <span>${e(m.orgGrowth[0].day)}</span><span>${e(m.orgGrowth[m.orgGrowth.length-1].day)}</span>
+                  </div>`
+                : `<p style="color:var(--muted)">No new orgs in the last 30 days.</p>`}
+            </div>
+            <div style="display:flex;gap:1rem;flex-wrap:wrap">
+              <a href="orgs.html" class="btn btn-primary">View all organizations →</a>
+              <a href="flags.html" class="btn btn-ghost">Ops flags</a>
+            </div>`;
+        } catch (e) {
+          el.innerHTML = `<p style="color:var(--blocked)">Error: ${ADMIN.escapeHtml(e.message)}</p>`;
+        }
+      })();
+    </script>
+  </body>
+</html>

@@ -25,6 +25,7 @@ const gdprRoutes = require("./routes/gdpr");
 const slaRoutes = require("./routes/sla");
 const studentRoutes = require("./routes/students");
 const knowledgeRoutes = require("./routes/knowledge");
+const adminRoutes = require("./routes/admin");
 const { requestLogger, errorHandler, healthz } = require("./lib/logger");
 
 const ROOT = path.join(__dirname, "..");
@@ -69,6 +70,7 @@ function createApp(db) {
   app.use("/api", knowledgeRoutes(db));
   app.use("/api", notificationRoutes(db));
   app.use("/api", analyticsRoutes(db));
+  app.use("/admin/api", adminRoutes(db));
 
   app.use("/api", (req, res) => res.status(404).json({ error: "Not found" }));
   app.use(express.static(ROOT, { index: "index.html", extensions: ["html"] }));

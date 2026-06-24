@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cookie Policy — Unblockify</title>
+    <meta name="description" content="Unblockify Cookie Policy — we use exactly one cookie and it's required for login." />
+    <meta property="og:title" content="Cookie Policy — Unblockify" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://unblockify.app/cookies.html" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./stylesheet.main.css" />
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <svg width="0" height="0" style="position:absolute">
+      <symbol id="mark" viewBox="0 0 32 32">
+        <rect x="1" y="1" width="30" height="30" rx="9" fill="#12B886" />
+        <path d="M6 16h4l2.5-6 4 12 2.5-6h7" fill="none" stroke="#05281d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+    </svg>
+    <div id="site-nav"></div>
+
+    <header class="hero hero-sm" id="main-content" style="padding:4rem 0 2.5rem">
+      <div class="container" style="max-width:720px">
+        <span class="eyebrow">Legal</span>
+        <h1>Cookie Policy</h1>
+        <p class="lead" style="font-size:1rem;color:var(--muted)">Last updated: 24 June 2026</p>
+      </div>
+    </header>
+
+    <section class="section" style="padding-top:1.5rem">
+      <div class="container" style="max-width:720px">
+        <div class="legal-body">
+
+          <div style="background:var(--surface-2,#f8f9fb);border-left:3px solid var(--flow,#12B886);padding:1rem 1.25rem;border-radius:0 8px 8px 0;margin-bottom:2rem">
+            <strong>Short version:</strong> Unblockify uses exactly one cookie. It's required for login. We don't use advertising, analytics, or tracking cookies of any kind.
+          </div>
+
+          <h2>What is a cookie?</h2>
+          <p>A cookie is a small file stored in your browser by a website. Cookies are used for things like keeping you logged in, remembering preferences, and tracking behaviour across sites.</p>
+
+          <h2>The one cookie we use</h2>
+          <table style="width:100%;border-collapse:collapse;font-size:.9rem;margin:1rem 0">
+            <thead>
+              <tr style="border-bottom:2px solid var(--line,#e8e8e8)">
+                <th style="text-align:left;padding:.5rem .75rem">Name</th>
+                <th style="text-align:left;padding:.5rem .75rem">Purpose</th>
+                <th style="text-align:left;padding:.5rem .75rem">Type</th>
+                <th style="text-align:left;padding:.5rem .75rem">Duration</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--line,#e8e8e8)">
+                <td style="padding:.5rem .75rem"><code>unblockify_token</code></td>
+                <td style="padding:.5rem .75rem">Keeps you logged in. Contains a JWT with your user ID, org, and role.</td>
+                <td style="padding:.5rem .75rem">Strictly necessary</td>
+                <td style="padding:.5rem .75rem">Session (cleared on logout)</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p>This cookie is:</p>
+          <ul>
+            <li><strong>HTTP-only</strong> — JavaScript cannot read it, which prevents XSS token theft</li>
+            <li><strong>Secure</strong> — only sent over HTTPS in production</li>
+            <li><strong>SameSite=Lax</strong> — provides CSRF protection</li>
+            <li><strong>Not a tracking cookie</strong> — it contains no advertising identifiers or cross-site tracking data</li>
+          </ul>
+
+          <h2>What we don't use</h2>
+          <ul>
+            <li>No Google Analytics or other analytics cookies</li>
+            <li>No advertising or retargeting cookies</li>
+            <li>No social media tracking pixels</li>
+            <li>No third-party cookies of any kind</li>
+          </ul>
+
+          <h2>Do you need to accept cookies?</h2>
+          <p>The single cookie we use is strictly necessary to log in to the application. Without it, authentication is impossible. Because it is strictly necessary, we don't require a consent banner for it under most privacy regulations (GDPR Article 5(3) exception for technically necessary cookies).</p>
+          <p>If you use Unblockify as a guest on the public marketing pages (this page, the homepage, pricing, etc.), no cookies are set at all.</p>
+
+          <h2>Managing cookies</h2>
+          <p>You can clear the <code>unblockify_token</code> cookie at any time via your browser's developer tools or privacy settings — this will log you out. You can also click "Log out" in the application, which deletes the cookie server-side.</p>
+
+          <h2>Changes</h2>
+          <p>If we ever introduce additional cookies, we'll update this page and provide notice in the application at least 14 days in advance.</p>
+
+          <h2>Contact</h2>
+          <p>Questions? Email <a href="mailto:hello@unblockify.app">hello@unblockify.app</a>.</p>
+
+        </div>
+      </div>
+    </section>
+
+    <div id="site-footer"></div>
+    <script src="./functions/site.js"></script>
+  </body>
+</html>

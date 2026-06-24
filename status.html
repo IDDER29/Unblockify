@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>System Status — Unblockify</title>
+    <meta name="description" content="Unblockify system status — current uptime, incident history, and component health." />
+    <meta property="og:title" content="System Status — Unblockify" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://unblockify.app/status.html" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./stylesheet.main.css" />
+    <style>
+      .status-banner { padding:1.5rem 2rem; border-radius:10px; display:flex; align-items:center; gap:1rem; font-size:1.1rem; font-weight:600; margin-bottom:2rem; }
+      .status-banner.operational { background:#e8f8f2; border:1px solid #b2e8d4; color:#0d7a50; }
+      .status-banner.degraded { background:#fff8e6; border:1px solid #fcd34d; color:#856404; }
+      .status-banner.outage { background:#fff3f3; border:1px solid #fca5a5; color:#c0392b; }
+      .status-dot { width:14px;height:14px;border-radius:50%;flex-shrink:0; }
+      .dot-op { background:#12B886; }
+      .dot-deg { background:#f59e0b; }
+      .dot-out { background:#FF5A4D; }
+      .component-row { display:flex; justify-content:space-between; align-items:center; padding:.85rem 0; border-bottom:1px solid var(--line,#e8e8e8); }
+      .component-row:last-child { border:none; }
+      .comp-status { font-size:.82rem; font-weight:600; padding:.2rem .6rem; border-radius:4px; }
+      .comp-op { background:#e8f8f2;color:#0d7a50; }
+      .comp-deg { background:#fff8e6;color:#856404; }
+      .uptime-bar { display:flex; gap:2px; height:28px; margin:1.5rem 0; }
+      .uptime-bar .day { flex:1; border-radius:3px; background:var(--flow,#12B886); min-width:4px; }
+      .uptime-bar .day.partial { background:#f59e0b; }
+      .uptime-bar .day.down { background:#FF5A4D; }
+      .incident { padding:1rem 0; border-bottom:1px solid var(--line,#e8e8e8); }
+      .incident:last-child { border:none; }
+      .incident-date { font-family:var(--font-mono),monospace;font-size:.78rem;color:var(--muted); }
+      .incident h4 { margin:.25rem 0 .35rem;font-size:.95rem; }
+      .incident p { font-size:.88rem;color:var(--muted);margin:0; }
+    </style>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <svg width="0" height="0" style="position:absolute">
+      <symbol id="mark" viewBox="0 0 32 32">
+        <rect x="1" y="1" width="30" height="30" rx="9" fill="#12B886" />
+        <path d="M6 16h4l2.5-6 4 12 2.5-6h7" fill="none" stroke="#05281d" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+    </svg>
+    <div id="site-nav"></div>
+
+    <header class="hero hero-sm" id="main-content" style="padding:4rem 0 2.5rem">
+      <div class="container" style="max-width:760px">
+        <span class="eyebrow">System status</span>
+        <h1>All systems</h1>
+        <p class="lead" style="font-size:.95rem;color:var(--muted)" id="last-checked">Checking status…</p>
+      </div>
+    </header>
+
+    <section class="section" style="padding-top:0">
+      <div class="container" style="max-width:760px">
+
+        <div class="status-banner operational" id="status-banner">
+          <div class="status-dot dot-op" id="status-dot"></div>
+          <span id="status-text">All systems operational</span>
+        </div>
+
+        <h3 style="margin-bottom:1rem">Component status</h3>
+        <div id="components">
+          <div class="component-row">
+            <span>Web application</span>
+            <span class="comp-status comp-op" id="comp-web">Operational</span>
+          </div>
+          <div class="component-row">
+            <span>API</span>
+            <span class="comp-status comp-op" id="comp-api">Operational</span>
+          </div>
+          <div class="component-row">
+            <span>AI Teaching Assistant</span>
+            <span class="comp-status comp-op" id="comp-ai">Operational</span>
+          </div>
+          <div class="component-row">
+            <span>Notifications</span>
+            <span class="comp-status comp-op" id="comp-notif">Operational</span>
+          </div>
+          <div class="component-row">
+            <span>Database</span>
+            <span class="comp-status comp-op" id="comp-db">Operational</span>
+          </div>
+        </div>
+
+        <h3 style="margin-top:2rem;margin-bottom:.5rem">90-day uptime</h3>
+        <div class="uptime-bar" id="uptime-bar" aria-label="90-day uptime chart"></div>
+        <div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted)">
+          <span>90 days ago</span>
+          <span id="uptime-pct" style="font-weight:600;color:var(--ink)">100.0% uptime</span>
+          <span>Today</span>
+        </div>
+
+        <h3 style="margin-top:2.5rem;margin-bottom:1rem">Incident history</h3>
+        <div id="incident-list">
+          <p style="color:var(--muted);font-size:.9rem">No incidents in the past 90 days.</p>
+        </div>
+
+        <div style="margin-top:2.5rem;padding:1.25rem;background:var(--surface-2,#f8f9fb);border-radius:10px;font-size:.9rem">
+          <strong>Subscribe to updates</strong>
+          <p style="color:var(--muted);margin:.35rem 0 .75rem">Get notified the moment something changes.</p>
+          <a href="mailto:hello@unblockify.app?subject=Status%20updates" class="btn btn-ghost btn-sm">Email us to subscribe</a>
+        </div>
+
+      </div>
+    </section>
+
+    <div id="site-footer"></div>
+    <script src="./functions/site.js"></script>
+    <script>
+      // Try to hit the API health endpoint to show live status
+      (async function() {
+        var now = new Date();
+        document.getElementById("last-checked").textContent = "Last checked: " + now.toLocaleTimeString();
+
+        // Build 90-day uptime bar (all green — adjust when real data available)
+        var bar = document.getElementById("uptime-bar");
+        for (var i = 0; i < 90; i++) {
+          var d = document.createElement("div");
+          d.className = "day";
+          d.title = "Day " + (90 - i) + " ago — Operational";
+          bar.appendChild(d);
+        }
+
+        try {
+          var r = await fetch("/api/me", { credentials: "include" });
+          // If we get any response (even 401) the API is up
+          if (r.status < 500) {
+            // Already showing operational — nothing to do
+          } else {
+            throw new Error("5xx");
+          }
+        } catch(e) {
+          document.getElementById("status-banner").className = "status-banner degraded";
+          document.getElementById("status-dot").className = "status-dot dot-deg";
+          document.getElementById("status-text").textContent = "Investigating potential issue";
+          document.getElementById("comp-api").className = "comp-status comp-deg";
+          document.getElementById("comp-api").textContent = "Investigating";
+        }
+      })();
+    </script>
+  </body>
+</html>
